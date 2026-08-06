@@ -1,0 +1,27 @@
+## Interface: 120007
+
+## Title: ManiaUF
+## Notes: Blizzlike unit frames built on oUF
+## Category: User Interface
+## Author: Pingumania
+## Version: @project-version@
+
+## SavedVariables: ManiaUFDB
+
+Libs\LibStub\LibStub.lua
+Libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua
+Libs\oUF\oUF.xml
+Libs\Huddle\Embed.xml
+
+Style.lua
+Addon.lua
+
+Units\Player.lua
+Units\Pet.lua
+Units\Target.lua
+Units\TargetOfTarget.lua
+Units\Party.lua
+Units\Raid.lua
+Units\Boss.lua
+
+Options.lua
