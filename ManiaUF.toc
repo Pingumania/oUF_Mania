@@ -13,15 +13,13 @@ Libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua
 Libs\oUF\oUF.xml
 Libs\Huddle\Embed.xml
 
+Tags.lua
+Database.lua
+Border.lua
+Elements.lua
+Preview.lua
 Style.lua
 Addon.lua
-
-Units\Player.lua
-Units\Pet.lua
-Units\Target.lua
-Units\TargetOfTarget.lua
-Units\Party.lua
-Units\Raid.lua
-Units\Boss.lua
+Units.lua
 
 Options.lua
