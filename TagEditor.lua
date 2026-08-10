@@ -33,15 +33,10 @@ local SCROLL_BAR_GAP = 8
 
 local TITLE_PREFIX = "Edit Tag - "
 
--- The window only reserves room for the reference list while it is actually shown - collapsed
--- is just the edit box, preview and button row; expanded adds the list's own viewport height.
 local COLLAPSED_HEIGHT = INNER_Y + EDITBOX_HEIGHT + PREVIEW_GAP + PREVIEW_HEIGHT
 	+ BUTTON_ROW_GAP + BUTTON_HEIGHT + INNER_BOTTOM
 local EXPANDED_HEIGHT = COLLAPSED_HEIGHT + LIST_GAP + LIST_AREA_HEIGHT
 
--- Samples are hardcoded, not rendered against a real unit - see NOTES.md "Tag editor previews"
--- for why calling into oUF's real tag system (even against a literal unit token) is not worth
--- the risk for what is ultimately just illustrative reference text.
 local SAMPLE_ICON_SIZE = 16
 local RAID_MARKER_SHEET = [[Interface\TargetingFrame\UI-RaidTargetingIcons]]
 local RESTING_SHEET = [[Interface\CharacterFrame\UI-StateIcon]]
@@ -176,6 +171,7 @@ local function CommitAndClose()
 		currentSetValue(editBox:GetText())
 	end
 
+	ns:RefreshOptionsWindow()
 	CloseEditor()
 end
 
@@ -274,8 +270,6 @@ local function BuildWindow()
 
 	ns:SetFrameMoveable(frame)
 
-	-- Growing/shrinking SetHeight on a CENTER-anchored frame moves both edges symmetrically,
-	-- which drags the title bar with it - AdjustPointsOffset compensates so only the bottom moves.
 	local function SetWindowHeight(newHeight)
 		local top = frame:GetTop()
 

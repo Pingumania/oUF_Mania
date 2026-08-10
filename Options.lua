@@ -33,7 +33,7 @@ local DROPDOWN_OFFSET = 32
 
 local LAUNCH_WIDTH = 200
 local BUTTON_HEIGHT = 22
-local TAG_BUTTON_WIDTH = 60
+local TAG_BUTTON_WIDTH = 30
 local SLIDER_STEP = 1
 
 local OFFSET_MIN, OFFSET_MAX = -200, 200
@@ -44,10 +44,11 @@ local TEXT_WIDTH_MIN, TEXT_WIDTH_MAX = 0, 300
 local SCROLL_BAR_INSET = 22
 local SCROLL_BAR_GAP = 8
 
--- Aligns the button's right edge with header.DefaultsButton's (Huddle: TOPRIGHT -36) - this row's
--- own right edge sits SCROLL_BAR_INSET further right than the header's, since the header spans the
--- full content width while rows sit inside the inset scroll area.
-local TAG_BUTTON_RIGHT = -36 + SCROLL_BAR_INSET
+local SLIDER_WIDTH = 250
+local SLIDER_INPUT_OFFSET = 25
+local TAG_INPUT_OFFSET = 8
+local TAG_BUTTON_OFFSET = 8
+local TAG_INPUT_WIDTH = SLIDER_WIDTH + SLIDER_INPUT_OFFSET - TAG_INPUT_OFFSET - TAG_BUTTON_OFFSET
 
 local PREVIEW_SHOW = "Preview"
 local PREVIEW_ALL = "Preview all"
@@ -259,6 +260,10 @@ local function RefreshAll()
 	RefreshListLabels()
 end
 
+function ns:RefreshOptionsWindow()
+	RefreshAll()
+end
+
 local function RegisterControl(body, row, control)
 	body.controls[#body.controls + 1] = { row = row, control = control }
 	return row
@@ -331,14 +336,17 @@ local function AddDropdownRow(body, previous, label, options, getValue, setValue
 end
 
 local function AddTagEditRow(body, previous, label, title, getValue, setValue)
-	return AddControlRow(body, previous, label, 0, function(row)
-		local button = ns:CreateButton(row, "Edit", function()
+	return AddControlRow(body, previous, label, TAG_INPUT_OFFSET, function(row)
+		local editBox = ns:CreateEditBox(row, getValue, setValue)
+		editBox:SetWidth(TAG_INPUT_WIDTH)
+
+		local button = ns:CreateButton(row, "...", function()
 			ns:OpenTagEditor(title, getValue, setValue)
 		end)
 		button:SetSize(TAG_BUTTON_WIDTH, BUTTON_HEIGHT)
-		button:SetPoint("RIGHT", row, "RIGHT", TAG_BUTTON_RIGHT, 0)
+		button:SetPoint("LEFT", editBox, "RIGHT", TAG_BUTTON_OFFSET, 0)
 
-		return ns:CreateEditBox(row, getValue, setValue)
+		return editBox
 	end, function(editBox)
 		editBox:Refresh()
 	end)
@@ -457,18 +465,20 @@ local function BuildFramePage(body, unit)
 end
 
 local function SetRowEnabled(entry, enabled)
-	local color = enabled and NORMAL_FONT_COLOR or GRAY_FONT_COLOR
+	local labelColor = enabled and NORMAL_FONT_COLOR or GRAY_FONT_COLOR
 	local control = entry.control
+	local isEditBox = control.IsObjectType and control:IsObjectType("EditBox")
+	local controlColor = (enabled and isEditBox) and HIGHLIGHT_FONT_COLOR or labelColor
 
 	if control.SetEnabled then
 		control:SetEnabled(enabled)
 	end
 
 	if control.SetTextColor then
-		control:SetTextColor(color:GetRGB())
+		control:SetTextColor(controlColor:GetRGB())
 	end
 
-	entry.row.Label:SetTextColor(color:GetRGB())
+	entry.row.Label:SetTextColor(labelColor:GetRGB())
 end
 
 local function AddLinkRow(body, previous, element, units)
