@@ -4,7 +4,6 @@ local LSM = LibStub("LibSharedMedia-3.0")
 
 local issecretvalue = issecretvalue
 
-local DEFAULT_FONT_SIZE = 12
 local FONT_SIZE_MIN = 8
 local FONT_SIZE_MAX = 20
 
@@ -27,7 +26,7 @@ function ns:GetTexture()
 end
 
 function ns:GetFontSize()
-	return ManiaUFDB.fontSize or DEFAULT_FONT_SIZE
+	return ManiaUFDB.fontSize or ns.DEFAULT_FONT_SIZE
 end
 
 function ns:GetFontSizeRange()

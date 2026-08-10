@@ -5,10 +5,8 @@ ns.ELEMENT_GROUPS = {
 	"elements", "offsets", "anchors", "widths", "sizes", "tags", "linked", "levels",
 }
 
-local INDICATOR_SIZE = 14
-local RAID_MARKER_SIZE = 20
+local INDICATOR_SIZE = ns.INDICATOR_SIZE
 local INDICATOR_SUBLEVEL = 2
-local THREAT_PADDING = 3
 local THREAT_FADE = 0.25
 local THREAT_SUBLEVEL = -1
 local THREAT_ATLAS = "timerunning-redbutton-backglow"
@@ -57,31 +55,31 @@ local function QuestPostUpdate(element)
 end
 
 local INDICATORS = {
-	{ key = "leader", element = "LeaderIndicator", point = "TOPLEFT", x = 22, y = 4,
+	{ key = "leader", element = "LeaderIndicator",
 		atlas = "UI-HUD-UnitFrame-Player-Group-LeaderIcon" },
-	{ key = "assistant", element = "AssistantIndicator", point = "TOPLEFT", x = 36, y = 4,
+	{ key = "assistant", element = "AssistantIndicator",
 		texture = [[Interface\GroupFrame\UI-Group-AssistantIcon]] },
-	{ key = "raidrole", element = "RaidRoleIndicator", point = "TOPLEFT", x = 50, y = 4,
+	{ key = "raidrole", element = "RaidRoleIndicator",
 		atlas = "RaidFrame-Icon-MainTank" },
-	{ key = "raidtarget", element = "RaidTargetIndicator", point = "TOP", x = 0, y = 5,
+	{ key = "raidtarget", element = "RaidTargetIndicator",
 		marker = 1 },
-	{ key = "combat", element = "CombatIndicator", point = "TOPRIGHT", x = 0, y = 4,
+	{ key = "combat", element = "CombatIndicator",
 		atlas = "UI-HUD-UnitFrame-Player-CombatIcon" },
-	{ key = "phase", element = "PhaseIndicator", point = "TOPRIGHT", x = -16, y = 4,
+	{ key = "phase", element = "PhaseIndicator",
 		atlas = "RaidFrame-Icon-Phasing" },
-	{ key = "grouprole", element = "GroupRoleIndicator", point = "LEFT", x = -6, y = 0,
+	{ key = "grouprole", element = "GroupRoleIndicator",
 		atlas = "UI-LFG-RoleIcon-Tank-Micro-Raid" },
-	{ key = "quest", element = "QuestIndicator", point = "RIGHT", x = 6, y = 0,
+	{ key = "quest", element = "QuestIndicator",
 		postUpdate = QuestPostUpdate },
-	{ key = "pvp", element = "PvPIndicator", point = "BOTTOMLEFT", x = 0, y = -4,
+	{ key = "pvp", element = "PvPIndicator",
 		postUpdate = PvPPostUpdate, atlas = PVP_ATLASES.Alliance },
-	{ key = "pvpclass", element = "PvPClassificationIndicator", point = "BOTTOMRIGHT", x = 0, y = -4,
+	{ key = "pvpclass", element = "PvPClassificationIndicator",
 		atlas = "nameplates-icon-flag-alliance" },
-	{ key = "readycheck", element = "ReadyCheckIndicator", point = "CENTER", x = 0, y = 0,
+	{ key = "readycheck", element = "ReadyCheckIndicator",
 		atlas = "UI-LFG-ReadyMark-Raid", gateUnit = "party" },
-	{ key = "resurrect", element = "ResurrectIndicator", point = "CENTER", x = -18, y = 0,
+	{ key = "resurrect", element = "ResurrectIndicator",
 		atlas = "RaidFrame-Icon-Rez" },
-	{ key = "summon", element = "SummonIndicator", point = "CENTER", x = 18, y = 0,
+	{ key = "summon", element = "SummonIndicator",
 		atlas = "RaidFrame-Icon-SummonPending" },
 }
 
@@ -93,43 +91,11 @@ local ANCHOR_POINTS = {
 	"BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT",
 }
 
-local DEFAULT_ANCHORS = {}
-local DEFAULT_OFFSETS = {}
-local DEFAULT_ELEMENT_SIZES = {}
-
-for _, info in ipairs(INDICATORS) do
-	DEFAULT_ANCHORS[info.key] = info.point
-	DEFAULT_OFFSETS[info.key] = { info.x, info.y }
-	DEFAULT_ELEMENT_SIZES[info.key] = INDICATOR_SIZE
-end
-
-local PREVIEWABLE = {
-	threat = true,
-	resting = true,
-	castbar = true,
-}
-
-for _, info in ipairs(INDICATORS) do
-	PREVIEWABLE[info.key] = true
-end
-
 function ns:HasPreviewArt(element)
-	return not not PREVIEWABLE[element]
+	return not not ns.PREVIEWABLE[element]
 end
 
-local ELEMENT_UNITS = {
-	castbar = { player = true, target = true, focus = true, boss = true },
-	resting = { player = true },
-	readycheck = { player = true, target = true, targettarget = true, focus = true, party = true },
-	leader = { player = true, target = true, targettarget = true, focus = true, party = true },
-	assistant = { player = true, target = true, targettarget = true, focus = true, party = true },
-	raidrole = { player = true, target = true, targettarget = true, focus = true, party = true },
-	summon = { player = true, target = true, targettarget = true, focus = true, party = true },
-	quest = { target = true, targettarget = true, focus = true, boss = true },
-}
-
-local RESTING_SIZE = 20
-local RESTING_INSET = 2
+local RESTING_SIZE = ns.RESTING_SIZE
 local RESTING_TEXTURE_RATIO = 1.5
 local RESTING_ATLAS = "UI-HUD-UnitFrame-Player-Rest-Flipbook"
 local RESTING_DURATION = 1.5
@@ -137,46 +103,9 @@ local RESTING_ROWS = 7
 local RESTING_COLUMNS = 6
 local RESTING_FRAMES = 42
 
-local OVERLAY_LEVEL = 5
 local LEVEL_MIN, LEVEL_MAX = 0, 10
 
-local DEFAULT_LEVELS = {
-	resting = OVERLAY_LEVEL,
-	threat = 0,
-}
-
-for _, info in ipairs(INDICATORS) do
-	DEFAULT_LEVELS[info.key] = OVERLAY_LEVEL
-end
-
-DEFAULT_ANCHORS.castbarIcon = "LEFT"
-DEFAULT_ANCHORS.name = "LEFT"
-DEFAULT_ANCHORS.health = "RIGHT"
-DEFAULT_ANCHORS.text1 = "CENTER"
-DEFAULT_ANCHORS.text2 = "CENTER"
-DEFAULT_OFFSETS.text1 = { 0, 12 }
-DEFAULT_OFFSETS.text2 = { 0, -12 }
-DEFAULT_ANCHORS.resting = "TOPLEFT"
-DEFAULT_OFFSETS.resting = { RESTING_INSET, -RESTING_INSET }
-DEFAULT_ELEMENT_SIZES.resting = RESTING_SIZE
-DEFAULT_ELEMENT_SIZES.threat = THREAT_PADDING
-DEFAULT_ELEMENT_SIZES.raidtarget = RAID_MARKER_SIZE
-
-local DEFAULT_TAGS = {
-	name = "[difficulty][smartlevel] [name]",
-	health = "[maniauf:curhp]",
-	text1 = "[maniauf:leader][maniauf:assistant][maniauf:role][maniauf:raidtarget]",
-	text2 = "[maniauf:combat][maniauf:resting][maniauf:pvp][maniauf:phase]",
-}
-
 ns.TEXT_ELEMENTS = { "name", "health", "text1", "text2" }
-
-local HIDDEN_BY_DEFAULT = {
-	text1 = true,
-	text2 = true,
-}
-
-local UNIT_TAGS = {}
 
 local threatAtlasExists
 
@@ -280,7 +209,7 @@ local function ReadElement(unit, group, element)
 end
 
 function ns:HasElement(unit, element)
-	local units = ELEMENT_UNITS[element]
+	local units = ns.ELEMENT_UNITS[element]
 
 	if not units then
 		return true
@@ -293,7 +222,7 @@ function ns:IsElementShown(unit, element)
 	local shown = ReadElement(unit, "elements", element)
 
 	if shown == nil then
-		return not HIDDEN_BY_DEFAULT[element]
+		return not ns.HIDDEN_BY_DEFAULT[element]
 	end
 
 	return shown
@@ -305,7 +234,7 @@ function ns:SetElementShown(unit, element, shown)
 end
 
 function ns:GetElementOffset(unit, element)
-	local default = DEFAULT_OFFSETS[element]
+	local default = ns.DEFAULT_OFFSETS[element]
 	local x = default and default[1] or 0
 	local y = default and default[2] or 0
 	local offset = ReadElement(unit, "offsets", element)
@@ -319,7 +248,7 @@ function ns:GetElementOffset(unit, element)
 end
 
 function ns:GetAnchorPoints(element)
-	if DEFAULT_TAGS[element] then
+	if ns.DEFAULT_TAGS[element] then
 		return TEXT_POINTS
 	end
 
@@ -327,11 +256,11 @@ function ns:GetAnchorPoints(element)
 end
 
 function ns:HasElementAnchor(element)
-	return DEFAULT_ANCHORS[element] ~= nil
+	return ns.DEFAULT_ANCHORS[element] ~= nil
 end
 
 function ns:GetElementAnchor(unit, element)
-	return ReadElement(unit, "anchors", element) or DEFAULT_ANCHORS[element]
+	return ReadElement(unit, "anchors", element) or ns.DEFAULT_ANCHORS[element]
 end
 
 function ns:SetElementAnchor(unit, element, point)
@@ -339,7 +268,7 @@ function ns:SetElementAnchor(unit, element, point)
 end
 
 function ns:HasElementWidth(element)
-	return DEFAULT_TAGS[element] ~= nil
+	return ns.DEFAULT_TAGS[element] ~= nil
 end
 
 function ns:GetElementWidth(unit, element)
@@ -351,7 +280,7 @@ function ns:SetElementWidth(unit, element, width)
 end
 
 function ns:HasElementLevel(element)
-	return DEFAULT_LEVELS[element] ~= nil
+	return ns.DEFAULT_LEVELS[element] ~= nil
 end
 
 function ns:GetElementLevelRange()
@@ -359,7 +288,7 @@ function ns:GetElementLevelRange()
 end
 
 function ns:GetElementLevel(unit, element)
-	return ReadElement(unit, "levels", element) or DEFAULT_LEVELS[element]
+	return ReadElement(unit, "levels", element) or ns.DEFAULT_LEVELS[element]
 end
 
 function ns:SetElementLevel(unit, element, level)
@@ -367,11 +296,19 @@ function ns:SetElementLevel(unit, element, level)
 end
 
 function ns:HasElementSize(element)
-	return DEFAULT_ELEMENT_SIZES[element] ~= nil
+	return ns.DEFAULT_ELEMENT_SIZES[element] ~= nil
 end
 
 function ns:GetElementSize(unit, element)
-	return ReadElement(unit, "sizes", element) or DEFAULT_ELEMENT_SIZES[element]
+	local stored = ReadElement(unit, "sizes", element)
+
+	if stored then
+		return stored
+	end
+
+	local sizes = ns.DEFAULT_ELEMENT_SIZES[element]
+
+	return sizes and (sizes[unit] or sizes.default)
 end
 
 function ns:SetElementSize(unit, element, size)
@@ -397,9 +334,9 @@ function ns:GetElementTag(unit, element)
 		return stored
 	end
 
-	local defaults = UNIT_TAGS[unit]
+	local defaults = ns.UNIT_TAGS[unit]
 
-	return defaults and defaults[element] or DEFAULT_TAGS[element]
+	return defaults and defaults[element] or ns.DEFAULT_TAGS[element]
 end
 
 function ns:SetElementTag(unit, element, tagString)

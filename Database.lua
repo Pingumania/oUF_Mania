@@ -1,5 +1,138 @@
 local _, ns = ...
 
+ns.DEFAULT_ICON_SIZE = 12
+ns.DEFAULT_FONT_SIZE = 12
+
+local INDICATOR_SIZE = 14
+ns.INDICATOR_SIZE = INDICATOR_SIZE
+
+local RESTING_SIZE = 20
+ns.RESTING_SIZE = RESTING_SIZE
+
+local RESTING_INSET = 2
+local OVERLAY_LEVEL = 5
+
+ns.DEFAULT_ANCHORS = {
+	castbarIcon = "LEFT",
+	name = "LEFT",
+	health = "RIGHT",
+	text1 = "CENTER",
+	text2 = "CENTER",
+	resting = "TOPLEFT",
+	leader = "TOPLEFT",
+	assistant = "TOPLEFT",
+	raidrole = "TOPLEFT",
+	raidtarget = "TOP",
+	combat = "TOPRIGHT",
+	phase = "TOPRIGHT",
+	grouprole = "LEFT",
+	quest = "RIGHT",
+	pvp = "BOTTOMLEFT",
+	pvpclass = "BOTTOMRIGHT",
+	readycheck = "CENTER",
+	resurrect = "CENTER",
+	summon = "CENTER",
+}
+
+ns.DEFAULT_OFFSETS = {
+	text1 = { 0, 12 },
+	text2 = { 0, -12 },
+	resting = { RESTING_INSET, -RESTING_INSET },
+	leader = { 22, 4 },
+	assistant = { 36, 4 },
+	raidrole = { 50, 4 },
+	raidtarget = { 0, 5 },
+	combat = { 0, 4 },
+	phase = { -16, 4 },
+	grouprole = { -6, 0 },
+	quest = { 6, 0 },
+	pvp = { 0, -4 },
+	pvpclass = { 0, -4 },
+	readycheck = { 0, 0 },
+	resurrect = { -18, 0 },
+	summon = { 18, 0 },
+}
+
+ns.DEFAULT_ELEMENT_SIZES = {
+	resting = { default = RESTING_SIZE },
+	threat = { default = 3 },
+	raidtarget = { default = 20 },
+	readycheck = { default = 32, targettarget = 18 },
+	leader = { default = INDICATOR_SIZE },
+	assistant = { default = INDICATOR_SIZE },
+	raidrole = { default = INDICATOR_SIZE },
+	combat = { default = INDICATOR_SIZE },
+	phase = { default = INDICATOR_SIZE },
+	grouprole = { default = INDICATOR_SIZE },
+	quest = { default = INDICATOR_SIZE },
+	pvp = { default = INDICATOR_SIZE },
+	pvpclass = { default = INDICATOR_SIZE },
+	resurrect = { default = INDICATOR_SIZE },
+	summon = { default = INDICATOR_SIZE },
+}
+
+ns.DEFAULT_LEVELS = {
+	resting = OVERLAY_LEVEL,
+	threat = 0,
+	leader = OVERLAY_LEVEL,
+	assistant = OVERLAY_LEVEL,
+	raidrole = OVERLAY_LEVEL,
+	raidtarget = OVERLAY_LEVEL,
+	combat = OVERLAY_LEVEL,
+	phase = OVERLAY_LEVEL,
+	grouprole = OVERLAY_LEVEL,
+	quest = OVERLAY_LEVEL,
+	pvp = OVERLAY_LEVEL,
+	pvpclass = OVERLAY_LEVEL,
+	readycheck = OVERLAY_LEVEL,
+	resurrect = OVERLAY_LEVEL,
+	summon = OVERLAY_LEVEL,
+}
+
+ns.DEFAULT_TAGS = {
+	name = "[difficulty][smartlevel] [name]",
+	health = "[maniauf:curhp]",
+	text1 = "[maniauf:leader][maniauf:assistant][maniauf:role][maniauf:raidtarget]",
+	text2 = "[maniauf:combat][maniauf:resting][maniauf:pvp][maniauf:phase]",
+}
+
+ns.HIDDEN_BY_DEFAULT = {
+	text1 = true,
+	text2 = true,
+}
+
+ns.UNIT_TAGS = {}
+
+ns.ELEMENT_UNITS = {
+	castbar = { player = true, target = true, focus = true, boss = true },
+	resting = { player = true },
+	readycheck = { player = true, target = true, targettarget = true, focus = true, party = true },
+	leader = { player = true, target = true, targettarget = true, focus = true, party = true },
+	assistant = { player = true, target = true, targettarget = true, focus = true, party = true },
+	raidrole = { player = true, target = true, targettarget = true, focus = true, party = true },
+	summon = { player = true, target = true, targettarget = true, focus = true, party = true },
+	quest = { target = true, targettarget = true, focus = true, boss = true },
+}
+
+ns.PREVIEWABLE = {
+	threat = true,
+	resting = true,
+	castbar = true,
+	leader = true,
+	assistant = true,
+	raidrole = true,
+	raidtarget = true,
+	combat = true,
+	phase = true,
+	grouprole = true,
+	quest = true,
+	pvp = true,
+	pvpclass = true,
+	readycheck = true,
+	resurrect = true,
+	summon = true,
+}
+
 local SIZE_ORDER = { "targettarget", "player", "target", "focus", "pet", "party", "boss" }
 
 ns.UNIT_KEYS = { "player", "target", "targettarget", "focus", "pet", "party", "boss" }

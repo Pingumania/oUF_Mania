@@ -114,7 +114,6 @@ end
 
 oUF.Tags.Events["maniauf:maxpp"] = "UNIT_MAXPOWER"
 
-local DEFAULT_ICON_SIZE = 12
 local ROLE_ATLASES = {
 	TANK = "UI-LFG-RoleIcon-Tank-Micro-Raid",
 	HEALER = "UI-LFG-RoleIcon-Healer-Micro-Raid",
@@ -131,7 +130,7 @@ local RAID_MARKER_COLUMNS = 4
 local RESTING_SHEET = [[Interface\CharacterFrame\UI-StateIcon]]
 
 function ns:GetIconTagSize()
-	return ManiaUFDB.iconSize or DEFAULT_ICON_SIZE
+	return ManiaUFDB.iconSize or ns.DEFAULT_ICON_SIZE
 end
 
 function ns:SetIconTagSize(size)
