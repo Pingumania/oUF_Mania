@@ -43,7 +43,7 @@ ns.DEFAULT_OFFSETS = {
 	raidtarget = { 0, 5 },
 	combat = { 0, 4 },
 	phase = { -16, 4 },
-	grouprole = { -6, 0 },
+	grouprole = { -3, 0 },
 	quest = { 6, 0 },
 	pvp = { 0, -4 },
 	pvpclass = { 0, -4 },
@@ -108,6 +108,7 @@ ns.ELEMENT_UNITS = {
 	leader = { player = true, target = true, targettarget = true, focus = true, party = true },
 	assistant = { player = true, target = true, targettarget = true, focus = true, party = true },
 	raidrole = { player = true, target = true, targettarget = true, focus = true, party = true },
+	grouprole = { player = true, target = true, targettarget = true, focus = true, party = true },
 	summon = { player = true, target = true, targettarget = true, focus = true, party = true },
 	quest = { target = true, targettarget = true, focus = true, boss = true },
 }
