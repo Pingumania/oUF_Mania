@@ -33,6 +33,7 @@ local DROPDOWN_OFFSET = 32
 
 local LAUNCH_WIDTH = 200
 local BUTTON_HEIGHT = 22
+local TAG_BUTTON_WIDTH = 60
 local SLIDER_STEP = 1
 
 local OFFSET_MIN, OFFSET_MAX = -200, 200
@@ -42,6 +43,11 @@ local TEXT_WIDTH_MIN, TEXT_WIDTH_MAX = 0, 300
 
 local SCROLL_BAR_INSET = 22
 local SCROLL_BAR_GAP = 8
+
+-- Aligns the button's right edge with header.DefaultsButton's (Huddle: TOPRIGHT -36) - this row's
+-- own right edge sits SCROLL_BAR_INSET further right than the header's, since the header spans the
+-- full content width while rows sit inside the inset scroll area.
+local TAG_BUTTON_RIGHT = -36 + SCROLL_BAR_INSET
 
 local PREVIEW_SHOW = "Preview"
 local PREVIEW_ALL = "Preview all"
@@ -61,7 +67,6 @@ local FRAME_FIELDS = {
 
 local ALL_KEY = ns.ALL_KEY
 local GENERAL_LABEL = "General"
-local TAGS_LABEL = "Icon tags"
 local LINKED_MARKER = " *"
 
 local UNIT_LABELS = {
@@ -131,20 +136,6 @@ local GROWTH_OPTIONS = {
 
 local SPACING_MIN, SPACING_MAX = 0, 60
 local ICON_SIZE_MIN, ICON_SIZE_MAX = 8, 32
-
-local ICON_TAGS = {
-	{ tag = "[maniauf:leader]", text = "Group leader crown" },
-	{ tag = "[maniauf:assistant]", text = "Raid assistant" },
-	{ tag = "[maniauf:role]", text = "Assigned role" },
-	{ tag = "[maniauf:raidtarget]", text = "Raid target marker" },
-	{ tag = "[maniauf:combat]", text = "In combat" },
-	{ tag = "[maniauf:resting]", text = "Resting (player only)" },
-	{ tag = "[maniauf:pvp]", text = "PvP flagged" },
-	{ tag = "[maniauf:quest]", text = "Quest objective" },
-	{ tag = "[maniauf:phase]", text = "Phased" },
-	{ tag = "[maniauf:resurrect]", text = "Incoming resurrect" },
-	{ tag = "[maniauf:summon]", text = "Incoming summon" },
-}
 
 local SIZE_ROWS = {
 	{ label = "Frame width", field = "width", min = 40, max = 400 },
@@ -298,17 +289,6 @@ local function CreateRow(body, previous, label, height)
 	return row
 end
 
-local function AddTextRow(body, previous, label, text)
-	local row = CreateRow(body, previous, label)
-
-	row.Value = row:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-	row.Value:SetPoint("LEFT", row, "LEFT", CONTROL_COLUMN, 0)
-	row.Value:SetJustifyH("LEFT")
-	row.Value:SetText(text)
-
-	return row
-end
-
 local function AddControlRow(body, previous, label, offset, CreateControl, Refresh)
 	local row = CreateRow(body, previous, label)
 	local control = CreateControl(row)
@@ -350,8 +330,14 @@ local function AddDropdownRow(body, previous, label, options, getValue, setValue
 	end)
 end
 
-local function AddEditBoxRow(body, previous, label, getValue, setValue)
+local function AddTagEditRow(body, previous, label, title, getValue, setValue)
 	return AddControlRow(body, previous, label, 0, function(row)
+		local button = ns:CreateButton(row, "Edit", function()
+			ns:OpenTagEditor(title, getValue, setValue)
+		end)
+		button:SetSize(TAG_BUTTON_WIDTH, BUTTON_HEIGHT)
+		button:SetPoint("RIGHT", row, "RIGHT", TAG_BUTTON_RIGHT, 0)
+
 		return ns:CreateEditBox(row, getValue, setValue)
 	end, function(editBox)
 		editBox:Refresh()
@@ -410,14 +396,6 @@ local function BuildGeneralPage(body)
 			ns:SetSyncEnabled(sync.key, value)
 			RefreshAll()
 		end)
-	end
-end
-
-local function BuildTagsPage(body)
-	local row
-
-	for _, info in ipairs(ICON_TAGS) do
-		row = AddTextRow(body, row, info.tag, info.text)
 	end
 end
 
@@ -608,7 +586,7 @@ local function BuildElementPage(body, unit, info)
 	end)
 
 	if info.tag then
-		row = AddEditBoxRow(body, row, "Tag", function()
+		row = AddTagEditRow(body, row, "Tag", info.label, function()
 			return ns:GetElementTag(storageUnit, info.key)
 		end, function(text)
 			ns:SetElementTag(storageUnit, info.key, text)
@@ -775,11 +753,7 @@ local function SelectSection(index)
 	header.Title:SetText(buttons[index].Label:GetText())
 
 	if unit.key == ALL_KEY and not element then
-		if buttons[index].entry.label == TAGS_LABEL then
-			ShowPage(unit.key, "tags", BuildTagsPage)
-		else
-			ShowPage(unit.key, FRAME_SECTION, BuildGeneralPage)
-		end
+		ShowPage(unit.key, FRAME_SECTION, BuildGeneralPage)
 	elseif not element then
 		ShowPage(unit.key, FRAME_SECTION, function(body)
 			BuildFramePage(body, unit.key)
@@ -828,7 +802,6 @@ local function BuildList()
 
 	if unit.key == ALL_KEY then
 		entries[1] = { label = GENERAL_LABEL }
-		entries[2] = { label = TAGS_LABEL }
 
 		for _, info in ipairs(ELEMENTS) do
 			entries[#entries + 1] = { label = info.label, element = info }
