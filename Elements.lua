@@ -116,29 +116,15 @@ function ns:HasPreviewArt(element)
 	return not not PREVIEWABLE[element]
 end
 
-local READYCHECK_KEYS = {
-	player = true,
-	target = true,
-	targettarget = true,
-	focus = true,
-	party = true,
-}
-
-local LEADERSHIP_KEYS = {
-	leader = true,
-	assistant = true,
-	raidrole = true,
-}
-
-local BOSS_PET_UNITS = {
-	boss = true,
-	pet = true,
-}
-
-local QUEST_EXCLUDED_UNITS = {
-	player = true,
-	pet = true,
-	party = true,
+local ELEMENT_UNITS = {
+	castbar = { player = true, target = true, focus = true, boss = true },
+	resting = { player = true },
+	readycheck = { player = true, target = true, targettarget = true, focus = true, party = true },
+	leader = { player = true, target = true, targettarget = true, focus = true, party = true },
+	assistant = { player = true, target = true, targettarget = true, focus = true, party = true },
+	raidrole = { player = true, target = true, targettarget = true, focus = true, party = true },
+	summon = { player = true, target = true, targettarget = true, focus = true, party = true },
+	quest = { target = true, targettarget = true, focus = true, boss = true },
 }
 
 local RESTING_SIZE = 20
@@ -189,13 +175,6 @@ local HIDDEN_BY_DEFAULT = {
 }
 
 local UNIT_TAGS = {}
-
-local CASTBAR_KEYS = {
-	player = true,
-	target = true,
-	focus = true,
-	boss = true,
-}
 
 local threatAtlasExists
 
@@ -299,21 +278,13 @@ local function ReadElement(unit, group, element)
 end
 
 function ns:HasElement(unit, element)
-	if element == "castbar" then
-		return not not CASTBAR_KEYS[unit]
-	elseif element == "resting" then
-		return unit == "player"
-	elseif element == "readycheck" then
-		return not not READYCHECK_KEYS[unit]
-	elseif LEADERSHIP_KEYS[element] then
-		return not BOSS_PET_UNITS[unit]
-	elseif element == "summon" then
-		return not BOSS_PET_UNITS[unit]
-	elseif element == "quest" then
-		return not QUEST_EXCLUDED_UNITS[unit]
+	local units = ELEMENT_UNITS[element]
+
+	if not units then
+		return true
 	end
 
-	return true
+	return not not units[unit]
 end
 
 function ns:IsElementShown(unit, element)
