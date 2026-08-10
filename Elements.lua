@@ -322,7 +322,19 @@ function ns:IsElementShown(unit, element)
 	local shown = ReadElement(unit, "elements", element)
 
 	if shown == nil then
-		return not ns.HIDDEN_BY_DEFAULT[element]
+		local hidden = ns.HIDDEN_BY_DEFAULT[element]
+
+		if not hidden then
+			return true
+		end
+
+		local value = hidden[unit]
+
+		if value == nil then
+			value = hidden.default
+		end
+
+		return not value
 	end
 
 	return shown

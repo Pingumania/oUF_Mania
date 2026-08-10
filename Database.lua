@@ -22,7 +22,7 @@ ns.DEFAULT_ANCHORS = {
 	assistant = { default = "TOPLEFT" },
 	raidrole = { default = "TOPLEFT" },
 	raidtarget = { default = "TOP" },
-	combat = { default = "TOPRIGHT" },
+	combat = { default = "BOTTOM" },
 	phase = { default = "CENTER" },
 	grouprole = { default = "LEFT" },
 	quest = { default = "RIGHT" },
@@ -41,7 +41,7 @@ ns.DEFAULT_OFFSETS = {
 	assistant = { 36, 4 },
 	raidrole = { 50, 4 },
 	raidtarget = { 0, 5 },
-	combat = { 0, 4 },
+	combat = { 0, -5 },
 	phase = { 0, 16 },
 	grouprole = { -3, 0 },
 	quest = { 6, 0 },
@@ -62,7 +62,7 @@ ns.DEFAULT_ELEMENT_SIZES = {
 	leader = { default = INDICATOR_SIZE },
 	assistant = { default = INDICATOR_SIZE },
 	raidrole = { default = INDICATOR_SIZE },
-	combat = { default = INDICATOR_SIZE },
+	combat = { default = 16, pet = 14, targettarget = 14 },
 	phase = { default = 32, pet = 22, targettarget = 22 },
 	grouprole = { default = INDICATOR_SIZE },
 	quest = { default = INDICATOR_SIZE },
@@ -99,8 +99,9 @@ ns.DEFAULT_TAGS = {
 }
 
 ns.HIDDEN_BY_DEFAULT = {
-	text1 = true,
-	text2 = true,
+	text1 = { default = true },
+	text2 = { default = true },
+	combat = { default = false, party = true, boss = true },
 }
 
 ns.ELEMENT_UNITS = {
