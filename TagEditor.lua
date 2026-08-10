@@ -266,6 +266,8 @@ local function BuildWindow()
 	frame:SetFrameStrata("DIALOG")
 	frame:SetToplevel(true)
 	frame:EnableMouse(true)
+	frame:EnableMouseWheel(true)
+	frame:SetScript("OnMouseWheel", function() end)
 	frame:Hide()
 
 	window = frame
