@@ -135,6 +135,12 @@ local BOSS_PET_UNITS = {
 	pet = true,
 }
 
+local QUEST_EXCLUDED_UNITS = {
+	player = true,
+	pet = true,
+	party = true,
+}
+
 local RESTING_SIZE = 20
 local RESTING_INSET = 2
 local RESTING_TEXTURE_RATIO = 1.5
@@ -303,6 +309,8 @@ function ns:HasElement(unit, element)
 		return not BOSS_PET_UNITS[unit]
 	elseif element == "summon" then
 		return not BOSS_PET_UNITS[unit]
+	elseif element == "quest" then
+		return not QUEST_EXCLUDED_UNITS[unit]
 	end
 
 	return true
