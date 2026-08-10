@@ -40,6 +40,7 @@ local OFFSET_MIN, OFFSET_MAX = -200, 200
 local POSITION_MIN, POSITION_MAX = -1000, 1000
 local SIZE_MIN, SIZE_MAX = 0, 64
 local TEXT_WIDTH_MIN, TEXT_WIDTH_MAX = 0, 300
+local CASTBAR_WIDTH_MIN, CASTBAR_WIDTH_MAX = 0, 400
 
 local SCROLL_BAR_INSET = 22
 local SCROLL_BAR_GAP = 8
@@ -91,7 +92,7 @@ local ELEMENTS = {
 	{ key = "health", label = "Health text", tag = true },
 	{ key = "text1", label = "Custom text 1", tag = true },
 	{ key = "text2", label = "Custom text 2", tag = true },
-	{ key = "castbar", label = "Cast bar", extra = { "castbarIcon", "castbarLatency" } },
+	{ key = "castbar", label = "Cast bar", extra = { "castbarIcon", "castbarLatency", "castbarWidth" } },
 	{ key = "resting", label = "Resting icon" },
 	{ key = "combat", label = "Combat icon" },
 	{ key = "leader", label = "Leader icon" },
@@ -641,6 +642,19 @@ local function BuildElementPage(body, unit, info)
 			ns:SetElementOffset(storageUnit, "castbarIcon", axis, value)
 		end)
 
+		row = AddSliderRow(body, row, "Height", SIZE_MIN, SIZE_MAX, function()
+			return ns:GetElementSize(storageUnit, "castbar")
+		end, function(value)
+			ns:SetElementSize(storageUnit, "castbar", value)
+		end)
+
+		row = AddSliderRow(body, row, "Width (0 = match frame)", CASTBAR_WIDTH_MIN,
+			CASTBAR_WIDTH_MAX, function()
+				return ns:GetElementSize(storageUnit, "castbarWidth")
+			end, function(value)
+				ns:SetElementSize(storageUnit, "castbarWidth", value)
+			end)
+
 		if storageUnit == "player" or storageUnit == ALL_KEY then
 			row = AddToggleRow(body, row, "Show latency", function()
 				return ns:IsElementShown(storageUnit, "castbarLatency")
@@ -666,7 +680,7 @@ local function BuildElementPage(body, unit, info)
 		end)
 	end
 
-	if ns:HasElementSize(info.key) then
+	if info.key ~= "castbar" and ns:HasElementSize(info.key) then
 		row = AddSliderRow(body, row, "Size", SIZE_MIN, SIZE_MAX, function()
 			return ns:GetElementSize(storageUnit, info.key)
 		end, function(value)

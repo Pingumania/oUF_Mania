@@ -53,6 +53,8 @@ ns.DEFAULT_OFFSETS = {
 }
 
 ns.DEFAULT_ELEMENT_SIZES = {
+	castbar = { default = 16 },
+	castbarWidth = { default = 0 },
 	resting = { default = RESTING_SIZE },
 	threat = { default = 3 },
 	raidtarget = { default = 20 },

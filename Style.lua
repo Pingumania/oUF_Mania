@@ -7,7 +7,6 @@ local issecretvalue = issecretvalue
 local FONT_SIZE_MIN = 8
 local FONT_SIZE_MAX = 20
 
-local CASTBAR_HEIGHT = 16
 local PREVIEW_UNIT = "player"
 local SPARK_ATLAS = "ui-castingbar-pip"
 local SPARK_OVERHANG = 4
@@ -138,17 +137,26 @@ local function LayoutFrame(frame)
 	ns:ApplyPowerShown(frame)
 
 	if frame.Castbar then
+		local castbarHeight = ns:GetElementSize(frame.unitKey, "castbar")
+		local castbarWidth = ns:GetElementSize(frame.unitKey, "castbarWidth")
 		local x, y = ns:GetElementOffset(frame.unitKey, "castbar")
 		local border = frame.castbarBorder
 
+		border:ClearAllPoints()
 		ns:SetPoint(border, "TOPLEFT", frame, "BOTTOMLEFT", x, -ns.BORDER_GAP + y)
-		ns:SetPoint(border, "TOPRIGHT", frame, "BOTTOMRIGHT", x, -ns.BORDER_GAP + y)
-		ns:SetHeight(border, CASTBAR_HEIGHT + 2 * ns.BAR_INSET)
+
+		if castbarWidth > 0 then
+			ns:SetWidth(border, castbarWidth)
+		else
+			ns:SetPoint(border, "TOPRIGHT", frame, "BOTTOMRIGHT", x, -ns.BORDER_GAP + y)
+		end
+
+		ns:SetHeight(border, castbarHeight + 2 * ns.BAR_INSET)
 
 		ns:SetPoint(frame.Castbar, "TOPLEFT", border, "TOPLEFT", ns.BAR_INSET, -ns.BAR_INSET)
 		ns:SetPoint(frame.Castbar, "BOTTOMRIGHT", border, "BOTTOMRIGHT", -ns.BAR_INSET, ns.BAR_INSET)
 
-		local boxHeight = CASTBAR_HEIGHT + 2 * ns.BAR_INSET
+		local boxHeight = castbarHeight + 2 * ns.BAR_INSET
 		local icon = frame.Castbar.Icon
 		local iconX, iconY = ns:GetElementOffset(frame.unitKey, "castbarIcon")
 
@@ -161,7 +169,7 @@ local function LayoutFrame(frame)
 		end
 
 		ns:SetSize(icon, boxHeight, boxHeight)
-		local sparkHeight = CASTBAR_HEIGHT + SPARK_OVERHANG
+		local sparkHeight = castbarHeight + SPARK_OVERHANG
 		ns:SetSize(frame.Castbar.Spark, sparkHeight * SPARK_RATIO, sparkHeight)
 	end
 
