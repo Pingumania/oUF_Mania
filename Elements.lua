@@ -25,6 +25,77 @@ local function PvPPostUpdate(element, unit, status)
 	end
 end
 
+local LFG_ROLE_STRINGS = {
+	[Enum.LFGRole.Tank] = "TANK",
+	[Enum.LFGRole.Healer] = "HEALER",
+	[Enum.LFGRole.Damage] = "DAMAGER",
+}
+
+local ROLE_ICON_STYLES = {
+	{ value = "raid", label = "Raid frame",
+		TANK = "UI-LFG-RoleIcon-Tank-Micro-Raid", HEALER = "UI-LFG-RoleIcon-Healer-Micro-Raid",
+		DAMAGER = "UI-LFG-RoleIcon-DPS-Micro-Raid" },
+	{ value = "group", label = "Group finder",
+		TANK = "UI-LFG-RoleIcon-Tank-Micro", HEALER = "UI-LFG-RoleIcon-Healer-Micro",
+		DAMAGER = "UI-LFG-RoleIcon-DPS-Micro" },
+	{ value = "compact", label = "Compact raid frame",
+		TANK = "GM-icon-role-tank", HEALER = "GM-icon-role-healer", DAMAGER = "GM-icon-role-dps" },
+	{ value = "journal", label = "Encounter journal",
+		TANK = "icons_16x16_tank", HEALER = "icons_16x16_healer", DAMAGER = "icons_16x16_damage" }
+}
+
+local ROLE_STYLE_DEFAULT = ROLE_ICON_STYLES[1].value
+
+function ns:GetRoleIconStyles()
+	return ROLE_ICON_STYLES
+end
+
+function ns:GetRoleIconStyle()
+	return ManiaUFDB.roleIcon or ROLE_STYLE_DEFAULT
+end
+
+function ns:SetRoleIconStyle(value)
+	ManiaUFDB.roleIcon = value
+	ns:UpdateElements()
+	ns:UpdateTags()
+end
+
+local roleAtlasExists = {}
+
+function ns:GetRoleIcon(roleString)
+	if not roleString then
+		return nil
+	end
+
+	local value = ns:GetRoleIconStyle()
+	local atlas
+
+	for _, style in ipairs(ROLE_ICON_STYLES) do
+		if style.value == value then
+			atlas = style[roleString]
+			break
+		end
+	end
+
+	if not atlas then
+		return nil
+	end
+
+	if roleAtlasExists[atlas] == nil then
+		roleAtlasExists[atlas] = C_Texture.GetAtlasInfo(atlas) ~= nil
+	end
+
+	return roleAtlasExists[atlas] and atlas or nil
+end
+
+local function RoleIndicatorPostUpdate(element, role)
+	local atlas = ns:GetRoleIcon(LFG_ROLE_STRINGS[role])
+
+	if atlas then
+		element:SetAtlas(atlas, false, nil, true)
+	end
+end
+
 local QUEST_ICON_STYLES = {
 	{ value = "AutoQuest-Badge-Campaign", label = "Campaign badge" },
 	{ value = "UI-HUD-UnitFrame-Target-PortraitOn-Boss-Quest", label = "Unit frame quest icon" },
@@ -68,7 +139,7 @@ local INDICATORS = {
 	{ key = "phase", element = "PhaseIndicator",
 		atlas = "RaidFrame-Icon-Phasing" },
 	{ key = "grouprole", element = "GroupRoleIndicator",
-		atlas = "UI-LFG-RoleIcon-Tank-Micro-Raid" },
+		postUpdate = RoleIndicatorPostUpdate },
 	{ key = "quest", element = "QuestIndicator",
 		postUpdate = QuestPostUpdate },
 	{ key = "pvp", element = "PvPIndicator",

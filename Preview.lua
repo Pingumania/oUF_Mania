@@ -83,6 +83,8 @@ function ns:ShowIndicatorPreview(frame, info)
 		SetRaidTargetIconTexture(indicator, info.marker)
 	elseif info.key == "quest" then
 		ns:ApplyQuestIcon(indicator)
+	elseif info.key == "grouprole" then
+		indicator:SetAtlas(ns:GetRoleIcon("TANK"), false, nil, true)
 	elseif info.atlas then
 		indicator:SetAtlas(info.atlas, false, nil, true)
 	elseif info.texture then

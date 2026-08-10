@@ -658,6 +658,14 @@ local function BuildElementPage(body, unit, info)
 		end)
 	end
 
+	if info.key == "grouprole" then
+		row = AddDropdownRow(body, row, "Icon style", ns:GetRoleIconStyles(), function()
+			return ns:GetRoleIconStyle()
+		end, function(value)
+			ns:SetRoleIconStyle(value)
+		end)
+	end
+
 	if ns:HasElementSize(info.key) then
 		row = AddSliderRow(body, row, "Size", SIZE_MIN, SIZE_MAX, function()
 			return ns:GetElementSize(storageUnit, info.key)
@@ -879,6 +887,7 @@ local function ResetGeneral()
 	ManiaUFDB.iconSize = nil
 	ManiaUFDB.sync = nil
 	ManiaUFDB.questIcon = nil
+	ManiaUFDB.roleIcon = nil
 end
 
 local function ResetAll()
@@ -924,6 +933,8 @@ local function ResetPage()
 
 		if selectedElement.key == "quest" then
 			ManiaUFDB.questIcon = nil
+		elseif selectedElement.key == "grouprole" then
+			ManiaUFDB.roleIcon = nil
 		end
 	elseif unit.key == ALL_KEY then
 		ResetGeneral()

@@ -114,12 +114,6 @@ end
 
 oUF.Tags.Events["maniauf:maxpp"] = "UNIT_MAXPOWER"
 
-local ROLE_ATLASES = {
-	TANK = "UI-LFG-RoleIcon-Tank-Micro-Raid",
-	HEALER = "UI-LFG-RoleIcon-Healer-Micro-Raid",
-	DAMAGER = "UI-LFG-RoleIcon-DPS-Micro-Raid",
-}
-
 local FACTION_ATLASES = {
 	Alliance = "questlog-questtypeicon-alliance",
 	Horde = "questlog-questtypeicon-horde",
@@ -181,7 +175,7 @@ IconTag("assistant", "GROUP_ROSTER_UPDATE", function(unit)
 end)
 
 IconTag("role", "PLAYER_ROLES_ASSIGNED GROUP_ROSTER_UPDATE", function(unit)
-	local atlas = ROLE_ATLASES[UnitGroupRolesAssigned(unit)]
+	local atlas = ns:GetRoleIcon(UnitGroupRolesAssigned(unit))
 
 	if atlas then
 		return Icon(atlas)
