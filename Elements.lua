@@ -6,6 +6,7 @@ ns.ELEMENT_GROUPS = {
 }
 
 local INDICATOR_SIZE = 14
+local RAID_MARKER_SIZE = 20
 local INDICATOR_SUBLEVEL = 2
 local THREAT_PADDING = 3
 local THREAT_FADE = 0.25
@@ -62,7 +63,7 @@ local INDICATORS = {
 		texture = [[Interface\GroupFrame\UI-Group-AssistantIcon]] },
 	{ key = "raidrole", element = "RaidRoleIndicator", point = "TOPLEFT", x = 50, y = 4,
 		atlas = "RaidFrame-Icon-MainTank" },
-	{ key = "raidtarget", element = "RaidTargetIndicator", point = "TOP", x = 0, y = 6,
+	{ key = "raidtarget", element = "RaidTargetIndicator", point = "TOP", x = 0, y = 5,
 		marker = 1 },
 	{ key = "combat", element = "CombatIndicator", point = "TOPRIGHT", x = 0, y = 4,
 		atlas = "UI-HUD-UnitFrame-Player-CombatIcon" },
@@ -159,6 +160,7 @@ DEFAULT_ANCHORS.resting = "TOPLEFT"
 DEFAULT_OFFSETS.resting = { RESTING_INSET, -RESTING_INSET }
 DEFAULT_ELEMENT_SIZES.resting = RESTING_SIZE
 DEFAULT_ELEMENT_SIZES.threat = THREAT_PADDING
+DEFAULT_ELEMENT_SIZES.raidtarget = RAID_MARKER_SIZE
 
 local DEFAULT_TAGS = {
 	name = "[difficulty][smartlevel] [name]",
