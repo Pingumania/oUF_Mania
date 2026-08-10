@@ -90,18 +90,17 @@ ns.DEFAULT_LEVELS = {
 }
 
 ns.DEFAULT_TAGS = {
-	name = "[difficulty][smartlevel] [name]",
-	health = "[maniauf:curhp]",
-	text1 = "[maniauf:leader][maniauf:assistant][maniauf:role][maniauf:raidtarget]",
-	text2 = "[maniauf:combat][maniauf:resting][maniauf:pvp][maniauf:phase]",
+	name = { default = "[difficulty][smartlevel] [name]", pet = "[name]", focus = "[name]",
+		boss = "[name]", targettarget = "[name]" },
+	health = { default = "[maniauf:curhp]" },
+	text1 = { default = "[maniauf:leader][maniauf:assistant][maniauf:role][maniauf:raidtarget]" },
+	text2 = { default = "[maniauf:combat][maniauf:resting][maniauf:pvp][maniauf:phase]" },
 }
 
 ns.HIDDEN_BY_DEFAULT = {
 	text1 = true,
 	text2 = true,
 }
-
-ns.UNIT_TAGS = {}
 
 ns.ELEMENT_UNITS = {
 	castbar = { player = true, target = true, focus = true, boss = true },

@@ -334,9 +334,9 @@ function ns:GetElementTag(unit, element)
 		return stored
 	end
 
-	local defaults = ns.UNIT_TAGS[unit]
+	local tags = ns.DEFAULT_TAGS[element]
 
-	return defaults and defaults[element] or ns.DEFAULT_TAGS[element]
+	return tags and (tags[unit] or tags.default)
 end
 
 function ns:SetElementTag(unit, element, tagString)
