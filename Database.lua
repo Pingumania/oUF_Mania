@@ -9,7 +9,6 @@ ns.INDICATOR_SIZE = INDICATOR_SIZE
 local RESTING_SIZE = 20
 ns.RESTING_SIZE = RESTING_SIZE
 
-local RESTING_INSET = 2
 local OVERLAY_LEVEL = 5
 
 ns.DEFAULT_ANCHORS = {
@@ -37,7 +36,7 @@ ns.DEFAULT_ANCHORS = {
 ns.DEFAULT_OFFSETS = {
 	text1 = { 0, 12 },
 	text2 = { 0, -12 },
-	resting = { RESTING_INSET, -RESTING_INSET },
+	resting = { 3, 8 },
 	leader = { 22, 4 },
 	assistant = { 36, 4 },
 	raidrole = { 50, 4 },
