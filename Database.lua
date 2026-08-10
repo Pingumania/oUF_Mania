@@ -89,7 +89,7 @@ ns.DEFAULT_LEVELS = {
 }
 
 ns.DEFAULT_TAGS = {
-	name = { default = "[difficulty][smartlevel] [name]", pet = "[name]", focus = "[name]",
+	name = { default = "[difficulty][maniauf:smartlevel] [name]", pet = "[name]", focus = "[name]",
 		boss = "[name]", targettarget = "[name]" },
 	health = { default = "[maniauf:curhp]" },
 	text1 = { default = "[maniauf:leader][maniauf:assistant][maniauf:role][maniauf:raidtarget]" },
