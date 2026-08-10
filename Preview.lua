@@ -6,6 +6,13 @@ local CASTBAR_PREVIEW_DURATION = 3
 
 local wholeUnitPreviews = {}
 local elementPreviews = {}
+local previewRotation = {}
+
+function ns:ClearIndicatorPreview(region)
+	if region then
+		region.previewSlot = nil
+	end
+end
 
 function ns:ShouldPreview(unit, element)
 	local own = elementPreviews[unit]
@@ -79,12 +86,21 @@ function ns:ShowIndicatorPreview(frame, info)
 
 	ns:SetOUFElement(frame, info.element, false)
 
-	if info.marker then
+	local variants = info.previewVariants and info.previewVariants()
+
+	if variants and variants[1] then
+		if not indicator.previewSlot then
+			local rotation = previewRotation[info.key] or 0
+
+			indicator.previewSlot = rotation % #variants + 1
+			previewRotation[info.key] = rotation + 1
+		end
+
+		indicator:SetAtlas(variants[(indicator.previewSlot - 1) % #variants + 1], false, nil, true)
+	elseif info.marker then
 		SetRaidTargetIconTexture(indicator, info.marker)
 	elseif info.key == "quest" then
 		ns:ApplyQuestIcon(indicator)
-	elseif info.key == "grouprole" then
-		indicator:SetAtlas(ns:GetRoleIcon("TANK"), false, nil, true)
 	elseif info.atlas then
 		indicator:SetAtlas(info.atlas, false, nil, true)
 	elseif info.texture then

@@ -25,6 +25,16 @@ local function PvPPostUpdate(element, unit, status)
 	end
 end
 
+local function GetPvPPreviewVariants()
+	return { PVP_ATLASES.Alliance, PVP_ATLASES.Horde, PVP_ATLASES.FFA }
+end
+
+local RAIDROLE_ATLASES = { "RaidFrame-Icon-MainTank", "RaidFrame-Icon-MainAssist" }
+
+local function GetRaidRolePreviewVariants()
+	return RAIDROLE_ATLASES
+end
+
 local LFG_ROLE_STRINGS = {
 	[Enum.LFGRole.Tank] = "TANK",
 	[Enum.LFGRole.Healer] = "HEALER",
@@ -99,6 +109,22 @@ local function RoleIndicatorPostUpdate(element, role)
 	end
 end
 
+local ROLE_PREVIEW_ORDER = { "TANK", "HEALER", "DAMAGER" }
+
+local function GetRolePreviewVariants()
+	local variants = {}
+
+	for _, role in ipairs(ROLE_PREVIEW_ORDER) do
+		local atlas = ns:GetRoleIcon(role)
+
+		if atlas then
+			variants[#variants + 1] = atlas
+		end
+	end
+
+	return variants
+end
+
 local QUEST_ICON_STYLES = {
 	{ value = "AutoQuest-Badge-Campaign", label = "Campaign badge" },
 	{ value = "UI-HUD-UnitFrame-Target-PortraitOn-Boss-Quest", label = "Unit frame quest icon" },
@@ -134,7 +160,7 @@ local INDICATORS = {
 	{ key = "assistant", element = "AssistantIndicator",
 		texture = [[Interface\GroupFrame\UI-Group-AssistantIcon]] },
 	{ key = "raidrole", element = "RaidRoleIndicator",
-		atlas = "RaidFrame-Icon-MainTank" },
+		previewVariants = GetRaidRolePreviewVariants },
 	{ key = "raidtarget", element = "RaidTargetIndicator",
 		marker = 1 },
 	{ key = "combat", element = "CombatIndicator",
@@ -142,11 +168,11 @@ local INDICATORS = {
 	{ key = "phase", element = "PhaseIndicator",
 		atlas = "RaidFrame-Icon-Phasing" },
 	{ key = "grouprole", element = "GroupRoleIndicator",
-		postUpdate = RoleIndicatorPostUpdate },
+		postUpdate = RoleIndicatorPostUpdate, previewVariants = GetRolePreviewVariants },
 	{ key = "quest", element = "QuestIndicator",
 		postUpdate = QuestPostUpdate },
 	{ key = "pvp", element = "PvPIndicator",
-		postUpdate = PvPPostUpdate, atlas = PVP_ATLASES.Alliance },
+		postUpdate = PvPPostUpdate, previewVariants = GetPvPPreviewVariants },
 	{ key = "pvpclass", element = "PvPClassificationIndicator",
 		atlas = "nameplates-icon-flag-alliance" },
 	{ key = "readycheck", element = "ReadyCheckIndicator",
@@ -543,6 +569,7 @@ function ns:ApplyElements(frame)
 		if ns:ShouldPreview(unit, info.key) and ns:HasElement(unit, info.key) then
 			ns:ShowIndicatorPreview(frame, info)
 		else
+			ns:ClearIndicatorPreview(elements[info.key])
 			ns:SetOUFElement(frame, info.element,
 				ns:HasElement(unit, info.key) and ns:IsElementShown(unit, info.key), info.gateUnit)
 		end
