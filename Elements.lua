@@ -124,6 +124,17 @@ local READYCHECK_KEYS = {
 	party = true,
 }
 
+local LEADERSHIP_KEYS = {
+	leader = true,
+	assistant = true,
+	raidrole = true,
+}
+
+local LEADERSHIP_EXCLUDED_UNITS = {
+	boss = true,
+	pet = true,
+}
+
 local RESTING_SIZE = 20
 local RESTING_INSET = 2
 local RESTING_TEXTURE_RATIO = 1.5
@@ -288,6 +299,8 @@ function ns:HasElement(unit, element)
 		return unit == "player"
 	elseif element == "readycheck" then
 		return not not READYCHECK_KEYS[unit]
+	elseif LEADERSHIP_KEYS[element] then
+		return not LEADERSHIP_EXCLUDED_UNITS[unit]
 	end
 
 	return true
@@ -528,7 +541,8 @@ function ns:ApplyElements(frame)
 		if ns:ShouldPreview(unit, info.key) and ns:HasElement(unit, info.key) then
 			ns:ShowIndicatorPreview(frame, info)
 		else
-			ns:SetOUFElement(frame, info.element, ns:IsElementShown(unit, info.key), info.gateUnit)
+			ns:SetOUFElement(frame, info.element,
+				ns:HasElement(unit, info.key) and ns:IsElementShown(unit, info.key), info.gateUnit)
 		end
 	end
 
