@@ -205,7 +205,7 @@ local RESTING_FRAMES = 42
 
 local LEVEL_MIN, LEVEL_MAX = 0, 10
 
-ns.TEXT_ELEMENTS = { "name", "health", "text1", "text2" }
+ns.TEXT_ELEMENTS = { "name", "health", "custom1", "custom2" }
 
 local threatAtlasExists
 
@@ -696,8 +696,8 @@ function ns:PlaceElements(frame)
 	local healthPoint = PlaceText(frame, elements.health, unit, "health")
 	local namePoint, nameWidth = PlaceText(frame, elements.name, unit, "name")
 
-	PlaceText(frame, elements.text1, unit, "text1")
-	PlaceText(frame, elements.text2, unit, "text2")
+	PlaceText(frame, elements.custom1, unit, "custom1")
+	PlaceText(frame, elements.custom2, unit, "custom2")
 
 	if nameWidth == 0 and namePoint == "LEFT" and healthPoint == "RIGHT" then
 		ns:SetPoint(elements.name, "RIGHT", elements.health, "LEFT", -ns.TEXT_PADDING, 0)

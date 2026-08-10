@@ -90,8 +90,8 @@ end
 local ELEMENTS = {
 	{ key = "name", label = "Name text", tag = true },
 	{ key = "health", label = "Health text", tag = true },
-	{ key = "text1", label = "Custom text 1", tag = true },
-	{ key = "text2", label = "Custom text 2", tag = true },
+	{ key = "custom1", label = "Custom text 1", tag = true },
+	{ key = "custom2", label = "Custom text 2", tag = true },
 	{ key = "castbar", label = "Cast bar", extra = { "castbarIcon", "castbarLatency", "castbarWidth" } },
 	{ key = "resting", label = "Resting icon" },
 	{ key = "combat", label = "Combat icon" },

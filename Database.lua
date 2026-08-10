@@ -15,8 +15,8 @@ ns.DEFAULT_ANCHORS = {
 	castbarIcon = { default = "LEFT", target = "RIGHT" },
 	name = { default = "LEFT" },
 	health = { default = "RIGHT" },
-	text1 = { default = "CENTER" },
-	text2 = { default = "CENTER" },
+	custom1 = { default = "CENTER" },
+	custom2 = { default = "CENTER" },
 	resting = { default = "TOPLEFT" },
 	leader = { default = "TOPLEFT" },
 	assistant = { default = "TOPLEFT" },
@@ -34,8 +34,8 @@ ns.DEFAULT_ANCHORS = {
 }
 
 ns.DEFAULT_OFFSETS = {
-	text1 = { 0, 12 },
-	text2 = { 0, -12 },
+	custom1 = { 0, 12 },
+	custom2 = { 0, -12 },
 	resting = { 3, 8 },
 	leader = { 22, 4 },
 	assistant = { 36, 4 },
@@ -94,13 +94,13 @@ ns.DEFAULT_TAGS = {
 	name = { default = "[difficulty][maniauf:smartlevel<$ ][name]", pet = "[name]", focus = "[name]",
 		boss = "[name]", targettarget = "[name]" },
 	health = { default = "[maniauf:curhp]" },
-	text1 = { default = "[maniauf:leader][maniauf:assistant][maniauf:role][maniauf:raidtarget]" },
-	text2 = { default = "[maniauf:combat][maniauf:resting][maniauf:pvp][maniauf:phase]" },
+	custom1 = { default = "[group][maniauf:leader][maniauf:assistant]" },
+	custom2 = { default = "[maniauf:combat][maniauf:resting][maniauf:pvp][maniauf:phase]" },
 }
 
 ns.HIDDEN_BY_DEFAULT = {
-	text1 = { default = true },
-	text2 = { default = true },
+	custom1 = { default = true },
+	custom2 = { default = true },
 	combat = { default = false, party = true, boss = true },
 }
 
