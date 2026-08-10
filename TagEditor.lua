@@ -93,7 +93,7 @@ local GENERAL_TAGS = {
 	{ tag = "[curpp]", text = "Current power, raw number", sample = "850" },
 	{ tag = "[dead]", text = "\"Dead\" or \"Ghost\"", sample = "Dead" },
 	{ tag = "[difficulty]", text = "Color prefix: enemy level difficulty",
-		sample = "|cffff2020Example|r" },
+		sample = "|cffff2020Example|r", colorPrefix = "|cffff2020" },
 	{ tag = "[faction]", text = "Alliance or Horde", sample = "Alliance" },
 	{ tag = "[group]", text = "Raid subgroup number", sample = "3" },
 	{ tag = "[holypower]", text = "Current holy power (Retribution paladin, if any)", sample = "3" },
@@ -111,10 +111,11 @@ local GENERAL_TAGS = {
 	{ tag = "[perpp]", text = "Power percent, no % sign", sample = "85" },
 	{ tag = "[plus]", text = "\"+\" if elite or rare elite", sample = "+" },
 	{ tag = "[powercolor]", text = "Color prefix: current power type",
-		sample = "|cff0070ddExample|r" },
+		sample = "|cff0070ddExample|r", colorPrefix = "|cff0070dd" },
 	{ tag = "[pvp]", text = "\"PvP\" if flagged", sample = "PvP" },
 	{ tag = "[race]", text = "Race name", sample = "Orc" },
-	{ tag = "[raidcolor]", text = "Color prefix: class color", sample = "|cffc79c6eExample|r" },
+	{ tag = "[raidcolor]", text = "Color prefix: class color", sample = "|cffc79c6eExample|r",
+		colorPrefix = "|cffc79c6e" },
 	{ tag = "[rare]", text = "\"Rare\" if rare or rare elite", sample = "Rare" },
 	{ tag = "[resting]", text = "\"zzz\" if the player is resting", sample = "zzz" },
 	{ tag = "[runes]", text = "Ready Death Knight runes", sample = "4" },
@@ -126,7 +127,8 @@ local GENERAL_TAGS = {
 	{ tag = "[soulshards]", text = "Current soul shards (Warlock, if any)", sample = "3" },
 	{ tag = "[status]", text = "Dead / Ghost / Offline / resting, combined", sample = "Dead" },
 	{ tag = "[threat]", text = "\"++\" / \"--\" / \"Aggro\"", sample = "Aggro" },
-	{ tag = "[threatcolor]", text = "Color prefix: threat situation", sample = "|cffff2020Example|r" },
+	{ tag = "[threatcolor]", text = "Color prefix: threat situation", sample = "|cffff2020Example|r",
+		colorPrefix = "|cffff2020" },
 }
 
 local TAG_GROUPS = {
@@ -139,7 +141,7 @@ local SAMPLE_LOOKUP = {}
 
 for _, group in ipairs(TAG_GROUPS) do
 	for _, info in ipairs(group.tags) do
-		SAMPLE_LOOKUP[info.tag:sub(2, -2)] = info.sample
+		SAMPLE_LOOKUP[info.tag:sub(2, -2)] = info.colorPrefix or info.sample
 	end
 end
 
@@ -152,7 +154,7 @@ local function RenderTag(tagString)
 
 	return (tagString:gsub(BRACKET_PATTERN, function(name)
 		return SAMPLE_LOOKUP[name] or ("[" .. name .. "]")
-	end))
+	end)) .. "|r"
 end
 
 local window
