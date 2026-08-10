@@ -73,6 +73,8 @@ local NUMBER_TAGS = {
 	{ tag = "[maniauf:maxhp]", text = "Maximum health, abbreviated", sample = "58.0k" },
 	{ tag = "[maniauf:curpp]", text = "Current power, abbreviated", sample = "850" },
 	{ tag = "[maniauf:maxpp]", text = "Maximum power, abbreviated", sample = "1.0k" },
+	{ tag = "[maniauf:smartlevel]", text = "Same as [smartlevel], blank once at max level",
+		sample = "70+" },
 }
 
 local GENERAL_TAGS = {

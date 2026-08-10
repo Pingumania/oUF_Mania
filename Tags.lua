@@ -139,6 +139,19 @@ function ns:SetIconTagSize(size)
 	ns:UpdateTags()
 end
 
+local smartLevel = oUF.Tags.Methods["smartlevel"]
+
+oUF.Tags.Methods["maniauf:smartlevel"] = function(unit)
+	if UnitClassification(unit) ~= "worldboss"
+		and UnitEffectiveLevel(unit) >= (GetMaxPlayerLevel() or 0) then
+		return ""
+	end
+
+	return smartLevel(unit)
+end
+
+oUF.Tags.Events["maniauf:smartlevel"] = oUF.Tags.Events["smartlevel"]
+
 local function Icon(atlas)
 	local size = ns:GetIconTagSize()
 	return CreateAtlasMarkup(atlas, size, size)
