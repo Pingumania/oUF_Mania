@@ -662,6 +662,14 @@ local function BuildElementPage(body, unit, info)
 		end
 	end
 
+	if info.key == "quest" then
+		row = AddDropdownRow(body, row, "Icon style", ns:GetQuestIconStyles(), function()
+			return ns:GetQuestIconStyle()
+		end, function(value)
+			ns:SetQuestIconStyle(value)
+		end)
+	end
+
 	if ns:HasElementSize(info.key) then
 		row = AddSliderRow(body, row, "Size", SIZE_MIN, SIZE_MAX, function()
 			return ns:GetElementSize(storageUnit, info.key)
@@ -887,6 +895,7 @@ local function ResetGeneral()
 	ManiaUFDB.fontSize = nil
 	ManiaUFDB.iconSize = nil
 	ManiaUFDB.sync = nil
+	ManiaUFDB.questIcon = nil
 end
 
 local function ResetAll()
@@ -928,6 +937,10 @@ local function ResetPage()
 					stored[group][key] = nil
 				end
 			end
+		end
+
+		if selectedElement.key == "quest" then
+			ManiaUFDB.questIcon = nil
 		end
 	elseif unit.key == ALL_KEY then
 		ResetGeneral()

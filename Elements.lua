@@ -26,6 +26,35 @@ local function PvPPostUpdate(element, unit, status)
 	end
 end
 
+local QUEST_ICON_STYLES = {
+	{ value = "AutoQuest-Badge-Campaign", label = "Campaign badge" },
+	{ value = "UI-HUD-UnitFrame-Target-PortraitOn-Boss-Quest", label = "Unit frame quest icon" },
+	{ value = "QuestNormal", label = "Quest available (!)" },
+}
+
+local QUEST_ATLAS = QUEST_ICON_STYLES[1].value
+
+function ns:GetQuestIconStyles()
+	return QUEST_ICON_STYLES
+end
+
+function ns:GetQuestIconStyle()
+	return ManiaUFDB.questIcon or QUEST_ATLAS
+end
+
+function ns:SetQuestIconStyle(atlas)
+	ManiaUFDB.questIcon = atlas
+	ns:UpdateElements()
+end
+
+function ns:ApplyQuestIcon(element)
+	element:SetAtlas(ns:GetQuestIconStyle(), false, nil, true)
+end
+
+local function QuestPostUpdate(element)
+	ns:ApplyQuestIcon(element)
+end
+
 local INDICATORS = {
 	{ key = "leader", element = "LeaderIndicator", point = "TOPLEFT", x = 22, y = 4,
 		atlas = "UI-HUD-UnitFrame-Player-Group-LeaderIcon" },
@@ -42,7 +71,7 @@ local INDICATORS = {
 	{ key = "grouprole", element = "GroupRoleIndicator", point = "LEFT", x = -6, y = 0,
 		atlas = "UI-LFG-RoleIcon-Tank-Micro-Raid" },
 	{ key = "quest", element = "QuestIndicator", point = "RIGHT", x = 6, y = 0,
-		texture = [[Interface\TargetingFrame\PortraitQuestBadge]] },
+		postUpdate = QuestPostUpdate },
 	{ key = "pvp", element = "PvPIndicator", point = "BOTTOMLEFT", x = 0, y = -4,
 		postUpdate = PvPPostUpdate, atlas = PVP_ATLASES.Alliance },
 	{ key = "pvpclass", element = "PvPClassificationIndicator", point = "BOTTOMRIGHT", x = 0, y = -4,
@@ -497,6 +526,10 @@ function ns:ApplyElements(frame)
 		else
 			ns:SetOUFElement(frame, info.element, ns:IsElementShown(unit, info.key))
 		end
+	end
+
+	if elements.quest and frame:IsElementEnabled("QuestIndicator") then
+		elements.quest:ForceUpdate()
 	end
 
 	SetThreatArt(elements.threat)

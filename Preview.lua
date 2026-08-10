@@ -81,6 +81,8 @@ function ns:ShowIndicatorPreview(frame, info)
 
 	if info.marker then
 		SetRaidTargetIconTexture(indicator, info.marker)
+	elseif info.key == "quest" then
+		ns:ApplyQuestIcon(indicator)
 	elseif info.atlas then
 		indicator:SetAtlas(info.atlas, false, nil, true)
 	elseif info.texture then
