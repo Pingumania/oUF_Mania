@@ -130,7 +130,7 @@ local LEADERSHIP_KEYS = {
 	raidrole = true,
 }
 
-local LEADERSHIP_EXCLUDED_UNITS = {
+local BOSS_PET_UNITS = {
 	boss = true,
 	pet = true,
 }
@@ -300,7 +300,9 @@ function ns:HasElement(unit, element)
 	elseif element == "readycheck" then
 		return not not READYCHECK_KEYS[unit]
 	elseif LEADERSHIP_KEYS[element] then
-		return not LEADERSHIP_EXCLUDED_UNITS[unit]
+		return not BOSS_PET_UNITS[unit]
+	elseif element == "summon" then
+		return not BOSS_PET_UNITS[unit]
 	end
 
 	return true
