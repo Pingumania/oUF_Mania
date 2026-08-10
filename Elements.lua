@@ -41,7 +41,10 @@ local ROLE_ICON_STYLES = {
 	{ value = "compact", label = "Compact raid frame",
 		TANK = "GM-icon-role-tank", HEALER = "GM-icon-role-healer", DAMAGER = "GM-icon-role-dps" },
 	{ value = "journal", label = "Encounter journal",
-		TANK = "icons_16x16_tank", HEALER = "icons_16x16_healer", DAMAGER = "icons_16x16_damage" }
+		TANK = "icons_16x16_tank", HEALER = "icons_16x16_healer", DAMAGER = "icons_16x16_damage" },
+	{ value = "premade", label = "Premade groups",
+		TANK = "groupfinder-icon-role-micro-tank", HEALER = "groupfinder-icon-role-micro-heal",
+		DAMAGER = "groupfinder-icon-role-micro-dps" },
 }
 
 local ROLE_STYLE_DEFAULT = ROLE_ICON_STYLES[1].value
