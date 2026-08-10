@@ -331,7 +331,15 @@ function ns:HasElementAnchor(element)
 end
 
 function ns:GetElementAnchor(unit, element)
-	return ReadElement(unit, "anchors", element) or ns.DEFAULT_ANCHORS[element]
+	local stored = ReadElement(unit, "anchors", element)
+
+	if stored then
+		return stored
+	end
+
+	local anchors = ns.DEFAULT_ANCHORS[element]
+
+	return anchors and (anchors[unit] or anchors.default)
 end
 
 function ns:SetElementAnchor(unit, element, point)
