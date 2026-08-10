@@ -62,7 +62,7 @@ local ICON_TAGS = {
 		sample = Icon("UI-HUD-UnitFrame-Player-CombatIcon") },
 	{ tag = "[maniauf:resting]", text = "Resting (player only)", sample = RESTING_SAMPLE },
 	{ tag = "[maniauf:pvp]", text = "PvP flagged", sample = Icon("questlog-questtypeicon-alliance") },
-	{ tag = "[maniauf:quest]", text = "Quest objective", sample = Icon("questlog-questtypeicon-quest") },
+	{ tag = "[maniauf:quest]", text = "Quest objective", sample = Icon(ns:GetQuestIconStyles()[1].value) },
 	{ tag = "[maniauf:phase]", text = "Phased", sample = Icon("RaidFrame-Icon-Phasing") },
 	{ tag = "[maniauf:resurrect]", text = "Incoming resurrect", sample = Icon("RaidFrame-Icon-Rez") },
 	{ tag = "[maniauf:summon]", text = "Incoming summon", sample = Icon("RaidFrame-Icon-SummonPending") },

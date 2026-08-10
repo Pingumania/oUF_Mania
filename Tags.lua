@@ -216,7 +216,7 @@ end)
 
 IconTag("quest", "UNIT_CLASSIFICATION_CHANGED", function(unit)
 	if UnitIsQuestBoss(unit) then
-		return Icon("questlog-questtypeicon-quest")
+		return Icon(ns:GetQuestIconStyle())
 	end
 end)
 
