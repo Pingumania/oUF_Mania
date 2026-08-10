@@ -147,13 +147,40 @@ end
 
 local BRACKET_PATTERN = "%[([^%[%]]+)%]"
 
+local function ParseBracket(bracket)
+	local prefix, name = "", bracket
+	local prefixEnd = bracket:find("%$>")
+
+	if prefixEnd then
+		prefix = bracket:sub(1, prefixEnd - 1)
+		name = bracket:sub(prefixEnd + 2)
+	end
+
+	local suffix = ""
+	local suffixStart = name:find("<%$")
+
+	if suffixStart then
+		suffix = name:sub(suffixStart + 2)
+		name = name:sub(1, suffixStart - 1)
+	end
+
+	return name, prefix, suffix
+end
+
 local function RenderTag(tagString)
 	if not tagString or tagString == "" then
 		return nil
 	end
 
-	return (tagString:gsub(BRACKET_PATTERN, function(name)
-		return SAMPLE_LOOKUP[name] or ("[" .. name .. "]")
+	return (tagString:gsub(BRACKET_PATTERN, function(bracket)
+		local name, prefix, suffix = ParseBracket(bracket)
+		local sample = SAMPLE_LOOKUP[name]
+
+		if not sample then
+			return "[" .. bracket .. "]"
+		end
+
+		return prefix .. sample .. suffix
 	end)) .. "|r"
 end
 
