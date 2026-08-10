@@ -178,9 +178,14 @@ local function CommitAndClose()
 end
 
 local function InsertTag(tag)
-	editBox:SetText((editBox:GetText() or "") .. tag)
+	local text = editBox:GetText() or ""
+	local position = editBox:GetCursorPosition()
+	local before = text:sub(1, position)
+	local after = text:sub(position + 1)
+
+	editBox:SetText(before .. tag .. after)
 	editBox:SetFocus()
-	editBox:SetCursorPosition(#editBox:GetText())
+	editBox:SetCursorPosition(#before + #tag)
 end
 
 local function CreateHeaderRow(parent, previous, title)
