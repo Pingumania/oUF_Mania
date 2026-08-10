@@ -77,7 +77,7 @@ local INDICATORS = {
 	{ key = "pvpclass", element = "PvPClassificationIndicator", point = "BOTTOMRIGHT", x = 0, y = -4,
 		atlas = "nameplates-icon-flag-alliance" },
 	{ key = "readycheck", element = "ReadyCheckIndicator", point = "CENTER", x = 0, y = 0,
-		atlas = "UI-LFG-ReadyMark-Raid" },
+		atlas = "UI-LFG-ReadyMark-Raid", gateUnit = "party" },
 	{ key = "resurrect", element = "ResurrectIndicator", point = "CENTER", x = -18, y = 0,
 		atlas = "RaidFrame-Icon-Rez" },
 	{ key = "summon", element = "SummonIndicator", point = "CENTER", x = 18, y = 0,
@@ -117,6 +117,10 @@ function ns:HasPreviewArt(element)
 end
 
 local READYCHECK_KEYS = {
+	player = true,
+	target = true,
+	targettarget = true,
+	focus = true,
 	party = true,
 }
 
@@ -474,11 +478,11 @@ function ns:CreateIndicators(frame)
 	frame.elements.threat = threat
 end
 
-function ns:SetOUFElement(frame, element, shown)
+function ns:SetOUFElement(frame, element, shown, gateUnit)
 	if shown then
 		if not frame:IsElementEnabled(element) then
 			frame[element]:Hide()
-			frame:EnableElement(element)
+			frame:EnableElement(element, gateUnit)
 
 			if frame:IsElementEnabled(element) then
 				frame[element]:ForceUpdate()
@@ -524,7 +528,7 @@ function ns:ApplyElements(frame)
 		if ns:ShouldPreview(unit, info.key) and ns:HasElement(unit, info.key) then
 			ns:ShowIndicatorPreview(frame, info)
 		else
-			ns:SetOUFElement(frame, info.element, ns:IsElementShown(unit, info.key))
+			ns:SetOUFElement(frame, info.element, ns:IsElementShown(unit, info.key), info.gateUnit)
 		end
 	end
 
