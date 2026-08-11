@@ -32,6 +32,98 @@ function ns:GetFontSizeRange()
 	return FONT_SIZE_MIN, FONT_SIZE_MAX
 end
 
+local BAR_COLOR_MODES = {
+	{ value = "class", label = "Class color" },
+	{ value = "blizzard", label = "Blizzard (default)" },
+	{ value = "custom", label = "Custom color" },
+}
+
+local POWER_COLOR_MODES = {
+	{ value = "class", label = "Class color" },
+	{ value = "blizzard", label = "Blizzard (default)" },
+}
+
+function ns:GetBarColorModes()
+	return BAR_COLOR_MODES
+end
+
+function ns:GetPowerColorModes()
+	return POWER_COLOR_MODES
+end
+
+function ns:GetHealthColorMode()
+	return ManiaUFDB.healthColorMode or ns.DEFAULT_BAR_COLOR_MODE
+end
+
+function ns:GetHealthCustomColor()
+	local color = ManiaUFDB.healthCustomColor or ns.DEFAULT_BAR_CUSTOM_COLOR
+	return color[1], color[2], color[3]
+end
+
+function ns:GetPowerColorMode()
+	return ManiaUFDB.powerColorMode or ns.DEFAULT_POWER_COLOR_MODE
+end
+
+local function HealthPostUpdateColor(element)
+	if ns:GetHealthColorMode() == "custom" then
+		element:SetStatusBarColor(ns:GetHealthCustomColor())
+	end
+end
+
+local function ApplyHealthColorFlags(frame)
+	local health = frame.Health
+	local mode = ns:GetHealthColorMode()
+
+	health.colorClass = mode == "class"
+	health.colorReaction = mode == "class"
+	health.colorHealth = mode ~= "class"
+end
+
+local function ApplyPowerColorFlags(frame)
+	local power = frame.Power
+
+	if not power then
+		return
+	end
+
+	local mode = ns:GetPowerColorMode()
+
+	power.colorClass = mode == "class"
+	power.colorPower = mode == "blizzard"
+end
+
+function ns:ApplyHealthColorMode()
+	for frame in next, styled do
+		ApplyHealthColorFlags(frame)
+		frame.Health:ForceUpdate()
+	end
+end
+
+function ns:ApplyPowerColorMode()
+	for frame in next, styled do
+		ApplyPowerColorFlags(frame)
+
+		if frame.Power then
+			frame.Power:ForceUpdate()
+		end
+	end
+end
+
+function ns:SetHealthColorMode(value)
+	ManiaUFDB.healthColorMode = value
+	ns:ApplyHealthColorMode()
+end
+
+function ns:SetHealthCustomColor(r, g, b)
+	ManiaUFDB.healthCustomColor = { r, g, b }
+	ns:ApplyHealthColorMode()
+end
+
+function ns:SetPowerColorMode(value)
+	ManiaUFDB.powerColorMode = value
+	ns:ApplyPowerColorMode()
+end
+
 local function SetTextFont(text, font, size)
 	if font and text:SetFont(font, size, "OUTLINE") then
 		return
@@ -189,7 +281,6 @@ local function Style(self, unit)
 	power.frequentUpdates = unit == "player"
 	power.colorTapping = true
 	power.colorDisconnected = true
-	power.colorPower = true
 	power.PostUpdate = PowerPostUpdate
 	self.Power = power
 
@@ -197,10 +288,11 @@ local function Style(self, unit)
 	health.smoothing = Enum.StatusBarInterpolation.ExponentialEaseOut
 	health.colorTapping = true
 	health.colorDisconnected = true
-	health.colorClass = true
-	health.colorReaction = true
-	health.colorHealth = true
+	health.PostUpdateColor = HealthPostUpdateColor
 	self.Health = health
+
+	ApplyHealthColorFlags(self)
+	ApplyPowerColorFlags(self)
 
 	local costPrediction = CreateBar(power)
 	costPrediction:SetReverseFill(true)

@@ -336,6 +336,31 @@ local function AddDropdownRow(body, previous, label, options, getValue, setValue
 	end)
 end
 
+local function AddColorRow(body, previous, label, getValue, setValue)
+	return AddControlRow(body, previous, label, 0, function(row)
+		local swatch = CreateFrame("Button", nil, row, "ColorSwatchTemplate")
+
+		swatch:SetScript("OnClick", function()
+			local info = {}
+			info.r, info.g, info.b = getValue()
+
+			info.swatchFunc = function()
+				setValue(ColorPickerFrame:GetColorRGB())
+			end
+
+			info.cancelFunc = function()
+				setValue(ColorPickerFrame:GetPreviousValues())
+			end
+
+			ColorPickerFrame:SetupColorPickerAndShow(info)
+		end)
+
+		return swatch
+	end, function(swatch)
+		swatch:SetColorRGB(getValue())
+	end)
+end
+
 local function AddTagEditRow(body, previous, label, title, getValue, setValue)
 	return AddControlRow(body, previous, label, TAG_INPUT_OFFSET, function(row)
 		local editBox = ns:CreateEditBox(row, getValue, setValue)
@@ -396,6 +421,24 @@ local function BuildGeneralPage(body)
 		return ns:GetIconTagSize()
 	end, function(value)
 		ns:SetIconTagSize(value)
+	end)
+
+	row = AddDropdownRow(body, row, "Health color", ns:GetBarColorModes(), function()
+		return ns:GetHealthColorMode()
+	end, function(value)
+		ns:SetHealthColorMode(value)
+	end)
+
+	row = AddColorRow(body, row, "Health custom color", function()
+		return ns:GetHealthCustomColor()
+	end, function(r, g, b)
+		ns:SetHealthCustomColor(r, g, b)
+	end)
+
+	row = AddDropdownRow(body, row, "Power color", ns:GetPowerColorModes(), function()
+		return ns:GetPowerColorMode()
+	end, function(value)
+		ns:SetPowerColorMode(value)
 	end)
 
 	for _, sync in ipairs(SYNC_OPTIONS) do
@@ -881,6 +924,8 @@ end
 
 local function ApplyChanges(needsReload)
 	ns:ApplyMedia()
+	ns:ApplyHealthColorMode()
+	ns:ApplyPowerColorMode()
 	ns:UpdatePower()
 	ns:UpdateElements()
 	ns:UpdateTags()
@@ -902,6 +947,9 @@ local function ResetGeneral()
 	ManiaUFDB.sync = nil
 	ManiaUFDB.questIcon = nil
 	ManiaUFDB.roleIcon = nil
+	ManiaUFDB.healthColorMode = nil
+	ManiaUFDB.healthCustomColor = nil
+	ManiaUFDB.powerColorMode = nil
 end
 
 local function ResetAll()
