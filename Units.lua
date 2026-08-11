@@ -50,15 +50,16 @@ local function SetChildrenPreviewed(header, previewed)
 end
 
 function ns:ApplyGroupPreview()
-	local entry, header
+	local entry, header, previewed
 
 	for key, count in next, PREVIEW_MEMBERS do
 		entry = placed[key]
 
 		if entry then
 			header = entry.frame
+			previewed = groupPreviews[key] or ns:AnyPreviewActive(key)
 
-			if groupPreviews[key] then
+			if previewed then
 				RegisterAttributeDriver(header, "state-visibility", "show")
 				header:SetAttribute("startingIndex", -(count - 1))
 			else
@@ -66,7 +67,7 @@ function ns:ApplyGroupPreview()
 				header:SetAttribute("startingIndex", 1)
 			end
 
-			SetChildrenPreviewed(header, groupPreviews[key])
+			SetChildrenPreviewed(header, previewed)
 		end
 	end
 end

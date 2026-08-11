@@ -36,6 +36,7 @@ function ns:SetWholeUnitPreviewed(unit, enabled)
 	wholeUnitPreviews[unit] = enabled or nil
 	ns:UpdateElements()
 	ns:DeferMethod(ns, "ApplyFramePreview", unit)
+	ns:DeferMethod(ns, "ApplyGroupPreview")
 end
 
 function ns:IsPreviewSet(unit, element)
@@ -55,6 +56,8 @@ function ns:SetPreviewSet(unit, element, value)
 	else
 		ns:DeferMethod(ns, "ApplyFramePreview", unit)
 	end
+
+	ns:DeferMethod(ns, "ApplyGroupPreview")
 end
 
 function ns:StopAllElementPreviews()
@@ -79,6 +82,8 @@ function ns:StopAllElementPreviews()
 	for _, unit in ipairs(ns.UNIT_KEYS) do
 		ns:DeferMethod(ns, "ApplyFramePreview", unit)
 	end
+
+	ns:DeferMethod(ns, "ApplyGroupPreview")
 end
 
 function ns:ShowIndicatorPreview(frame, info)
