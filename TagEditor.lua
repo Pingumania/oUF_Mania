@@ -51,29 +51,29 @@ local RESTING_SAMPLE = ("|T%s:%d:%d:0:0:64:64:0:32:0:27|t"):format(
 	RESTING_SHEET, SAMPLE_ICON_SIZE, SAMPLE_ICON_SIZE)
 
 local ICON_TAGS = {
-	{ tag = "[mania3:leader]", text = "Group leader crown",
+	{ tag = "[mania:leader]", text = "Group leader crown",
 		sample = Icon("UI-HUD-UnitFrame-Player-Group-LeaderIcon") },
-	{ tag = "[mania3:assistant]", text = "Raid assistant",
+	{ tag = "[mania:assistant]", text = "Raid assistant",
 		sample = Icon("UI-HUD-UnitFrame-Player-Group-GuideIcon") },
-	{ tag = "[mania3:role]", text = "Assigned role",
+	{ tag = "[mania:role]", text = "Assigned role",
 		sample = Icon("UI-LFG-RoleIcon-Tank-Micro-Raid") },
-	{ tag = "[mania3:raidtarget]", text = "Raid target marker", sample = RAID_MARKER_SAMPLE },
-	{ tag = "[mania3:combat]", text = "In combat",
+	{ tag = "[mania:raidtarget]", text = "Raid target marker", sample = RAID_MARKER_SAMPLE },
+	{ tag = "[mania:combat]", text = "In combat",
 		sample = Icon("UI-HUD-UnitFrame-Player-CombatIcon") },
-	{ tag = "[mania3:resting]", text = "Resting (player only)", sample = RESTING_SAMPLE },
-	{ tag = "[mania3:pvp]", text = "PvP flagged", sample = Icon("questlog-questtypeicon-alliance") },
-	{ tag = "[mania3:quest]", text = "Quest objective", sample = Icon(ns:GetQuestIconStyles()[1].value) },
-	{ tag = "[mania3:phase]", text = "Phased", sample = Icon("RaidFrame-Icon-Phasing") },
-	{ tag = "[mania3:resurrect]", text = "Incoming resurrect", sample = Icon("RaidFrame-Icon-Rez") },
-	{ tag = "[mania3:summon]", text = "Incoming summon", sample = Icon("RaidFrame-Icon-SummonPending") },
+	{ tag = "[mania:resting]", text = "Resting (player only)", sample = RESTING_SAMPLE },
+	{ tag = "[mania:pvp]", text = "PvP flagged", sample = Icon("questlog-questtypeicon-alliance") },
+	{ tag = "[mania:quest]", text = "Quest objective", sample = Icon(ns:GetQuestIconStyles()[1].value) },
+	{ tag = "[mania:phase]", text = "Phased", sample = Icon("RaidFrame-Icon-Phasing") },
+	{ tag = "[mania:resurrect]", text = "Incoming resurrect", sample = Icon("RaidFrame-Icon-Rez") },
+	{ tag = "[mania:summon]", text = "Incoming summon", sample = Icon("RaidFrame-Icon-SummonPending") },
 }
 
 local NUMBER_TAGS = {
-	{ tag = "[mania3:curhp]", text = "Current health, abbreviated (57.2k)", sample = "57.2k" },
-	{ tag = "[mania3:maxhp]", text = "Maximum health, abbreviated", sample = "58.0k" },
-	{ tag = "[mania3:curpp]", text = "Current power, abbreviated", sample = "850" },
-	{ tag = "[mania3:maxpp]", text = "Maximum power, abbreviated", sample = "1.0k" },
-	{ tag = "[mania3:smartlevel]", text = "Same as [smartlevel], blank once at max level",
+	{ tag = "[mania:curhp]", text = "Current health, abbreviated (57.2k)", sample = "57.2k" },
+	{ tag = "[mania:maxhp]", text = "Maximum health, abbreviated", sample = "58.0k" },
+	{ tag = "[mania:curpp]", text = "Current power, abbreviated", sample = "850" },
+	{ tag = "[mania:maxpp]", text = "Maximum power, abbreviated", sample = "1.0k" },
+	{ tag = "[mania:smartlevel]", text = "Same as [smartlevel], blank once at max level",
 		sample = "70+" },
 }
 

@@ -94,11 +94,11 @@ ns.DEFAULT_LEVELS = {
 }
 
 ns.DEFAULT_TAGS = {
-	name = { default = "[difficulty][mania3:smartlevel<$ ][name]", pet = "[name]", focus = "[name]",
+	name = { default = "[difficulty][mania:smartlevel<$ ][name]", pet = "[name]", focus = "[name]",
 		boss = "[name]", targettarget = "[name]" },
-	health = { default = "[mania3:curhp]" },
-	custom1 = { default = "[group][mania3:leader][mania3:assistant]" },
-	custom2 = { default = "[mania3:combat][mania3:resting][mania3:pvp][mania3:phase]" },
+	health = { default = "[mania:curhp]" },
+	custom1 = { default = "[group][mania:leader][mania:assistant]" },
+	custom2 = { default = "[mania:combat][mania:resting][mania:pvp][mania:phase]" },
 }
 
 ns.HIDDEN_BY_DEFAULT = {

@@ -90,29 +90,29 @@ end
 
 ns.FormatNumber = FormatNumber
 
-oUF.Tags.Methods["mania3:curhp"] = function(unit)
+oUF.Tags.Methods["mania:curhp"] = function(unit)
 	return FormatNumber(UnitHealth(unit))
 end
 
-oUF.Tags.Events["mania3:curhp"] = "UNIT_HEALTH UNIT_MAXHEALTH"
+oUF.Tags.Events["mania:curhp"] = "UNIT_HEALTH UNIT_MAXHEALTH"
 
-oUF.Tags.Methods["mania3:maxhp"] = function(unit)
+oUF.Tags.Methods["mania:maxhp"] = function(unit)
 	return FormatNumber(UnitHealthMax(unit))
 end
 
-oUF.Tags.Events["mania3:maxhp"] = "UNIT_MAXHEALTH"
+oUF.Tags.Events["mania:maxhp"] = "UNIT_MAXHEALTH"
 
-oUF.Tags.Methods["mania3:curpp"] = function(unit)
+oUF.Tags.Methods["mania:curpp"] = function(unit)
 	return FormatNumber(UnitPower(unit))
 end
 
-oUF.Tags.Events["mania3:curpp"] = "UNIT_POWER_UPDATE UNIT_MAXPOWER"
+oUF.Tags.Events["mania:curpp"] = "UNIT_POWER_UPDATE UNIT_MAXPOWER"
 
-oUF.Tags.Methods["mania3:maxpp"] = function(unit)
+oUF.Tags.Methods["mania:maxpp"] = function(unit)
 	return FormatNumber(UnitPowerMax(unit))
 end
 
-oUF.Tags.Events["mania3:maxpp"] = "UNIT_MAXPOWER"
+oUF.Tags.Events["mania:maxpp"] = "UNIT_MAXPOWER"
 
 local FACTION_ATLASES = {
 	Alliance = "questlog-questtypeicon-alliance",
@@ -134,7 +134,7 @@ end
 
 local smartLevel = oUF.Tags.Methods["smartlevel"]
 
-oUF.Tags.Methods["mania3:smartlevel"] = function(unit)
+oUF.Tags.Methods["mania:smartlevel"] = function(unit)
 	if UnitClassification(unit) ~= "worldboss"
 		and UnitEffectiveLevel(unit) >= (GetMaxPlayerLevel() or 0) then
 		return ""
@@ -143,7 +143,7 @@ oUF.Tags.Methods["mania3:smartlevel"] = function(unit)
 	return smartLevel(unit)
 end
 
-oUF.Tags.Events["mania3:smartlevel"] = oUF.Tags.Events["smartlevel"]
+oUF.Tags.Events["mania:smartlevel"] = oUF.Tags.Events["smartlevel"]
 
 local function Icon(atlas)
 	local size = ns:GetIconTagSize()
@@ -151,7 +151,7 @@ local function Icon(atlas)
 end
 
 local function IconTag(name, event, Read)
-	oUF.Tags.Methods["mania3:" .. name] = function(unit)
+	oUF.Tags.Methods["mania:" .. name] = function(unit)
 		if issecretvalue(unit) then
 			return ""
 		end
@@ -159,7 +159,7 @@ local function IconTag(name, event, Read)
 		return Read(unit) or ""
 	end
 
-	oUF.Tags.Events["mania3:" .. name] = event
+	oUF.Tags.Events["mania:" .. name] = event
 end
 
 IconTag("leader", "UNIT_FLAGS PARTY_LEADER_CHANGED GROUP_ROSTER_UPDATE", function(unit)
