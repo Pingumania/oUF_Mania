@@ -462,6 +462,10 @@ function ns:ApplyMedia()
 
 		for _, text in ipairs(texts) do
 			SetTextFont(text, font, size)
+
+			if text.binding then
+				text.binding:UpdateFontString()
+			end
 		end
 
 		if frame.__unit then
