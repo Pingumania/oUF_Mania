@@ -5,16 +5,16 @@ local BOSS_ANCHOR = { "RIGHT", UIParent, "RIGHT", -60, 160 }
 local PARTY_ANCHOR = { "TOPLEFT", UIParent, "TOPLEFT", 30, -220 }
 
 local FRAMES = {
-	{ key = "player", name = "ManiaUFPlayer",
+	{ key = "player", name = "oUF_ManiaPlayer",
 		anchor = { "BOTTOM", UIParent, "BOTTOM", -260, 280 } },
-	{ key = "target", name = "ManiaUFTarget",
+	{ key = "target", name = "oUF_ManiaTarget",
 		anchor = { "BOTTOM", UIParent, "BOTTOM", 260, 280 } },
-	{ key = "focus", name = "ManiaUFFocus",
+	{ key = "focus", name = "oUF_ManiaFocus",
 		anchor = { "BOTTOM", UIParent, "BOTTOM", -260, 380 } },
-	{ key = "pet", name = "ManiaUFPet",
-		anchor = { "BOTTOMRIGHT", "ManiaUFPlayer", "TOPRIGHT", 0, 6 } },
-	{ key = "targettarget", name = "ManiaUFTargetTarget",
-		anchor = { "BOTTOMLEFT", "ManiaUFTarget", "TOPLEFT", 0, 6 } },
+	{ key = "pet", name = "oUF_ManiaPet",
+		anchor = { "BOTTOMRIGHT", "oUF_ManiaPlayer", "TOPRIGHT", 0, 6 } },
+	{ key = "targettarget", name = "oUF_ManiaTargetTarget",
+		anchor = { "BOTTOMLEFT", "oUF_ManiaTarget", "TOPLEFT", 0, 6 } },
 }
 
 local PREVIEW_MEMBERS = {
@@ -135,7 +135,7 @@ local function SpawnBoss()
 	local boss
 
 	for index = 1, MAX_BOSS_FRAMES do
-		boss = oUF:Spawn("boss" .. index, "ManiaUFBoss" .. index)
+		boss = oUF:Spawn("boss" .. index, "oUF_ManiaBoss" .. index)
 		boss.standalone = true
 		bossFrames[index] = boss
 
@@ -150,7 +150,7 @@ local function SpawnParty()
 		return
 	end
 
-	partyHeader = oUF:SpawnHeader("ManiaUFParty", nil,
+	partyHeader = oUF:SpawnHeader("oUF_ManiaParty", nil,
 		"showParty", true,
 		"showSolo", false,
 		"oUF-initialConfigFunction", ConfigSnippet("party")

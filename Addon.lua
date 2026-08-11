@@ -3,8 +3,8 @@ local oUF = ns.oUF
 
 local LSM = LibStub("LibSharedMedia-3.0")
 
-oUF:RegisterStyle("ManiaUF", ns.Style)
-oUF:SetActiveStyle("ManiaUF")
+oUF:RegisterStyle("oUF_Mania", ns.Style)
+oUF:SetActiveStyle("oUF_Mania")
 
 oUF:RegisterInitCallback(function(frame)
 	ns:OnFrameInitialized(frame)

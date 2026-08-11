@@ -2,7 +2,7 @@ local _, ns = ...
 
 local LSM = LibStub("LibSharedMedia-3.0")
 
-local WINDOW_NAME = "ManiaUFOptionsFrame"
+local WINDOW_NAME = "oUF_ManiaOptionsFrame"
 local WINDOW_WIDTH = 920
 
 local INNER_X, INNER_Y = 17, 64
@@ -58,8 +58,8 @@ local PREVIEW_HIDE = "Stop preview"
 local PREVIEW_WIDTH = 110
 local HEADER_BUTTON_GAP = 6
 
-local RELOAD_POPUP = "MANIAUF_RELOAD"
-local DEFAULTS_POPUP = "MANIAUF_DEFAULTS"
+local RELOAD_POPUP = "OUF_MANIA_RELOAD"
+local DEFAULTS_POPUP = "OUF_MANIA_DEFAULTS"
 local FRAME_SECTION = "frame"
 
 local FRAME_FIELDS = {
@@ -395,9 +395,9 @@ end
 local function AddMediaRow(body, previous, label, mediaType, field)
 	return AddControlRow(body, previous, label, DROPDOWN_OFFSET, function(row)
 		return ns:CreateMediaDropdown(row, mediaType, function()
-			return ManiaUFDB[field] or LSM:GetDefault(mediaType)
+			return oUF_ManiaDB[field] or LSM:GetDefault(mediaType)
 		end, function(name)
-			ManiaUFDB[field] = name
+			oUF_ManiaDB[field] = name
 			ns:ApplyMedia()
 		end)
 	end, function(dropdown)
@@ -413,7 +413,7 @@ local function BuildGeneralPage(body)
 	row = AddSliderRow(body, row, "Font size", minSize, maxSize, function()
 		return ns:GetFontSize()
 	end, function(value)
-		ManiaUFDB.fontSize = value
+		oUF_ManiaDB.fontSize = value
 		ns:ApplyMedia()
 	end)
 
@@ -940,16 +940,16 @@ local function ApplyChanges(needsReload)
 end
 
 local function ResetGeneral()
-	ManiaUFDB.texture = nil
-	ManiaUFDB.font = nil
-	ManiaUFDB.fontSize = nil
-	ManiaUFDB.iconSize = nil
-	ManiaUFDB.sync = nil
-	ManiaUFDB.questIcon = nil
-	ManiaUFDB.roleIcon = nil
-	ManiaUFDB.healthColorMode = nil
-	ManiaUFDB.healthCustomColor = nil
-	ManiaUFDB.powerColorMode = nil
+	oUF_ManiaDB.texture = nil
+	oUF_ManiaDB.font = nil
+	oUF_ManiaDB.fontSize = nil
+	oUF_ManiaDB.iconSize = nil
+	oUF_ManiaDB.sync = nil
+	oUF_ManiaDB.questIcon = nil
+	oUF_ManiaDB.roleIcon = nil
+	oUF_ManiaDB.healthColorMode = nil
+	oUF_ManiaDB.healthCustomColor = nil
+	oUF_ManiaDB.powerColorMode = nil
 end
 
 local function ResetAll()
@@ -962,7 +962,7 @@ local function ResetAll()
 	end
 
 	ResetGeneral()
-	ManiaUFDB.units = nil
+	oUF_ManiaDB.units = nil
 
 	ApplyChanges(needsReload)
 end
@@ -976,7 +976,7 @@ local function ResetPage()
 		storageUnit = StorageUnit(unit.key, selectedElement.key)
 	end
 
-	local stored = ManiaUFDB.units and ManiaUFDB.units[storageUnit]
+	local stored = oUF_ManiaDB.units and oUF_ManiaDB.units[storageUnit]
 
 	if selectedElement then
 		local keys = { selectedElement.key }
@@ -994,9 +994,9 @@ local function ResetPage()
 		end
 
 		if selectedElement.key == "quest" then
-			ManiaUFDB.questIcon = nil
+			oUF_ManiaDB.questIcon = nil
 		elseif selectedElement.key == "grouprole" then
-			ManiaUFDB.roleIcon = nil
+			oUF_ManiaDB.roleIcon = nil
 		end
 	elseif unit.key == ALL_KEY then
 		ResetGeneral()
@@ -1012,7 +1012,7 @@ local function ResetPage()
 end
 
 StaticPopupDialogs[RELOAD_POPUP] = {
-	text = "ManiaUF needs the interface reloaded to apply that.",
+	text = "oUF_Mania needs the interface reloaded to apply that.",
 	button1 = RELOADUI or "Reload UI",
 	button2 = CANCEL,
 	OnAccept = ReloadUI,
@@ -1022,7 +1022,7 @@ StaticPopupDialogs[RELOAD_POPUP] = {
 }
 
 StaticPopupDialogs[DEFAULTS_POPUP] = {
-	text = "Do you want to reset all ManiaUF settings to their defaults, or only the settings for this category?",
+	text = "Do you want to reset all oUF_Mania settings to their defaults, or only the settings for this category?",
 	button1 = ALL_SETTINGS or "All Settings",
 	button2 = CANCEL,
 	button3 = CURRENT_SETTINGS or "These Settings",
@@ -1040,7 +1040,7 @@ local function BuildWindow()
 	frame:SetFrameStrata("HIGH")
 	frame:SetToplevel(true)
 	frame:EnableMouse(true)
-	frame:SetTitle("ManiaUF")
+	frame:SetTitle("oUF_Mania")
 	frame:Hide()
 
 	window = frame
@@ -1114,19 +1114,19 @@ function ns:OpenOptionsWindow()
 	window:Raise()
 end
 
-ns:RegisterSettings("ManiaUFDB", {
+ns:RegisterSettings("oUF_ManiaDB", {
 	{
 		type = "description",
-		title = "ManiaUF is configured from its own window.",
+		title = "oUF_Mania is configured from its own window.",
 	},
 	{
 		type = "custom",
 		title = "Options",
-		tooltip = "Opens the ManiaUF options window.",
+		tooltip = "Opens the oUF_Mania options window.",
 		createControl = function(rowFrame)
 			local button = CreateFrame("Button", nil, rowFrame, "UIPanelButtonTemplate")
 			button:SetSize(LAUNCH_WIDTH, BUTTON_HEIGHT)
-			button:SetText("Open ManiaUF options")
+			button:SetText("Open oUF_Mania options")
 			button:SetScript("OnClick", function()
 				local skipTransitionBackToOpeningPanel = true
 				SettingsPanel:Close(skipTransitionBackToOpeningPanel)
@@ -1138,6 +1138,6 @@ ns:RegisterSettings("ManiaUFDB", {
 	},
 })
 
-ns:RegisterSlash("/maniauf", function()
+ns:RegisterSlash("/oufmania", function()
 	ns:OpenOptionsWindow()
 end)

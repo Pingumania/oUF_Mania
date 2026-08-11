@@ -1,12 +1,12 @@
 ## Interface: 120007
 
-## Title: ManiaUF
+## Title: oUF_Mania
 ## Notes: Blizzlike unit frames built on oUF
 ## Category: User Interface
 ## Author: Pingumania
 ## Version: @project-version@
 
-## SavedVariables: ManiaUFDB
+## SavedVariables: oUF_ManiaDB
 
 Libs\LibStub\LibStub.lua
 Libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua

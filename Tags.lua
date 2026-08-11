@@ -90,29 +90,29 @@ end
 
 ns.FormatNumber = FormatNumber
 
-oUF.Tags.Methods["maniauf:curhp"] = function(unit)
+oUF.Tags.Methods["mania3:curhp"] = function(unit)
 	return FormatNumber(UnitHealth(unit))
 end
 
-oUF.Tags.Events["maniauf:curhp"] = "UNIT_HEALTH UNIT_MAXHEALTH"
+oUF.Tags.Events["mania3:curhp"] = "UNIT_HEALTH UNIT_MAXHEALTH"
 
-oUF.Tags.Methods["maniauf:maxhp"] = function(unit)
+oUF.Tags.Methods["mania3:maxhp"] = function(unit)
 	return FormatNumber(UnitHealthMax(unit))
 end
 
-oUF.Tags.Events["maniauf:maxhp"] = "UNIT_MAXHEALTH"
+oUF.Tags.Events["mania3:maxhp"] = "UNIT_MAXHEALTH"
 
-oUF.Tags.Methods["maniauf:curpp"] = function(unit)
+oUF.Tags.Methods["mania3:curpp"] = function(unit)
 	return FormatNumber(UnitPower(unit))
 end
 
-oUF.Tags.Events["maniauf:curpp"] = "UNIT_POWER_UPDATE UNIT_MAXPOWER"
+oUF.Tags.Events["mania3:curpp"] = "UNIT_POWER_UPDATE UNIT_MAXPOWER"
 
-oUF.Tags.Methods["maniauf:maxpp"] = function(unit)
+oUF.Tags.Methods["mania3:maxpp"] = function(unit)
 	return FormatNumber(UnitPowerMax(unit))
 end
 
-oUF.Tags.Events["maniauf:maxpp"] = "UNIT_MAXPOWER"
+oUF.Tags.Events["mania3:maxpp"] = "UNIT_MAXPOWER"
 
 local FACTION_ATLASES = {
 	Alliance = "questlog-questtypeicon-alliance",
@@ -124,17 +124,17 @@ local RAID_MARKER_COLUMNS = 4
 local RESTING_SHEET = [[Interface\CharacterFrame\UI-StateIcon]]
 
 function ns:GetIconTagSize()
-	return ManiaUFDB.iconSize or ns.DEFAULT_ICON_SIZE
+	return oUF_ManiaDB.iconSize or ns.DEFAULT_ICON_SIZE
 end
 
 function ns:SetIconTagSize(size)
-	ManiaUFDB.iconSize = size
+	oUF_ManiaDB.iconSize = size
 	ns:UpdateTags()
 end
 
 local smartLevel = oUF.Tags.Methods["smartlevel"]
 
-oUF.Tags.Methods["maniauf:smartlevel"] = function(unit)
+oUF.Tags.Methods["mania3:smartlevel"] = function(unit)
 	if UnitClassification(unit) ~= "worldboss"
 		and UnitEffectiveLevel(unit) >= (GetMaxPlayerLevel() or 0) then
 		return ""
@@ -143,7 +143,7 @@ oUF.Tags.Methods["maniauf:smartlevel"] = function(unit)
 	return smartLevel(unit)
 end
 
-oUF.Tags.Events["maniauf:smartlevel"] = oUF.Tags.Events["smartlevel"]
+oUF.Tags.Events["mania3:smartlevel"] = oUF.Tags.Events["smartlevel"]
 
 local function Icon(atlas)
 	local size = ns:GetIconTagSize()
@@ -151,7 +151,7 @@ local function Icon(atlas)
 end
 
 local function IconTag(name, event, Read)
-	oUF.Tags.Methods["maniauf:" .. name] = function(unit)
+	oUF.Tags.Methods["mania3:" .. name] = function(unit)
 		if issecretvalue(unit) then
 			return ""
 		end
@@ -159,7 +159,7 @@ local function IconTag(name, event, Read)
 		return Read(unit) or ""
 	end
 
-	oUF.Tags.Events["maniauf:" .. name] = event
+	oUF.Tags.Events["mania3:" .. name] = event
 end
 
 IconTag("leader", "UNIT_FLAGS PARTY_LEADER_CHANGED GROUP_ROSTER_UPDATE", function(unit)

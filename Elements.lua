@@ -64,11 +64,11 @@ function ns:GetRoleIconStyles()
 end
 
 function ns:GetRoleIconStyle()
-	return ManiaUFDB.roleIcon or ROLE_STYLE_DEFAULT
+	return oUF_ManiaDB.roleIcon or ROLE_STYLE_DEFAULT
 end
 
 function ns:SetRoleIconStyle(value)
-	ManiaUFDB.roleIcon = value
+	oUF_ManiaDB.roleIcon = value
 	ns:UpdateElements()
 	ns:UpdateTags()
 end
@@ -138,11 +138,11 @@ function ns:GetQuestIconStyles()
 end
 
 function ns:GetQuestIconStyle()
-	return ManiaUFDB.questIcon or QUEST_ATLAS
+	return oUF_ManiaDB.questIcon or QUEST_ATLAS
 end
 
 function ns:SetQuestIconStyle(atlas)
-	ManiaUFDB.questIcon = atlas
+	oUF_ManiaDB.questIcon = atlas
 	ns:UpdateElements()
 end
 
@@ -252,14 +252,14 @@ local function ThreatPostUpdate(element, _, status)
 end
 
 local function StoreNested(unit, group, field, value)
-	ManiaUFDB.units = ManiaUFDB.units or {}
-	ManiaUFDB.units[unit] = ManiaUFDB.units[unit] or {}
-	ManiaUFDB.units[unit][group] = ManiaUFDB.units[unit][group] or {}
-	ManiaUFDB.units[unit][group][field] = value
+	oUF_ManiaDB.units = oUF_ManiaDB.units or {}
+	oUF_ManiaDB.units[unit] = oUF_ManiaDB.units[unit] or {}
+	oUF_ManiaDB.units[unit][group] = oUF_ManiaDB.units[unit][group] or {}
+	oUF_ManiaDB.units[unit][group][field] = value
 end
 
 local function ReadNested(unit, group, field)
-	local stored = ManiaUFDB.units and ManiaUFDB.units[unit]
+	local stored = oUF_ManiaDB.units and oUF_ManiaDB.units[unit]
 	local sub = stored and stored[group]
 	return sub and sub[field]
 end

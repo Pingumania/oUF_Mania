@@ -1,6 +1,6 @@
 local _, ns = ...
 
-local MEDIA = [[Interface\AddOns\ManiaUF\Media\]]
+local MEDIA = [[Interface\AddOns\oUF_Mania\Media\]]
 
 local BORDER_SIZE = 8
 local BORDER_TRIM = 4 / 16

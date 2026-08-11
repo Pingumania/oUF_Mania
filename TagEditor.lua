@@ -1,6 +1,6 @@
 local _, ns = ...
 
-local WINDOW_NAME = "ManiaUFTagEditorFrame"
+local WINDOW_NAME = "oUF_ManiaTagEditorFrame"
 local WINDOW_WIDTH = 600
 
 local INNER_X, INNER_Y = 20, 48
@@ -51,29 +51,29 @@ local RESTING_SAMPLE = ("|T%s:%d:%d:0:0:64:64:0:32:0:27|t"):format(
 	RESTING_SHEET, SAMPLE_ICON_SIZE, SAMPLE_ICON_SIZE)
 
 local ICON_TAGS = {
-	{ tag = "[maniauf:leader]", text = "Group leader crown",
+	{ tag = "[mania3:leader]", text = "Group leader crown",
 		sample = Icon("UI-HUD-UnitFrame-Player-Group-LeaderIcon") },
-	{ tag = "[maniauf:assistant]", text = "Raid assistant",
+	{ tag = "[mania3:assistant]", text = "Raid assistant",
 		sample = Icon("UI-HUD-UnitFrame-Player-Group-GuideIcon") },
-	{ tag = "[maniauf:role]", text = "Assigned role",
+	{ tag = "[mania3:role]", text = "Assigned role",
 		sample = Icon("UI-LFG-RoleIcon-Tank-Micro-Raid") },
-	{ tag = "[maniauf:raidtarget]", text = "Raid target marker", sample = RAID_MARKER_SAMPLE },
-	{ tag = "[maniauf:combat]", text = "In combat",
+	{ tag = "[mania3:raidtarget]", text = "Raid target marker", sample = RAID_MARKER_SAMPLE },
+	{ tag = "[mania3:combat]", text = "In combat",
 		sample = Icon("UI-HUD-UnitFrame-Player-CombatIcon") },
-	{ tag = "[maniauf:resting]", text = "Resting (player only)", sample = RESTING_SAMPLE },
-	{ tag = "[maniauf:pvp]", text = "PvP flagged", sample = Icon("questlog-questtypeicon-alliance") },
-	{ tag = "[maniauf:quest]", text = "Quest objective", sample = Icon(ns:GetQuestIconStyles()[1].value) },
-	{ tag = "[maniauf:phase]", text = "Phased", sample = Icon("RaidFrame-Icon-Phasing") },
-	{ tag = "[maniauf:resurrect]", text = "Incoming resurrect", sample = Icon("RaidFrame-Icon-Rez") },
-	{ tag = "[maniauf:summon]", text = "Incoming summon", sample = Icon("RaidFrame-Icon-SummonPending") },
+	{ tag = "[mania3:resting]", text = "Resting (player only)", sample = RESTING_SAMPLE },
+	{ tag = "[mania3:pvp]", text = "PvP flagged", sample = Icon("questlog-questtypeicon-alliance") },
+	{ tag = "[mania3:quest]", text = "Quest objective", sample = Icon(ns:GetQuestIconStyles()[1].value) },
+	{ tag = "[mania3:phase]", text = "Phased", sample = Icon("RaidFrame-Icon-Phasing") },
+	{ tag = "[mania3:resurrect]", text = "Incoming resurrect", sample = Icon("RaidFrame-Icon-Rez") },
+	{ tag = "[mania3:summon]", text = "Incoming summon", sample = Icon("RaidFrame-Icon-SummonPending") },
 }
 
 local NUMBER_TAGS = {
-	{ tag = "[maniauf:curhp]", text = "Current health, abbreviated (57.2k)", sample = "57.2k" },
-	{ tag = "[maniauf:maxhp]", text = "Maximum health, abbreviated", sample = "58.0k" },
-	{ tag = "[maniauf:curpp]", text = "Current power, abbreviated", sample = "850" },
-	{ tag = "[maniauf:maxpp]", text = "Maximum power, abbreviated", sample = "1.0k" },
-	{ tag = "[maniauf:smartlevel]", text = "Same as [smartlevel], blank once at max level",
+	{ tag = "[mania3:curhp]", text = "Current health, abbreviated (57.2k)", sample = "57.2k" },
+	{ tag = "[mania3:maxhp]", text = "Maximum health, abbreviated", sample = "58.0k" },
+	{ tag = "[mania3:curpp]", text = "Current power, abbreviated", sample = "850" },
+	{ tag = "[mania3:maxpp]", text = "Maximum power, abbreviated", sample = "1.0k" },
+	{ tag = "[mania3:smartlevel]", text = "Same as [smartlevel], blank once at max level",
 		sample = "70+" },
 }
 
@@ -132,8 +132,8 @@ local GENERAL_TAGS = {
 }
 
 local TAG_GROUPS = {
-	{ title = "ManiaUF icons", tags = ICON_TAGS },
-	{ title = "ManiaUF numbers", tags = NUMBER_TAGS },
+	{ title = "oUF_Mania icons", tags = ICON_TAGS },
+	{ title = "oUF_Mania numbers", tags = NUMBER_TAGS },
 	{ title = "General", tags = GENERAL_TAGS },
 }
 

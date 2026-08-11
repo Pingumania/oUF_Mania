@@ -94,11 +94,11 @@ ns.DEFAULT_LEVELS = {
 }
 
 ns.DEFAULT_TAGS = {
-	name = { default = "[difficulty][maniauf:smartlevel<$ ][name]", pet = "[name]", focus = "[name]",
+	name = { default = "[difficulty][mania3:smartlevel<$ ][name]", pet = "[name]", focus = "[name]",
 		boss = "[name]", targettarget = "[name]" },
-	health = { default = "[maniauf:curhp]" },
-	custom1 = { default = "[group][maniauf:leader][maniauf:assistant]" },
-	custom2 = { default = "[maniauf:combat][maniauf:resting][maniauf:pvp][maniauf:phase]" },
+	health = { default = "[mania3:curhp]" },
+	custom1 = { default = "[group][mania3:leader][mania3:assistant]" },
+	custom2 = { default = "[mania3:combat][mania3:resting][mania3:pvp][mania3:phase]" },
 }
 
 ns.HIDDEN_BY_DEFAULT = {
@@ -194,7 +194,7 @@ end
 
 function ns:GetUnitSizes(key)
 	local width, height, power = ns:GetUnitSizeDefaults(key)
-	local stored = ManiaUFDB.units and ManiaUFDB.units[key]
+	local stored = oUF_ManiaDB.units and oUF_ManiaDB.units[key]
 
 	if stored then
 		width = stored.width or width
@@ -206,13 +206,13 @@ function ns:GetUnitSizes(key)
 end
 
 local function Store(key, field, value)
-	ManiaUFDB.units = ManiaUFDB.units or {}
-	ManiaUFDB.units[key] = ManiaUFDB.units[key] or {}
-	ManiaUFDB.units[key][field] = value
+	oUF_ManiaDB.units = oUF_ManiaDB.units or {}
+	oUF_ManiaDB.units[key] = oUF_ManiaDB.units[key] or {}
+	oUF_ManiaDB.units[key][field] = value
 end
 
 function ns:IsSyncEnabled(name)
-	return not not (ManiaUFDB.sync and ManiaUFDB.sync[name])
+	return not not (oUF_ManiaDB.sync and oUF_ManiaDB.sync[name])
 end
 
 function ns:GetSyncedKeys(key)
@@ -247,8 +247,8 @@ function ns:SetUnitSize(key, field, value)
 end
 
 function ns:SetSyncEnabled(name, enabled)
-	ManiaUFDB.sync = ManiaUFDB.sync or {}
-	ManiaUFDB.sync[name] = enabled
+	oUF_ManiaDB.sync = oUF_ManiaDB.sync or {}
+	oUF_ManiaDB.sync[name] = enabled
 
 	if name == MIRROR_SYNC then
 		if enabled then
@@ -277,7 +277,7 @@ function ns:SetSyncEnabled(name, enabled)
 end
 
 function ns:IsUnitPowerShown(key)
-	local stored = ManiaUFDB.units and ManiaUFDB.units[key]
+	local stored = oUF_ManiaDB.units and oUF_ManiaDB.units[key]
 	local shown = stored and stored.showPower
 
 	if shown == nil then
@@ -293,7 +293,7 @@ function ns:SetUnitPowerEnabled(key, enabled)
 end
 
 function ns:IsHealerPowerOnly(key)
-	local stored = ManiaUFDB.units and ManiaUFDB.units[key]
+	local stored = oUF_ManiaDB.units and oUF_ManiaDB.units[key]
 	return not not (stored and stored.healerPower)
 end
 
@@ -303,7 +303,7 @@ function ns:SetHealerPowerOnly(key, enabled)
 end
 
 function ns:GetUnitOffset(key)
-	local stored = ManiaUFDB.units and ManiaUFDB.units[key]
+	local stored = oUF_ManiaDB.units and oUF_ManiaDB.units[key]
 
 	if not stored then
 		return 0, 0
@@ -330,7 +330,7 @@ function ns:HasUnitSpacing(key)
 end
 
 function ns:GetUnitSpacing(key)
-	local stored = ManiaUFDB.units and ManiaUFDB.units[key]
+	local stored = oUF_ManiaDB.units and oUF_ManiaDB.units[key]
 	return stored and stored.spacing or DEFAULT_SPACINGS[key]
 end
 
@@ -340,7 +340,7 @@ function ns:SetUnitSpacing(key, value)
 end
 
 function ns:IsPartyVertical()
-	local stored = ManiaUFDB.units and ManiaUFDB.units.party
+	local stored = oUF_ManiaDB.units and oUF_ManiaDB.units.party
 	return not stored or stored.vertical ~= false
 end
 
@@ -350,7 +350,7 @@ function ns:SetPartyVertical(vertical)
 end
 
 function ns:IsPartyPlayerShown()
-	local stored = ManiaUFDB.units and ManiaUFDB.units.party
+	local stored = oUF_ManiaDB.units and oUF_ManiaDB.units.party
 	return not not (stored and stored.showPlayer)
 end
 
@@ -360,7 +360,7 @@ function ns:SetPartyPlayerShown(shown)
 end
 
 function ns:IsUnitEnabled(key)
-	local stored = ManiaUFDB.units and ManiaUFDB.units[key]
+	local stored = oUF_ManiaDB.units and oUF_ManiaDB.units[key]
 	return not stored or stored.enabled ~= false
 end
 
