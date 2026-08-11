@@ -197,6 +197,14 @@ local function IsHealer(unit)
 	return role == "HEALER"
 end
 
+local function IsFriendlyNPC(unit)
+	if not unit or issecretvalue(unit) then
+		return false
+	end
+
+	return not UnitIsPlayer(unit) and UnitIsFriend("player", unit)
+end
+
 local function PowerPostUpdate(element, unit, _, _, max)
 	local key = element.__owner.unitKey
 	local shown
@@ -204,6 +212,8 @@ local function PowerPostUpdate(element, unit, _, _, max)
 	if not ns:IsUnitPowerShown(key) then
 		shown = false
 	elseif ns:IsHealerPowerOnly(key) and IsHealer(unit) == false then
+		shown = false
+	elseif ns:IsHidingFriendlyNPCPower(key) and IsFriendlyNPC(unit) then
 		shown = false
 	elseif issecretvalue(max) then
 		shown = true

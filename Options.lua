@@ -64,7 +64,7 @@ local FRAME_SECTION = "frame"
 
 local FRAME_FIELDS = {
 	"enabled", "width", "height", "power", "showPower", "posX", "posY",
-	"spacing", "vertical", "showPlayer", "healerPower",
+	"spacing", "vertical", "showPlayer", "healerPower", "hideFriendlyNPCPower",
 }
 
 local ALL_KEY = ns.ALL_KEY
@@ -483,6 +483,12 @@ local function BuildFramePage(body, unit)
 		return ns:IsHealerPowerOnly(unit)
 	end, function(value)
 		ns:SetHealerPowerOnly(unit, value)
+	end)
+
+	row = AddToggleRow(body, row, "Hide on friendly NPCs", function()
+		return ns:IsHidingFriendlyNPCPower(unit)
+	end, function(value)
+		ns:SetHideFriendlyNPCPower(unit, value)
 	end)
 
 	if unit == "party" then

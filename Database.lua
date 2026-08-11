@@ -302,6 +302,16 @@ function ns:SetHealerPowerOnly(key, enabled)
 	ns:UpdatePower()
 end
 
+function ns:IsHidingFriendlyNPCPower(key)
+	local stored = oUF_ManiaDB.units and oUF_ManiaDB.units[key]
+	return not not (stored and stored.hideFriendlyNPCPower)
+end
+
+function ns:SetHideFriendlyNPCPower(key, enabled)
+	Store(key, "hideFriendlyNPCPower", enabled)
+	ns:UpdatePower()
+end
+
 function ns:GetUnitOffset(key)
 	local stored = oUF_ManiaDB.units and oUF_ManiaDB.units[key]
 
