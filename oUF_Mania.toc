@@ -14,12 +14,11 @@ Libs\oUF\oUF.xml
 Libs\Huddle\Embed.xml
 
 Tags.lua
-Database.lua
+Addon.lua
 Border.lua
 Elements.lua
 Preview.lua
 Style.lua
-Addon.lua
 Units.lua
 
 Options.lua

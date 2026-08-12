@@ -17,15 +17,15 @@ local styled = setmetatable({}, { __mode = "k" })
 ns.TEXT_PADDING = 4
 
 function ns:GetFontFile()
-	return LSM:Fetch("font", oUF_ManiaDB.font or LSM:GetDefault("font"))
+	return LSM:Fetch("font", ns.db.font or LSM:GetDefault("font"))
 end
 
 function ns:GetTexture()
-	return LSM:Fetch("statusbar", oUF_ManiaDB.texture or LSM:GetDefault("statusbar"))
+	return LSM:Fetch("statusbar", ns.db.texture or LSM:GetDefault("statusbar"))
 end
 
 function ns:GetFontSize()
-	return oUF_ManiaDB.fontSize or ns.DEFAULT_FONT_SIZE
+	return ns.db.fontSize or ns.Defaults.fontSize
 end
 
 function ns:GetFontSizeRange()
@@ -52,16 +52,16 @@ function ns:GetPowerColorModes()
 end
 
 function ns:GetHealthColorMode()
-	return oUF_ManiaDB.healthColorMode or ns.DEFAULT_BAR_COLOR_MODE
+	return ns.db.healthColorMode or ns.Defaults.barColorMode
 end
 
 function ns:GetHealthCustomColor()
-	local color = oUF_ManiaDB.healthCustomColor or ns.DEFAULT_BAR_CUSTOM_COLOR
+	local color = ns.db.healthCustomColor or ns.Defaults.barCustomColor
 	return color[1], color[2], color[3]
 end
 
 function ns:GetPowerColorMode()
-	return oUF_ManiaDB.powerColorMode or ns.DEFAULT_POWER_COLOR_MODE
+	return ns.db.powerColorMode or ns.Defaults.powerColorMode
 end
 
 local function HealthPostUpdateColor(element)
@@ -110,17 +110,17 @@ function ns:ApplyPowerColorMode()
 end
 
 function ns:SetHealthColorMode(value)
-	oUF_ManiaDB.healthColorMode = value
+	ns.db.healthColorMode = value
 	ns:ApplyHealthColorMode()
 end
 
 function ns:SetHealthCustomColor(r, g, b)
-	oUF_ManiaDB.healthCustomColor = { r, g, b }
+	ns.db.healthCustomColor = { r, g, b }
 	ns:ApplyHealthColorMode()
 end
 
 function ns:SetPowerColorMode(value)
-	oUF_ManiaDB.powerColorMode = value
+	ns.db.powerColorMode = value
 	ns:ApplyPowerColorMode()
 end
 

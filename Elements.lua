@@ -64,11 +64,11 @@ function ns:GetRoleIconStyles()
 end
 
 function ns:GetRoleIconStyle()
-	return oUF_ManiaDB.roleIcon or ROLE_STYLE_DEFAULT
+	return ns.db.roleIcon or ROLE_STYLE_DEFAULT
 end
 
 function ns:SetRoleIconStyle(value)
-	oUF_ManiaDB.roleIcon = value
+	ns.db.roleIcon = value
 	ns:UpdateElements()
 	ns:UpdateTags()
 end
@@ -138,11 +138,11 @@ function ns:GetQuestIconStyles()
 end
 
 function ns:GetQuestIconStyle()
-	return oUF_ManiaDB.questIcon or QUEST_ATLAS
+	return ns.db.questIcon or QUEST_ATLAS
 end
 
 function ns:SetQuestIconStyle(atlas)
-	oUF_ManiaDB.questIcon = atlas
+	ns.db.questIcon = atlas
 	ns:UpdateElements()
 end
 
@@ -254,14 +254,17 @@ local function ThreatPostUpdate(element, _, status)
 end
 
 local function StoreNested(unit, group, field, value)
-	oUF_ManiaDB.units = oUF_ManiaDB.units or {}
-	oUF_ManiaDB.units[unit] = oUF_ManiaDB.units[unit] or {}
-	oUF_ManiaDB.units[unit][group] = oUF_ManiaDB.units[unit][group] or {}
-	oUF_ManiaDB.units[unit][group][field] = value
+	local db = ns.db
+
+	db.units = db.units or {}
+	db.units[unit] = db.units[unit] or {}
+	db.units[unit][group] = db.units[unit][group] or {}
+	db.units[unit][group][field] = value
 end
 
 local function ReadNested(unit, group, field)
-	local stored = oUF_ManiaDB.units and oUF_ManiaDB.units[unit]
+	local db = ns.db
+	local stored = db.units and db.units[unit]
 	local sub = stored and stored[group]
 	return sub and sub[field]
 end
@@ -324,7 +327,8 @@ function ns:IsElementShown(unit, element)
 	local shown = ReadElement(unit, "elements", element)
 
 	if shown == nil then
-		local hidden = ns.HIDDEN_BY_DEFAULT[element]
+		local info = ns.Defaults.elements[element]
+		local hidden = info and info.hidden
 
 		if not hidden then
 			return true
@@ -348,7 +352,8 @@ function ns:SetElementShown(unit, element, shown)
 end
 
 function ns:GetElementOffset(unit, element)
-	local default = ns.DEFAULT_OFFSETS[element]
+	local info = ns.Defaults.elements[element]
+	local default = info and info.offset
 	local x = default and default[1] or 0
 	local y = default and default[2] or 0
 	local offset = ReadElement(unit, "offsets", element)
@@ -362,7 +367,9 @@ function ns:GetElementOffset(unit, element)
 end
 
 function ns:GetAnchorPoints(element)
-	if ns.DEFAULT_TAGS[element] then
+	local info = ns.Defaults.elements[element]
+
+	if info and info.tag then
 		return TEXT_POINTS
 	end
 
@@ -370,7 +377,8 @@ function ns:GetAnchorPoints(element)
 end
 
 function ns:HasElementAnchor(element)
-	return ns.DEFAULT_ANCHORS[element] ~= nil
+	local info = ns.Defaults.elements[element]
+	return not not (info and info.anchor)
 end
 
 function ns:GetElementAnchor(unit, element)
@@ -380,7 +388,8 @@ function ns:GetElementAnchor(unit, element)
 		return stored
 	end
 
-	local anchors = ns.DEFAULT_ANCHORS[element]
+	local info = ns.Defaults.elements[element]
+	local anchors = info and info.anchor
 
 	return anchors and (anchors[unit] or anchors.default)
 end
@@ -390,7 +399,8 @@ function ns:SetElementAnchor(unit, element, point)
 end
 
 function ns:HasElementWidth(element)
-	return ns.DEFAULT_TAGS[element] ~= nil
+	local info = ns.Defaults.elements[element]
+	return not not (info and info.tag)
 end
 
 function ns:GetElementWidth(unit, element)
@@ -402,7 +412,8 @@ function ns:SetElementWidth(unit, element, width)
 end
 
 function ns:HasElementLevel(element)
-	return ns.DEFAULT_LEVELS[element] ~= nil
+	local info = ns.Defaults.elements[element]
+	return info and info.level ~= nil
 end
 
 function ns:GetElementLevelRange()
@@ -410,7 +421,8 @@ function ns:GetElementLevelRange()
 end
 
 function ns:GetElementLevel(unit, element)
-	return ReadElement(unit, "levels", element) or ns.DEFAULT_LEVELS[element]
+	local info = ns.Defaults.elements[element]
+	return ReadElement(unit, "levels", element) or (info and info.level)
 end
 
 function ns:SetElementLevel(unit, element, level)
@@ -418,7 +430,8 @@ function ns:SetElementLevel(unit, element, level)
 end
 
 function ns:HasElementSize(element)
-	return ns.DEFAULT_ELEMENT_SIZES[element] ~= nil
+	local info = ns.Defaults.elements[element]
+	return not not (info and info.size)
 end
 
 function ns:GetElementSize(unit, element)
@@ -428,7 +441,8 @@ function ns:GetElementSize(unit, element)
 		return stored
 	end
 
-	local sizes = ns.DEFAULT_ELEMENT_SIZES[element]
+	local info = ns.Defaults.elements[element]
+	local sizes = info and info.size
 
 	return sizes and (sizes[unit] or sizes.default)
 end
@@ -456,7 +470,8 @@ function ns:GetElementTag(unit, element)
 		return stored
 	end
 
-	local tags = ns.DEFAULT_TAGS[element]
+	local info = ns.Defaults.elements[element]
+	local tags = info and info.tag
 
 	return tags and (tags[unit] or tags.default)
 end

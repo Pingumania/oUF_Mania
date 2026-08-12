@@ -398,9 +398,9 @@ end
 local function AddMediaRow(body, previous, label, mediaType, field)
 	return AddControlRow(body, previous, label, DROPDOWN_OFFSET, function(row)
 		return ns:CreateMediaDropdown(row, mediaType, function()
-			return oUF_ManiaDB[field] or LSM:GetDefault(mediaType)
+			return ns.db[field] or LSM:GetDefault(mediaType)
 		end, function(name)
-			oUF_ManiaDB[field] = name
+			ns.db[field] = name
 			ns:ApplyMedia()
 		end)
 	end, function(dropdown)
@@ -416,7 +416,7 @@ local function BuildGeneralPage(body)
 	row = AddSliderRow(body, row, "Font size", minSize, maxSize, function()
 		return ns:GetFontSize()
 	end, function(value)
-		oUF_ManiaDB.fontSize = value
+		ns.db.fontSize = value
 		ns:ApplyMedia()
 	end)
 
@@ -949,16 +949,18 @@ local function ApplyChanges(needsReload)
 end
 
 local function ResetGeneral()
-	oUF_ManiaDB.texture = nil
-	oUF_ManiaDB.font = nil
-	oUF_ManiaDB.fontSize = nil
-	oUF_ManiaDB.iconSize = nil
-	oUF_ManiaDB.sync = nil
-	oUF_ManiaDB.questIcon = nil
-	oUF_ManiaDB.roleIcon = nil
-	oUF_ManiaDB.healthColorMode = nil
-	oUF_ManiaDB.healthCustomColor = nil
-	oUF_ManiaDB.powerColorMode = nil
+	local db = ns.db
+
+	db.texture = nil
+	db.font = nil
+	db.fontSize = nil
+	db.iconSize = nil
+	db.sync = nil
+	db.questIcon = nil
+	db.roleIcon = nil
+	db.healthColorMode = nil
+	db.healthCustomColor = nil
+	db.powerColorMode = nil
 end
 
 local function ResetAll()
@@ -971,7 +973,7 @@ local function ResetAll()
 	end
 
 	ResetGeneral()
-	oUF_ManiaDB.units = nil
+	ns.db.units = nil
 
 	ApplyChanges(needsReload)
 end
@@ -980,12 +982,13 @@ local function ResetPage()
 	local unit = UNITS[unitIndex]
 	local storageUnit = unit.key
 	local needsReload
+	local db = ns.db
 
 	if selectedElement then
 		storageUnit = StorageUnit(unit.key, selectedElement.key)
 	end
 
-	local stored = oUF_ManiaDB.units and oUF_ManiaDB.units[storageUnit]
+	local stored = db.units and db.units[storageUnit]
 
 	if selectedElement then
 		local keys = { selectedElement.key }
@@ -1003,9 +1006,9 @@ local function ResetPage()
 		end
 
 		if selectedElement.key == "quest" then
-			oUF_ManiaDB.questIcon = nil
+			db.questIcon = nil
 		elseif selectedElement.key == "grouprole" then
-			oUF_ManiaDB.roleIcon = nil
+			db.roleIcon = nil
 		end
 	elseif unit.key == ALL_KEY then
 		ResetGeneral()

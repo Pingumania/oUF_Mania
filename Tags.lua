@@ -124,11 +124,11 @@ local RAID_MARKER_COLUMNS = 4
 local RESTING_SHEET = [[Interface\CharacterFrame\UI-StateIcon]]
 
 function ns:GetIconTagSize()
-	return oUF_ManiaDB.iconSize or ns.DEFAULT_ICON_SIZE
+	return ns.db.iconSize or ns.Defaults.iconSize
 end
 
 function ns:SetIconTagSize(size)
-	oUF_ManiaDB.iconSize = size
+	ns.db.iconSize = size
 	ns:UpdateTags()
 end
 
