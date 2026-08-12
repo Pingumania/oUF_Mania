@@ -20,6 +20,9 @@ ns.DEFAULT_ANCHORS = {
 	health = { default = "RIGHT" },
 	custom1 = { default = "CENTER" },
 	custom2 = { default = "CENTER" },
+	custom3 = { default = "CENTER" },
+	custom4 = { default = "CENTER" },
+	custom5 = { default = "CENTER" },
 	resting = { default = "TOPLEFT" },
 	leader = { default = "TOPLEFT" },
 	assistant = { default = "TOPLEFT" },
@@ -39,6 +42,9 @@ ns.DEFAULT_ANCHORS = {
 ns.DEFAULT_OFFSETS = {
 	custom1 = { 0, 12 },
 	custom2 = { 0, -12 },
+	custom3 = { 0, 36 },
+	custom4 = { 0, -36 },
+	custom5 = { 0, 0 },
 	resting = { 3, 8 },
 	leader = { 22, 4 },
 	assistant = { 36, 4 },
@@ -99,11 +105,17 @@ ns.DEFAULT_TAGS = {
 	health = { default = "[mania:curhp]" },
 	custom1 = { default = "[group][mania:leader][mania:assistant]" },
 	custom2 = { default = "[mania:combat][mania:resting][mania:pvp][mania:phase]" },
+	custom3 = { default = "" },
+	custom4 = { default = "" },
+	custom5 = { default = "" },
 }
 
 ns.HIDDEN_BY_DEFAULT = {
 	custom1 = { default = true },
 	custom2 = { default = true },
+	custom3 = { default = true },
+	custom4 = { default = true },
+	custom5 = { default = true },
 	combat = { default = false, party = true, boss = true },
 }
 
