@@ -84,8 +84,8 @@ ns.Defaults = {
 		castbarIcon = { anchor = { default = "LEFT", target = "RIGHT" } },
 		name = {
 			anchor = { default = "LEFT" },
-			tag = { default = "[difficulty][mania:smartlevel<$ ][name]", pet = "[name]", focus = "[name]",
-				boss = "[name]", targettarget = "[name]" },
+			tag = { default = "[difficulty][mania:smartlevel<$ ][mania:reset][name]", pet = "[name]",
+				focus = "[name]", boss = "[name]", targettarget = "[name]" },
 		},
 		health = {
 			anchor = { default = "RIGHT" },

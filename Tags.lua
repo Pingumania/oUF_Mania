@@ -132,6 +132,10 @@ function ns:SetIconTagSize(size)
 	ns:UpdateTags()
 end
 
+oUF.Tags.Methods["mania:reset"] = function()
+	return "|r"
+end
+
 local smartLevel = oUF.Tags.Methods["smartlevel"]
 
 oUF.Tags.Methods["mania:smartlevel"] = function(unit)

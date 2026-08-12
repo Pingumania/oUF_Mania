@@ -50,7 +50,7 @@ local RAID_MARKER_SAMPLE = ("|T%s:%d:%d:0:0:256:256:0:64:0:64|t"):format(
 local RESTING_SAMPLE = ("|T%s:%d:%d:0:0:64:64:0:32:0:27|t"):format(
 	RESTING_SHEET, SAMPLE_ICON_SIZE, SAMPLE_ICON_SIZE)
 
-local ICON_TAGS = {
+local MANIA_TAGS = {
 	{ tag = "[mania:leader]", text = "Group leader crown",
 		sample = Icon("UI-HUD-UnitFrame-Player-Group-LeaderIcon") },
 	{ tag = "[mania:assistant]", text = "Raid assistant",
@@ -66,15 +66,14 @@ local ICON_TAGS = {
 	{ tag = "[mania:phase]", text = "Phased", sample = Icon("RaidFrame-Icon-Phasing") },
 	{ tag = "[mania:resurrect]", text = "Incoming resurrect", sample = Icon("RaidFrame-Icon-Rez") },
 	{ tag = "[mania:summon]", text = "Incoming summon", sample = Icon("RaidFrame-Icon-SummonPending") },
-}
-
-local NUMBER_TAGS = {
 	{ tag = "[mania:curhp]", text = "Current health, abbreviated (57.2k)", sample = "57.2k" },
 	{ tag = "[mania:maxhp]", text = "Maximum health, abbreviated", sample = "58.0k" },
 	{ tag = "[mania:curpp]", text = "Current power, abbreviated", sample = "850" },
 	{ tag = "[mania:maxpp]", text = "Maximum power, abbreviated", sample = "1.0k" },
 	{ tag = "[mania:smartlevel]", text = "Same as [smartlevel], blank once at max level",
 		sample = "70+" },
+	{ tag = "[mania:reset]", text = "Cancel a color prefix (difficulty/powercolor/raidcolor/threatcolor)",
+		sample = "|r" },
 }
 
 local GENERAL_TAGS = {
@@ -132,8 +131,7 @@ local GENERAL_TAGS = {
 }
 
 local TAG_GROUPS = {
-	{ title = "oUF_Mania icons", tags = ICON_TAGS },
-	{ title = "oUF_Mania numbers", tags = NUMBER_TAGS },
+	{ title = "oUF_Mania", tags = MANIA_TAGS },
 	{ title = "General", tags = GENERAL_TAGS },
 }
 
