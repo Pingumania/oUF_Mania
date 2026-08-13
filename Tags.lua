@@ -6,85 +6,72 @@ local issecretvalue = issecretvalue
 local BREAKPOINTS = {
 	{
 		breakpoint = 1e12,
-		abbreviation = "B", -- B
-		significandDivisor = 1e10,
+		abbreviation = "B",
+		significandDivisor = 1e7,
 		fractionDivisor = 100,
 		abbreviationIsGlobal = false,
 	},
 	{
 		breakpoint = 1e11,
-		abbreviation = "B", -- B
+		abbreviation = "B",
 		significandDivisor = 1e9,
 		fractionDivisor = 1,
 		abbreviationIsGlobal = false,
 	},
 	{
 		breakpoint = 1e10,
-		abbreviation = "B", -- B
+		abbreviation = "B",
 		significandDivisor = 1e8,
 		fractionDivisor = 10,
 		abbreviationIsGlobal = false,
 	},
 	{
 		breakpoint = 1e9,
-		abbreviation = "B", -- B
+		abbreviation = "B",
 		significandDivisor = 1e7,
 		fractionDivisor = 100,
 		abbreviationIsGlobal = false,
 	},
 	{
 		breakpoint = 1e8,
-		abbreviation = "M", -- M
+		abbreviation = "M",
 		significandDivisor = 1e6,
 		fractionDivisor = 1,
 		abbreviationIsGlobal = false,
 	},
 	{
 		breakpoint = 1e7,
-		abbreviation = "M", -- M
+		abbreviation = "M",
 		significandDivisor = 1e5,
 		fractionDivisor = 10,
 		abbreviationIsGlobal = false,
 	},
 	{
 		breakpoint = 1e6,
-		abbreviation = "M", -- M
+		abbreviation = "M",
 		significandDivisor = 1e4,
 		fractionDivisor = 100,
 		abbreviationIsGlobal = false,
 	},
 	{
 		breakpoint = 1e5,
-		abbreviation = "K", -- K
+		abbreviation = "K",
 		significandDivisor = 1000,
 		fractionDivisor = 1,
 		abbreviationIsGlobal = false,
 	},
 	{
 		breakpoint = 1e4,
-		abbreviation = "K", -- K
+		abbreviation = "K",
 		significandDivisor = 100,
 		fractionDivisor = 10,
 		abbreviationIsGlobal = false,
 	}
 }
 
-local options = { breakpointData = BREAKPOINTS }
-local resolved
+local options = { config = CreateAbbreviateConfig(BREAKPOINTS) }
 
 local function FormatNumber(value)
-	if not resolved then
-		resolved = true
-
-		if C_AbbreviateConfig and C_AbbreviateConfig.CreateAbbreviateConfig then
-			local ok, config = pcall(C_AbbreviateConfig.CreateAbbreviateConfig, BREAKPOINTS)
-
-			if ok and config then
-				options = { config = config }
-			end
-		end
-	end
-
 	return AbbreviateNumbers(value, options)
 end
 
