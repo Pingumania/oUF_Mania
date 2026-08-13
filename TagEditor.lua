@@ -165,21 +165,25 @@ local function ParseBracket(bracket)
 	return name, prefix, suffix
 end
 
+local function ResolveBracketSample(bracket)
+	local name, prefix, suffix = ParseBracket(bracket)
+	local sample = SAMPLE_LOOKUP[name]
+
+	if not sample then
+		return "[" .. bracket .. "]"
+	end
+
+	return prefix .. sample .. suffix
+end
+
 local function RenderTag(tagString)
 	if not tagString or tagString == "" then
 		return nil
 	end
 
-	return (tagString:gsub(BRACKET_PATTERN, function(bracket)
-		local name, prefix, suffix = ParseBracket(bracket)
-		local sample = SAMPLE_LOOKUP[name]
+	local rendered = tagString:gsub(BRACKET_PATTERN, ResolveBracketSample)
 
-		if not sample then
-			return "[" .. bracket .. "]"
-		end
-
-		return prefix .. sample .. suffix
-	end)) .. "|r"
+	return rendered .. "|r"
 end
 
 local window
