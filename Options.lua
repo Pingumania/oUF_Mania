@@ -732,6 +732,14 @@ local function BuildElementPage(body, unit, info)
 		end)
 	end
 
+	if info.key == "pvp" then
+		row = AddDropdownRow(body, row, "Icon style", ns:GetPvPIconStyles(), function()
+			return ns:GetPvPIconStyle()
+		end, function(value)
+			ns:SetPvPIconStyle(value)
+		end)
+	end
+
 	if info.key ~= "castbar" and ns:HasElementSize(info.key) then
 		row = AddSliderRow(body, row, "Size", SIZE_MIN, SIZE_MAX, function()
 			return ns:GetElementSize(storageUnit, info.key)
@@ -958,6 +966,7 @@ local function ResetGeneral()
 	db.sync = nil
 	db.questIcon = nil
 	db.roleIcon = nil
+	db.pvpIcon = nil
 	db.healthColorMode = nil
 	db.healthCustomColor = nil
 	db.powerColorMode = nil
@@ -1009,6 +1018,8 @@ local function ResetPage()
 			db.questIcon = nil
 		elseif selectedElement.key == "grouprole" then
 			db.roleIcon = nil
+		elseif selectedElement.key == "pvp" then
+			db.pvpIcon = nil
 		end
 	elseif unit.key == ALL_KEY then
 		ResetGeneral()

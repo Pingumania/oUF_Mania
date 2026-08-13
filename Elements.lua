@@ -11,22 +11,91 @@ local THREAT_FADE = 0.25
 local THREAT_SUBLEVEL = -1
 local THREAT_ATLAS = "timerunning-redbutton-backglow"
 
-local PVP_ATLASES = {
-	Alliance = "questlog-questtypeicon-alliance",
-	Horde = "questlog-questtypeicon-horde",
-	FFA = "UI-HUD-UnitFrame-Player-PVP-FFAIcon",
+local PVP_FFA_ATLAS = "UI-HUD-UnitFrame-Player-PVP-FFAIcon"
+
+local PVP_ICON_STYLES = {
+	{ value = "questlog", label = "Quest log",
+		Alliance = "questlog-questtypeicon-alliance", Horde = "questlog-questtypeicon-horde",
+		FFA = PVP_FFA_ATLAS },
+	{ value = "unitframe", label = "Unit frame icon",
+		Alliance = "UI-HUD-UnitFrame-Player-PVP-AllianceIcon",
+		Horde = "UI-HUD-UnitFrame-Player-PVP-HordeIcon", FFA = PVP_FFA_ATLAS },
+	{ value = "questportrait", label = "Quest portrait",
+		Alliance = "QuestPortraitIcon-Alliance-small", Horde = "QuestPortraitIcon-Horde-small",
+		FFA = PVP_FFA_ATLAS },
+	{ value = "warfront", label = "Warfront banner",
+		Alliance = "AllianceWarfrontMapBanner", Horde = "HordeWarfrontMapBanner",
+		FFA = PVP_FFA_ATLAS },
+	{ value = "symbol", label = "Faction symbol",
+		Alliance = "AllianceSymbol", Horde = "HordeSymbol", FFA = PVP_FFA_ATLAS },
 }
 
+local PVP_STYLE_DEFAULT = PVP_ICON_STYLES[1].value
+
+function ns:GetPvPIconStyles()
+	return PVP_ICON_STYLES
+end
+
+function ns:GetPvPIconStyle()
+	return ns.db.pvpIcon or PVP_STYLE_DEFAULT
+end
+
+function ns:SetPvPIconStyle(value)
+	ns.db.pvpIcon = value
+	ns:UpdateElements()
+	ns:UpdateTags()
+end
+
+local pvpAtlasExists = {}
+
+function ns:GetPvPIcon(status)
+	if not status then
+		return nil
+	end
+
+	local value = ns:GetPvPIconStyle()
+	local atlas
+
+	for _, style in ipairs(PVP_ICON_STYLES) do
+		if style.value == value then
+			atlas = style[status]
+			break
+		end
+	end
+
+	if not atlas then
+		return nil
+	end
+
+	if pvpAtlasExists[atlas] == nil then
+		pvpAtlasExists[atlas] = C_Texture.GetAtlasInfo(atlas) ~= nil
+	end
+
+	return pvpAtlasExists[atlas] and atlas or nil
+end
+
 local function PvPPostUpdate(element, unit, status)
-	local atlas = status and PVP_ATLASES[status]
+	local atlas = ns:GetPvPIcon(status)
 
 	if atlas then
 		element:SetAtlas(atlas, false, nil, true)
 	end
 end
 
+local PVP_PREVIEW_ORDER = { "Alliance", "Horde", "FFA" }
+
 local function GetPvPPreviewVariants()
-	return { PVP_ATLASES.Alliance, PVP_ATLASES.Horde, PVP_ATLASES.FFA }
+	local variants = {}
+
+	for _, status in ipairs(PVP_PREVIEW_ORDER) do
+		local atlas = ns:GetPvPIcon(status)
+
+		if atlas then
+			variants[#variants + 1] = atlas
+		end
+	end
+
+	return variants
 end
 
 local RAIDROLE_ATLASES = { "RaidFrame-Icon-MainTank", "RaidFrame-Icon-MainAssist" }

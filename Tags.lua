@@ -101,11 +101,6 @@ end
 
 oUF.Tags.Events["mania:maxpp"] = "UNIT_MAXPOWER"
 
-local FACTION_ATLASES = {
-	Alliance = "questlog-questtypeicon-alliance",
-	Horde = "questlog-questtypeicon-horde",
-}
-
 local RAID_MARKER_SHEET = [[Interface\TargetingFrame\UI-RaidTargetingIcons]]
 local RAID_MARKER_COLUMNS = 4
 local RESTING_SHEET = [[Interface\CharacterFrame\UI-StateIcon]]
@@ -191,7 +186,7 @@ local function ReadPvPIcon(unit)
 		return
 	end
 
-	local atlas = FACTION_ATLASES[UnitFactionGroup(unit)]
+	local atlas = ns:GetPvPIcon(UnitFactionGroup(unit))
 
 	if atlas then
 		return Icon(atlas)
