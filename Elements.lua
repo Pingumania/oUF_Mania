@@ -677,6 +677,14 @@ function ns:ApplyElements(frame)
 		elements.quest:ForceUpdate()
 	end
 
+	if elements.pvp and frame:IsElementEnabled("PvPIndicator") then
+		elements.pvp:ForceUpdate()
+	end
+
+	if elements.grouprole and frame:IsElementEnabled("GroupRoleIndicator") then
+		elements.grouprole:ForceUpdate()
+	end
+
 	SetThreatArt(elements.threat)
 
 	if ns:ShouldPreview(unit, "threat") then
