@@ -166,40 +166,40 @@ local function IconTag(name, event, Read)
 	oUF.Tags.Events["mania:" .. name] = event
 end
 
-IconTag("leader", "UNIT_FLAGS PARTY_LEADER_CHANGED GROUP_ROSTER_UPDATE", function(unit)
+local function ReadLeaderIcon(unit)
 	if UnitIsGroupLeader(unit) then
 		return Icon("UI-HUD-UnitFrame-Player-Group-LeaderIcon")
 	end
-end)
+end
 
-IconTag("assistant", "GROUP_ROSTER_UPDATE", function(unit)
+local function ReadAssistantIcon(unit)
 	if UnitIsGroupAssistant(unit) and not UnitIsGroupLeader(unit) then
 		return Icon("UI-HUD-UnitFrame-Player-Group-GuideIcon")
 	end
-end)
+end
 
-IconTag("role", "PLAYER_ROLES_ASSIGNED GROUP_ROSTER_UPDATE", function(unit)
+local function ReadRoleIcon(unit)
 	local atlas = ns:GetRoleIcon(UnitGroupRolesAssigned(unit))
 
 	if atlas then
 		return Icon(atlas)
 	end
-end)
+end
 
-IconTag("combat", "UNIT_FLAGS", function(unit)
+local function ReadCombatIcon(unit)
 	if UnitAffectingCombat(unit) then
 		return Icon("UI-HUD-UnitFrame-Player-CombatIcon")
 	end
-end)
+end
 
-IconTag("resting", "PLAYER_UPDATE_RESTING", function(unit)
+local function ReadRestingIcon(unit)
 	if unit == "player" and IsResting() then
 		local size = ns:GetIconTagSize()
 		return ("|T%s:%d:%d:0:0:64:64:0:32:0:27|t"):format(RESTING_SHEET, size, size)
 	end
-end)
+end
 
-IconTag("pvp", "UNIT_FACTION", function(unit)
+local function ReadPvPIcon(unit)
 	if not UnitIsPVP(unit) then
 		return
 	end
@@ -209,33 +209,33 @@ IconTag("pvp", "UNIT_FACTION", function(unit)
 	if atlas then
 		return Icon(atlas)
 	end
-end)
+end
 
-IconTag("quest", "UNIT_CLASSIFICATION_CHANGED", function(unit)
+local function ReadQuestIcon(unit)
 	if UnitIsQuestBoss(unit) then
 		return Icon(ns:GetQuestIconStyle())
 	end
-end)
+end
 
-IconTag("phase", "UNIT_PHASE", function(unit)
+local function ReadPhaseIcon(unit)
 	if UnitPhaseReason(unit) then
 		return Icon("RaidFrame-Icon-Phasing")
 	end
-end)
+end
 
-IconTag("resurrect", "INCOMING_RESURRECT_CHANGED", function(unit)
+local function ReadResurrectIcon(unit)
 	if UnitHasIncomingResurrection(unit) then
 		return Icon("RaidFrame-Icon-Rez")
 	end
-end)
+end
 
-IconTag("summon", "INCOMING_SUMMON_CHANGED", function(unit)
+local function ReadSummonIcon(unit)
 	if C_IncomingSummon.HasIncomingSummon(unit) then
 		return Icon("RaidFrame-Icon-SummonPending")
 	end
-end)
+end
 
-IconTag("raidtarget", "RAID_TARGET_UPDATE", function(unit)
+local function ReadRaidTargetIcon(unit)
 	local index = GetRaidTargetIndex(unit)
 
 	if not index then
@@ -250,4 +250,16 @@ IconTag("raidtarget", "RAID_TARGET_UPDATE", function(unit)
 
 	return ("|T%s:%d:%d:0:0:256:256:%d:%d:%d:%d|t"):format(RAID_MARKER_SHEET, size, size,
 		left, left + 64, top, top + 64)
-end)
+end
+
+IconTag("leader", "UNIT_FLAGS PARTY_LEADER_CHANGED GROUP_ROSTER_UPDATE", ReadLeaderIcon)
+IconTag("assistant", "GROUP_ROSTER_UPDATE", ReadAssistantIcon)
+IconTag("role", "PLAYER_ROLES_ASSIGNED GROUP_ROSTER_UPDATE", ReadRoleIcon)
+IconTag("combat", "UNIT_FLAGS", ReadCombatIcon)
+IconTag("resting", "PLAYER_UPDATE_RESTING", ReadRestingIcon)
+IconTag("pvp", "UNIT_FACTION", ReadPvPIcon)
+IconTag("quest", "UNIT_CLASSIFICATION_CHANGED", ReadQuestIcon)
+IconTag("phase", "UNIT_PHASE", ReadPhaseIcon)
+IconTag("resurrect", "INCOMING_RESURRECT_CHANGED", ReadResurrectIcon)
+IconTag("summon", "INCOMING_SUMMON_CHANGED", ReadSummonIcon)
+IconTag("raidtarget", "RAID_TARGET_UPDATE", ReadRaidTargetIcon)
