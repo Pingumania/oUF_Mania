@@ -126,14 +126,14 @@ ns.Defaults = {
 		},
 		combat = {
 			anchor = { default = "BOTTOM" },
-			offset = { 0, -5 },
+			offset = { 0, -2 },
 			size = { default = 16, pet = 14, targettarget = 14 },
 			level = OVERLAY_LEVEL,
 			hidden = { default = false, party = true, boss = true },
 		},
 		phase = {
 			anchor = { default = "CENTER" },
-			offset = { 0, 16 },
+			offset = { 0, 0 },
 			size = { default = 32, pet = 22, targettarget = 22 },
 			level = OVERLAY_LEVEL,
 		},
@@ -169,13 +169,13 @@ ns.Defaults = {
 		},
 		resurrect = {
 			anchor = { default = "CENTER" },
-			offset = { -18, 0 },
+			offset = { 0, 0 },
 			size = { default = 32, pet = 22, targettarget = 22 },
 			level = OVERLAY_LEVEL,
 		},
 		summon = {
 			anchor = { default = "CENTER" },
-			offset = { 18, 0 },
+			offset = { 0, 0 },
 			size = { default = 32, pet = 22, targettarget = 22 },
 			level = OVERLAY_LEVEL,
 		},
