@@ -1,5 +1,7 @@
 local _, ns = ...
 
+local EMPTY = {}
+
 ns.ALL_KEY = "all"
 ns.ELEMENT_GROUPS = {
 	"elements", "offsets", "anchors", "widths", "sizes", "tags", "linked", "levels",
@@ -274,9 +276,123 @@ local RESTING_FRAMES = 42
 
 local LEVEL_MIN, LEVEL_MAX = 0, 10
 
-local CUSTOM_TEXT_KEYS = { "custom1", "custom2", "custom3", "custom4", "custom5" }
+local CUSTOM_TEXT_PREFIX = "customText"
 
-ns.TEXT_ELEMENTS = { "name", "health", unpack(CUSTOM_TEXT_KEYS) }
+local function CustomTextKey(id)
+	return CUSTOM_TEXT_PREFIX .. id
+end
+
+local function FindCustomTextIndex(key)
+	for index, entry in ipairs(ns.db.customTexts or EMPTY) do
+		if CustomTextKey(entry.id) == key then
+			return index
+		end
+	end
+end
+
+local function CustomTextDefaults()
+	return {
+		anchor = { default = "CENTER" },
+		offset = { 0, 0 },
+		tag = { default = "" },
+		hidden = { default = true },
+	}
+end
+
+ns.TEXT_ELEMENTS = { "name", "health" }
+ns.CUSTOM_TEXT_ELEMENTS = {}
+
+function ns:RebuildTextElements()
+	local custom = ns.CUSTOM_TEXT_ELEMENTS
+	local all = ns.TEXT_ELEMENTS
+	local key
+
+	for index = #custom, 1, -1 do
+		custom[index] = nil
+	end
+
+	for index = #all, 1, -1 do
+		all[index] = nil
+	end
+
+	all[1], all[2] = "name", "health"
+
+	for _, entry in ipairs(ns.db.customTexts or EMPTY) do
+		key = CustomTextKey(entry.id)
+		custom[#custom + 1] = key
+		all[#all + 1] = key
+		ns.Defaults.elements[key] = ns.Defaults.elements[key] or CustomTextDefaults()
+	end
+end
+
+function ns:GetCustomTexts()
+	local entries = {}
+
+	for _, entry in ipairs(ns.db.customTexts or EMPTY) do
+		entries[#entries + 1] = { key = CustomTextKey(entry.id), label = entry.label }
+	end
+
+	return entries
+end
+
+function ns:AddCustomTextElement(label)
+	local db = ns.db
+	local id = (db.nextCustomTextId or 0) + 1
+	local key = CustomTextKey(id)
+
+	db.nextCustomTextId = id
+	db.customTexts = db.customTexts or {}
+	db.customTexts[#db.customTexts + 1] = { id = id, label = label }
+
+	ns:RebuildTextElements()
+	ns:CreateLiveTextElement(key)
+
+	return key
+end
+
+function ns:RenameCustomTextElement(key, label)
+	local index = FindCustomTextIndex(key)
+
+	if index then
+		ns.db.customTexts[index].label = label
+	end
+end
+
+function ns:RemoveCustomTextElement(key)
+	local db = ns.db
+	local index = FindCustomTextIndex(key)
+
+	if index then
+		table.remove(db.customTexts, index)
+	end
+
+	ns.Defaults.elements[key] = nil
+
+	for _, stored in next, db.units or EMPTY do
+		for _, group in ipairs(ns.ELEMENT_GROUPS) do
+			if stored[group] then
+				stored[group][key] = nil
+			end
+		end
+	end
+
+	ns:RebuildTextElements()
+	ns:RemoveLiveTextElement(key)
+end
+
+function ns:ResetCustomTextElements()
+	local db = ns.db
+
+	for _, key in ipairs(ns.CUSTOM_TEXT_ELEMENTS) do
+		ns.Defaults.elements[key] = nil
+		ns:RemoveLiveTextElement(key)
+	end
+
+	db.customTexts = nil
+	db.nextCustomTextId = nil
+
+	ns:RebuildTextElements()
+end
 
 local threatAtlasExists
 
@@ -790,7 +906,7 @@ function ns:PlaceElements(frame)
 	local healthPoint = PlaceText(frame, elements.health, unit, "health")
 	local namePoint, nameWidth = PlaceText(frame, elements.name, unit, "name")
 
-	for _, key in ipairs(CUSTOM_TEXT_KEYS) do
+	for _, key in ipairs(ns.CUSTOM_TEXT_ELEMENTS) do
 		PlaceText(frame, elements[key], unit, key)
 	end
 

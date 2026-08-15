@@ -31,6 +31,8 @@ function ns:OnLoad()
 	oUF_ManiaDB.profiles[profileName] = oUF_ManiaDB.profiles[profileName] or {}
 	ns.db = oUF_ManiaDB.profiles[profileName]
 
+	ns:RebuildTextElements()
+
 	oUF:RegisterStyle("oUF_Mania", ns.Style)
 	oUF:SetActiveStyle("oUF_Mania")
 end
@@ -90,36 +92,6 @@ ns.Defaults = {
 		health = {
 			anchor = { default = "RIGHT" },
 			tag = { default = "[mania:curhp]" },
-		},
-		custom1 = {
-			anchor = { default = "CENTER" },
-			offset = { 0, 12 },
-			tag = { default = "[group][mania:leader][mania:assistant]" },
-			hidden = { default = true },
-		},
-		custom2 = {
-			anchor = { default = "CENTER" },
-			offset = { 0, -12 },
-			tag = { default = "[mania:combat][mania:resting][mania:pvp][mania:phase]" },
-			hidden = { default = true },
-		},
-		custom3 = {
-			anchor = { default = "CENTER" },
-			offset = { 0, 36 },
-			tag = { default = "" },
-			hidden = { default = true },
-		},
-		custom4 = {
-			anchor = { default = "CENTER" },
-			offset = { 0, -36 },
-			tag = { default = "" },
-			hidden = { default = true },
-		},
-		custom5 = {
-			anchor = { default = "CENTER" },
-			offset = { 0, 0 },
-			tag = { default = "" },
-			hidden = { default = true },
 		},
 		resting = {
 			anchor = { default = "TOPLEFT" },

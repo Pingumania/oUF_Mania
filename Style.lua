@@ -443,6 +443,42 @@ function ns:UpdateTags()
 	end
 end
 
+function ns:CreateLiveTextElement(key)
+	local text
+
+	for frame, texts in next, styled do
+		text = CreateText(frame.Health, ns:GetElementAnchor(frame.unitKey, key))
+		frame.elements[key] = text
+		texts[#texts + 1] = text
+	end
+
+	ns:UpdateElements()
+	ns:UpdateTags()
+	ns:DeferMethod(ns, "UpdatePixelGeometry")
+end
+
+function ns:RemoveLiveTextElement(key)
+	local text
+
+	for frame, texts in next, styled do
+		text = frame.elements[key]
+
+		if text then
+			frame:Untag(text)
+			text:Hide()
+			text:ClearAllPoints()
+			frame.elements[key] = nil
+
+			for index, existing in ipairs(texts) do
+				if existing == text then
+					table.remove(texts, index)
+					break
+				end
+			end
+		end
+	end
+end
+
 function ns:UpdatePower()
 	for frame in next, styled do
 		if frame.Power and frame:IsElementEnabled("Power") then
