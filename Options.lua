@@ -17,7 +17,6 @@ local INNER_HEIGHT = LIST_HEIGHT + 2 * INNER_PAD
 local LIST_Y = INNER_Y + INNER_PAD
 local WINDOW_HEIGHT = INNER_Y + INNER_HEIGHT + INNER_BOTTOM
 local LIST_SPACING = 2
-local LIST_ROW_HEIGHT = 20
 local LIST_BAR_INSET = 14
 local CONTENT_GAP = 16
 local CONTENT_RIGHT = -22
@@ -44,12 +43,14 @@ local CASTBAR_WIDTH_MIN, CASTBAR_WIDTH_MAX = 0, 400
 
 local SCROLL_BAR_INSET = 22
 local SCROLL_BAR_GAP = 8
+local SCROLL_TOLERANCE = 1
 
 local SLIDER_WIDTH = 250
 local SLIDER_INPUT_OFFSET = 25
 local TAG_INPUT_OFFSET = 8
 local TAG_BUTTON_OFFSET = 8
 local TAG_INPUT_WIDTH = SLIDER_WIDTH + SLIDER_INPUT_OFFSET - TAG_INPUT_OFFSET - TAG_BUTTON_OFFSET
+local TAG_BUTTON_RIGHT = CONTROL_COLUMN + SLIDER_WIDTH + SLIDER_INPUT_OFFSET + TAG_BUTTON_WIDTH
 
 local PREVIEW_SHOW = "Preview"
 local PREVIEW_ALL = "Preview all"
@@ -87,14 +88,10 @@ for _, key in ipairs(ns.UNIT_KEYS) do
 	UNITS[#UNITS + 1] = { key = key, label = UNIT_LABELS[key] }
 end
 
+local CUSTOM_TEXT_SECTION = "customtext"
+
 local ELEMENTS = {
-	{ key = "name", label = "Name text", tag = true },
-	{ key = "health", label = "Health text", tag = true },
-	{ key = "custom1", label = "Custom text 1", tag = true },
-	{ key = "custom2", label = "Custom text 2", tag = true },
-	{ key = "custom3", label = "Custom text 3", tag = true },
-	{ key = "custom4", label = "Custom text 4", tag = true },
-	{ key = "custom5", label = "Custom text 5", tag = true },
+	{ key = CUSTOM_TEXT_SECTION, label = "Text", custom = true },
 	{ key = "castbar", label = "Cast bar", extra = { "castbarIcon", "castbarLatency", "castbarWidth" } },
 	{ key = "resting", label = "Resting icon" },
 	{ key = "combat", label = "Combat icon" },
@@ -113,18 +110,12 @@ local ELEMENTS = {
 	{ key = "threat", label = "Threat glow" },
 }
 
-local LINK_COLUMNS = 4
-local LINK_COLUMN_WIDTH = 150
-local LINK_LINE_HEIGHT = 26
+local LINK_PADDING = 12
+local LINK_WIDTH = TAG_BUTTON_RIGHT + LINK_PADDING
+local LINK_TOGGLE_GAP = 2
+local LINK_LINE_HEIGHT = 30
 local LINK_BUTTON_WIDTH = 60
 local LINK_BUTTON_GAP = 6
-local LINK_LABEL_Y = 6
-local LINK_LABEL_HEIGHT = 12
-local LINK_INSET = 30
-local LINK_LABEL_WIDTH = 110
-local LINK_BUTTON_RIGHT = 14
-local LINK_DIVIDER_GAP = 10
-local DIVIDER_PIXELS = 1
 
 local EMPTY = {}
 local AXES = { "x", "y" }
@@ -273,27 +264,39 @@ local function RegisterControl(body, row, control)
 	return row
 end
 
-local function CreateRow(body, previous, label, height)
-	local row = CreateFrame("Frame", nil, body)
-	height = height or ROW_HEIGHT
-	body.contentHeight = body.contentHeight + height + ROW_SPACING
-	row:SetHeight(height)
-	row:SetPoint("LEFT", body, "LEFT", 0, 0)
-	row:SetPoint("RIGHT", body, "RIGHT", 0, 0)
+local function PlaceRow(body, row, previous, height)
+	height = height or row:GetHeight()
 
 	if previous then
-		row:SetPoint("TOP", previous, "BOTTOM", 0, -ROW_SPACING)
-	else
-		row:SetPoint("TOP", body, "TOP", 0, 0)
+		body.contentHeight = body.contentHeight + ROW_SPACING
 	end
 
-	local text = row:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-	text:SetPoint("LEFT", row, "LEFT", LABEL_INSET, 0)
-	text:SetPoint("RIGHT", row, "LEFT", CONTROL_COLUMN - LABEL_GAP, 0)
-	text:SetJustifyH("LEFT")
-	text:SetWordWrap(false)
-	text:SetText(label)
-	row.Label = text
+	body.contentHeight = body.contentHeight + height
+	ns:SetHeight(row, height)
+	ns:SetPoint(row, "LEFT", body, "LEFT", 0, 0)
+	ns:SetPoint(row, "RIGHT", body, "RIGHT", 0, 0)
+
+	if previous then
+		ns:SetPoint(row, "TOP", previous, "BOTTOM", 0, -ROW_SPACING)
+	else
+		ns:SetPoint(row, "TOP", body, "TOP", 0, 0)
+	end
+
+	return row
+end
+
+local function CreateRow(body, previous, label, height)
+	local row = PlaceRow(body, CreateFrame("Frame", nil, body), previous, height or ROW_HEIGHT)
+
+	if label then
+		local text = row:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+		text:SetPoint("LEFT", row, "LEFT", LABEL_INSET, 0)
+		text:SetPoint("RIGHT", row, "LEFT", CONTROL_COLUMN - LABEL_GAP, 0)
+		text:SetJustifyH("LEFT")
+		text:SetWordWrap(false)
+		text:SetText(label)
+		row.Label = text
+	end
 
 	return row
 end
@@ -535,41 +538,53 @@ local function SetRowEnabled(entry, enabled)
 end
 
 local function AddLinkRow(body, previous, element, units)
-	local lines = math.ceil(#units / LINK_COLUMNS)
-	local row = CreateRow(body, previous, "Units using these settings",
-		(lines + 1) * LINK_LINE_HEIGHT + 2 * LINK_DIVIDER_GAP)
+	local available = LINK_WIDTH - 2 * LINK_PADDING
+	local top = 2 * LINK_PADDING + BUTTON_HEIGHT
+	local row = CreateRow(body, previous, nil, LINK_LINE_HEIGHT)
 
-	row.Label:ClearAllPoints()
-	row.Label:SetPoint("TOPLEFT", row, "TOPLEFT", LABEL_INSET, -LINK_LABEL_Y)
+	local inset = ns:CreateInset(body)
+	ns:SetPoint(inset, "TOPLEFT", row, "TOPLEFT", 0, 0)
+	ns:SetPoint(inset, "BOTTOMLEFT", row, "BOTTOMLEFT", 0, LINK_PADDING)
 
-	local divider = row:CreateTexture(nil, "ARTWORK")
-	divider:SetAtlas("Options_HorizontalDivider")
-	ns:SetPoint(divider, "BOTTOMLEFT", row, "BOTTOMLEFT", LABEL_INSET, LINK_DIVIDER_GAP)
-	ns:SetPoint(divider, "BOTTOMRIGHT", row, "BOTTOMRIGHT", -LINK_BUTTON_RIGHT, LINK_DIVIDER_GAP)
-
-	body.refreshers[#body.refreshers + 1] = function()
-		ns:SetHeight(divider, ns:PixelSize(divider, DIVIDER_PIXELS))
-	end
+	local header = ns:CreateSectionHeader(row, "Applies to")
+	header.Divider:Hide()
+	ns:SetHeight(header, BUTTON_HEIGHT)
+	ns:SetPoint(header, "TOPLEFT", inset, "TOPLEFT", LINK_PADDING, -LINK_PADDING)
+	ns:SetPoint(header, "TOPRIGHT", inset, "TOPRIGHT", -LINK_PADDING, -LINK_PADDING)
+	ns:SetPoint(header.Title, "LEFT", header, "LEFT", 0, 0)
 
 	local toggles = {}
-	local toggle, column, line
+	local x, line, toggleHeight = 0, 0, LINK_LINE_HEIGHT
+	local toggle, toggleWidth
 
 	for index, key in ipairs(units) do
-		column = (index - 1) % LINK_COLUMNS
-		line = math.floor((index - 1) / LINK_COLUMNS)
-
 		toggle = ns:CreateToggle(row, UNIT_LABELS[key], function()
 			return ns:IsElementLinked(key, element)
 		end, function(value)
 			ns:SetElementLinked(key, element, value)
 			RefreshAll()
 		end)
-		toggle:SetPoint("TOPLEFT", row, "TOPLEFT",
-			LINK_INSET + LINK_LABEL_WIDTH + column * LINK_COLUMN_WIDTH,
-			-(line + 1) * LINK_LINE_HEIGHT)
 
+		toggleWidth = toggle:GetWidth() + toggle.Text:GetStringWidth() + LINK_TOGGLE_GAP
+		toggleHeight = toggle:GetHeight()
+
+		if x > 0 and x + toggleWidth > available then
+			x, line = 0, line + 1
+		end
+
+		ns:SetPoint(toggle, "TOPLEFT", row, "TOPLEFT",
+			LINK_PADDING + x + toggleWidth - toggle:GetWidth(),
+			-(top + line * LINK_LINE_HEIGHT))
+
+		x = x + toggleWidth + LINK_PADDING
 		toggles[index] = toggle
 	end
+
+	local rowHeight = top + line * LINK_LINE_HEIGHT + toggleHeight + 2 * LINK_PADDING
+
+	body.contentHeight = body.contentHeight + rowHeight - LINK_LINE_HEIGHT
+	ns:SetHeight(row, rowHeight)
+	ns:SetWidth(inset, LINK_WIDTH)
 
 	local function SetAll(linked)
 		for _, key in ipairs(units) do
@@ -579,18 +594,17 @@ local function AddLinkRow(body, previous, element, units)
 		RefreshAll()
 	end
 
-	local none = ns:CreateButton(row, "None", function()
+	local none = ns:CreateButton(header, "None", function()
 		SetAll(false)
 	end)
 	none:SetSize(LINK_BUTTON_WIDTH, BUTTON_HEIGHT)
-	none:SetPoint("RIGHT", row, "TOPRIGHT", -LINK_BUTTON_RIGHT,
-		-(LINK_LABEL_Y + LINK_LABEL_HEIGHT / 2))
+	ns:SetPoint(none, "RIGHT", header, "RIGHT", 0, 0)
 
-	local all = ns:CreateButton(row, "All", function()
+	local all = ns:CreateButton(header, "All", function()
 		SetAll(true)
 	end)
 	all:SetSize(LINK_BUTTON_WIDTH, BUTTON_HEIGHT)
-	all:SetPoint("RIGHT", none, "LEFT", -LINK_BUTTON_GAP, 0)
+	ns:SetPoint(all, "RIGHT", none, "LEFT", -LINK_BUTTON_GAP, 0)
 
 	body.refreshers[#body.refreshers + 1] = function()
 		for index, key in ipairs(units) do
@@ -772,6 +786,175 @@ local function BuildElementPage(body, unit, info)
 	end
 end
 
+local CUSTOM_TEXT_TAB_WIDTH = 640
+local DELETE_CUSTOM_TEXT_POPUP = "OUF_MANIA_DELETE_CUSTOM_TEXT"
+
+local function CustomTextEntries()
+	local entries = {
+		{ key = "name", label = "Name text", locked = true },
+		{ key = "health", label = "Health text", locked = true },
+	}
+
+	for _, entry in ipairs(ns:GetCustomTexts()) do
+		entries[#entries + 1] = { key = entry.key, label = entry.label }
+	end
+
+	return entries
+end
+
+local function CustomTextLabel(key)
+	for _, entry in ipairs(CustomTextEntries()) do
+		if entry.key == key then
+			return entry.label
+		end
+	end
+end
+
+local function GateMouseWheel(scroll)
+	local onMouseWheel = scroll:GetScript("OnMouseWheel")
+
+	scroll:SetScript("OnMouseWheel", function(self, value)
+		if self.scrollable then
+			onMouseWheel(self, value)
+		end
+	end)
+end
+
+local function UpdateScrollBar(scroll, scrollBar, content)
+	local viewport = scroll:GetHeight()
+	local overflow = content:GetHeight() - viewport
+
+	if overflow <= SCROLL_TOLERANCE then
+		content:SetHeight(viewport)
+		scroll:SetVerticalScroll(0)
+		overflow = 0
+	end
+
+	scroll.scrollable = overflow > 0
+	scrollBar:SetShown(scroll.scrollable)
+end
+
+local function BuildCustomTextPage(body, unit)
+	body.selectedTextKey = body.selectedTextKey or "name"
+	body.fieldsByKey = body.fieldsByKey or {}
+
+	local function ForgetFields(key)
+		if body.fieldsByKey[key] then
+			body.fieldsByKey[key]:Hide()
+			body.fieldsByKey[key] = nil
+		end
+	end
+
+	local function ShowFields()
+		local key = body.selectedTextKey
+		local fields = body.fieldsByKey[key]
+
+		if not fields then
+			fields = CreateFrame("Frame", nil, body)
+			fields.refreshers = {}
+			fields.controls = {}
+			fields.contentHeight = 0
+			fields:SetPoint("TOPLEFT", body.strip, "BOTTOMLEFT", 0, -PAGE_GAP)
+			fields:SetPoint("RIGHT", body, "RIGHT", 0, 0)
+
+			BuildElementPage(fields, unit, { key = key, label = CustomTextLabel(key), tag = true })
+			fields:SetHeight(fields.contentHeight)
+
+			body.fieldsByKey[key] = fields
+		end
+
+		for otherKey, other in next, body.fieldsByKey do
+			other:SetShown(otherKey == key)
+		end
+
+		body.fields = fields
+		RefreshPage({ content = fields })
+
+		body.contentHeight = body.strip:GetHeight() + PAGE_GAP + fields.contentHeight
+		body:SetHeight(body.contentHeight)
+
+		if body.container then
+			UpdateScrollBar(body.container.scroll, body.container.scrollBar, body)
+		end
+	end
+
+	function body:Resync()
+		for key in next, body.fieldsByKey do
+			if not CustomTextLabel(key) then
+				ForgetFields(key)
+			end
+		end
+
+		if not CustomTextLabel(body.selectedTextKey) then
+			body.selectedTextKey = "name"
+		end
+
+		body.strip:SetEntries(CustomTextEntries(), body.selectedTextKey)
+		ShowFields()
+	end
+
+	local function SelectText(key)
+		body.selectedTextKey = key
+		body.strip:SetEntries(CustomTextEntries(), key)
+		ShowFields()
+	end
+
+	local function CreateText(label)
+		local key = ns:AddCustomTextElement(label)
+
+		body.selectedTextKey = key
+		body.strip:SetEntries(CustomTextEntries(), key)
+		ShowFields()
+	end
+
+	local function RenameText(key, label)
+		ns:RenameCustomTextElement(key, label)
+		body.strip:SetEntries(CustomTextEntries(), body.selectedTextKey)
+		ForgetFields(key)
+
+		if body.selectedTextKey == key then
+			ShowFields()
+		end
+	end
+
+	local function DoDeleteText(key)
+		if body.selectedTextKey == key then
+			local entries = CustomTextEntries()
+
+			for index, entry in ipairs(entries) do
+				if entry.key == key then
+					body.selectedTextKey = entries[index - 1] and entries[index - 1].key or "name"
+					break
+				end
+			end
+		end
+
+		ns:RemoveCustomTextElement(key)
+		ForgetFields(key)
+		body.strip:SetEntries(CustomTextEntries(), body.selectedTextKey)
+		ShowFields()
+	end
+
+	local function DeleteText(key)
+		StaticPopup_Show(DELETE_CUSTOM_TEXT_POPUP, CustomTextLabel(key), nil, function()
+			DoDeleteText(key)
+		end)
+	end
+
+	body.strip = ns:CreateEditableTabStrip(body, CUSTOM_TEXT_TAB_WIDTH, SelectText, CreateText, RenameText,
+		DeleteText)
+	body.strip:SetPoint("TOPLEFT", body, "TOPLEFT", 0, 0)
+
+	body.refreshers[1] = function()
+		for _, refresh in ipairs(body.fields.refreshers) do
+			refresh()
+		end
+	end
+
+	body.strip:SetEntries(CustomTextEntries(), body.selectedTextKey)
+	ShowFields()
+end
+
 local function CreatePage(parent)
 	local container = CreateFrame("Frame", nil, parent)
 	container:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -PAGE_GAP)
@@ -799,10 +982,12 @@ local function CreatePage(parent)
 	end)
 
 	ScrollUtil.InitScrollFrameWithScrollBar(scroll, scrollBar)
+	GateMouseWheel(scroll)
 
 	container.content = content
 	container.scroll = scroll
 	container.scrollBar = scrollBar
+	content.container = container
 
 	return container
 end
@@ -827,7 +1012,7 @@ local function ShowPage(unit, section, build)
 	end
 
 	RefreshPage(page)
-	page.scrollBar:SetShown(page.content:GetHeight() > page.scroll:GetHeight() + 1)
+	UpdateScrollBar(page.scroll, page.scrollBar, page.content)
 end
 
 local function SelectSection(index)
@@ -849,6 +1034,10 @@ local function SelectSection(index)
 	elseif not element then
 		ShowPage(unit.key, FRAME_SECTION, function(body)
 			BuildFramePage(body, unit.key)
+		end)
+	elseif element.custom then
+		ShowPage(unit.key, element.key, function(body)
+			BuildCustomTextPage(body, unit.key)
 		end)
 	else
 		ShowPage(unit.key, element.key, function(body)
@@ -918,9 +1107,9 @@ local function BuildList()
 		button:ClearAllPoints()
 
 		if previous then
-			button:SetPoint("TOPLEFT", previous, "BOTTOMLEFT", 0, -LIST_SPACING)
+			ns:SetPoint(button, "TOPLEFT", previous, "BOTTOMLEFT", 0, -LIST_SPACING)
 		else
-			button:SetPoint("TOPLEFT", list, "TOPLEFT", 0, 0)
+			ns:SetPoint(button, "TOPLEFT", list, "TOPLEFT", 0, 0)
 		end
 
 		button:Show()
@@ -931,10 +1120,10 @@ local function BuildList()
 		buttons[index]:Hide()
 	end
 
-	local height = #entries * (LIST_ROW_HEIGHT + LIST_SPACING)
+	local height = #entries * button:GetHeight() + (#entries - 1) * LIST_SPACING
 
-	list:SetHeight(math.max(height, LIST_HEIGHT))
-	listScrollBar:SetShown(height > LIST_HEIGHT)
+	ns:SetHeight(list, math.max(height, LIST_HEIGHT))
+	UpdateScrollBar(listScroll, listScrollBar, list)
 
 	SelectSection(1)
 end
@@ -982,9 +1171,25 @@ local function ResetAll()
 	end
 
 	ResetGeneral()
+	ns:ResetCustomTextElements()
 	ns.db.units = nil
 
+	local page
+
+	for _, info in ipairs(UNITS) do
+		page = pages[info.key .. "/" .. CUSTOM_TEXT_SECTION]
+
+		if page and page.built then
+			page.content:Resync()
+		end
+	end
+
 	ApplyChanges(needsReload)
+end
+
+local function SelectedTextKey(unit)
+	local page = pages[unit.key .. "/" .. CUSTOM_TEXT_SECTION]
+	return page and page.content.selectedTextKey
 end
 
 local function ResetPage()
@@ -992,15 +1197,20 @@ local function ResetPage()
 	local storageUnit = unit.key
 	local needsReload
 	local db = ns.db
+	local elementKey = selectedElement and selectedElement.key
+
+	if selectedElement and selectedElement.custom then
+		elementKey = SelectedTextKey(unit) or elementKey
+	end
 
 	if selectedElement then
-		storageUnit = StorageUnit(unit.key, selectedElement.key)
+		storageUnit = StorageUnit(unit.key, elementKey)
 	end
 
 	local stored = db.units and db.units[storageUnit]
 
 	if selectedElement then
-		local keys = { selectedElement.key }
+		local keys = { elementKey }
 
 		for _, extra in ipairs(selectedElement.extra or EMPTY) do
 			keys[#keys + 1] = extra
@@ -1014,11 +1224,11 @@ local function ResetPage()
 			end
 		end
 
-		if selectedElement.key == "quest" then
+		if elementKey == "quest" then
 			db.questIcon = nil
-		elseif selectedElement.key == "grouprole" then
+		elseif elementKey == "grouprole" then
 			db.roleIcon = nil
-		elseif selectedElement.key == "pvp" then
+		elseif elementKey == "pvp" then
 			db.pvpIcon = nil
 		end
 	elseif unit.key == ALL_KEY then
@@ -1056,10 +1266,22 @@ StaticPopupDialogs[DEFAULTS_POPUP] = {
 	hideOnEscape = true,
 }
 
+StaticPopupDialogs[DELETE_CUSTOM_TEXT_POPUP] = {
+	text = "Delete %s?",
+	button1 = DELETE or "Delete",
+	button2 = CANCEL,
+	OnAccept = function(self)
+		self.data()
+	end,
+	timeout = 0,
+	whileDead = true,
+	hideOnEscape = true,
+}
+
 local function BuildWindow()
 	local frame = CreateFrame("Frame", WINDOW_NAME, UIParent, "DefaultPanelFlatTemplate")
-	frame:SetSize(WINDOW_WIDTH, WINDOW_HEIGHT)
-	frame:SetPoint("CENTER")
+	ns:SetSize(frame, WINDOW_WIDTH, WINDOW_HEIGHT)
+	ns:SetPoint(frame, "CENTER", UIParent, "CENTER", 0, 0)
 	frame:SetFrameStrata("HIGH")
 	frame:SetToplevel(true)
 	frame:EnableMouse(true)
@@ -1067,6 +1289,10 @@ local function BuildWindow()
 	frame:Hide()
 
 	window = frame
+
+	frame:HookScript("OnShow", function(self)
+		ns:SnapToPixelGrid(self)
+	end)
 
 	frame:HookScript("OnHide", function()
 		ns:StopAllElementPreviews()
@@ -1093,8 +1319,8 @@ local function BuildWindow()
 	tabs:SetPoint("TOPLEFT", frame, "TOPLEFT", TAB_X, -TAB_Y)
 
 	listScroll = CreateFrame("ScrollFrame", nil, frame)
-	listScroll:SetSize(LIST_WIDTH, LIST_HEIGHT)
-	listScroll:SetPoint("TOPLEFT", frame, "TOPLEFT", LIST_X, -LIST_Y)
+	ns:SetSize(listScroll, LIST_WIDTH, LIST_HEIGHT)
+	ns:SetPoint(listScroll, "TOPLEFT", frame, "TOPLEFT", LIST_X, -LIST_Y)
 	listScroll:EnableMouseWheel(true)
 
 	listScrollBar = CreateFrame("EventFrame", nil, frame, "MinimalScrollBar")
@@ -1102,10 +1328,11 @@ local function BuildWindow()
 	listScrollBar:SetPoint("BOTTOMLEFT", listScroll, "BOTTOMRIGHT", -LIST_BAR_INSET, 0)
 
 	list = CreateFrame("Frame", nil, listScroll)
-	list:SetSize(LIST_WIDTH, LIST_HEIGHT)
+	ns:SetSize(list, LIST_WIDTH, LIST_HEIGHT)
 	listScroll:SetScrollChild(list)
 
 	ScrollUtil.InitScrollFrameWithScrollBar(listScroll, listScrollBar)
+	GateMouseWheel(listScroll)
 
 	content = CreateFrame("Frame", nil, frame)
 	content:SetPoint("TOPLEFT", listScroll, "TOPRIGHT", CONTENT_GAP, 0)
