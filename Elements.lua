@@ -254,6 +254,23 @@ local INDICATORS = {
 		atlas = "RaidFrame-Icon-SummonPending" },
 }
 
+local PRIORITY_SECTION = "prioritygroups"
+local PRIORITY_PREFIX = "priorityGroup"
+
+ns.PRIORITY_SECTION = PRIORITY_SECTION
+
+local function PriorityGroupKey(id)
+	return PRIORITY_PREFIX .. id
+end
+
+local PRIORITY_ELEMENTS = { "resting" }
+local PRIORITY_OUF_ELEMENTS = { resting = "RestingIndicator" }
+
+for _, info in ipairs(INDICATORS) do
+	PRIORITY_ELEMENTS[#PRIORITY_ELEMENTS + 1] = info.key
+	PRIORITY_OUF_ELEMENTS[info.key] = info.element
+end
+
 local TEXT_POINTS = { "LEFT", "CENTER", "RIGHT" }
 
 local ANCHOR_POINTS = {
@@ -666,6 +683,217 @@ function ns:SetElementTag(unit, element, tagString)
 	ns:UpdateTags()
 end
 
+local function FindPriorityGroupIndex(key)
+	for index, entry in ipairs(ns.db.priorityGroups or EMPTY) do
+		if PriorityGroupKey(entry.id) == key then
+			return index
+		end
+	end
+end
+
+function ns:GetPriorityGroups()
+	local entries = {}
+
+	for _, entry in ipairs(ns.db.priorityGroups or EMPTY) do
+		entries[#entries + 1] = { key = PriorityGroupKey(entry.id), label = entry.label }
+	end
+
+	return entries
+end
+
+function ns:HasPriorityGroups()
+	return ns.db.priorityGroups ~= nil and #ns.db.priorityGroups > 0
+end
+
+function ns:AddPriorityGroup(label)
+	local db = ns.db
+	local id = (db.nextPriorityGroupId or 0) + 1
+
+	db.nextPriorityGroupId = id
+	db.priorityGroups = db.priorityGroups or {}
+	db.priorityGroups[#db.priorityGroups + 1] = { id = id, label = label }
+
+	return PriorityGroupKey(id)
+end
+
+function ns:RenamePriorityGroup(key, label)
+	local index = FindPriorityGroupIndex(key)
+
+	if index then
+		ns.db.priorityGroups[index].label = label
+	end
+end
+
+function ns:RemovePriorityGroup(key)
+	local db = ns.db
+	local index = FindPriorityGroupIndex(key)
+
+	if index then
+		table.remove(db.priorityGroups, index)
+	end
+
+	for _, stored in next, db.units or EMPTY do
+		if stored.groups then
+			stored.groups[key] = nil
+		end
+	end
+
+	ns:UpdateElements()
+end
+
+local DEFAULT_GROUP_LABEL = "Center Icons"
+local DEFAULT_GROUP_MEMBERS = { "readycheck", "resurrect", "summon", "phase" }
+
+local function SeedGroupMembers(unit, key)
+	local members = {}
+
+	for _, element in ipairs(DEFAULT_GROUP_MEMBERS) do
+		if unit == ns.ALL_KEY or ns:HasElement(unit, element) then
+			members[#members + 1] = element
+		end
+	end
+
+	if #members > 0 then
+		StoreNested(unit, "groups", key, members)
+	end
+
+	if unit ~= ns.ALL_KEY then
+		StoreNested(unit, "linked", PRIORITY_SECTION, true)
+	end
+end
+
+function ns:SeedDefaultPriorityGroup()
+	if ns.db.priorityGroups then
+		return
+	end
+
+	local key = ns:AddPriorityGroup(DEFAULT_GROUP_LABEL)
+
+	SeedGroupMembers(ns.ALL_KEY, key)
+
+	for _, unit in ipairs(ns.UNIT_KEYS) do
+		SeedGroupMembers(unit, key)
+	end
+end
+
+function ns:ResetPriorityGroups()
+	local db = ns.db
+
+	db.priorityGroups = nil
+	db.nextPriorityGroupId = nil
+
+	ns:SeedDefaultPriorityGroup()
+	ns:UpdateElements()
+end
+
+function ns:ResetPriorityMembers(unit)
+	local groups = ns.db.priorityGroups
+
+	if groups and groups[1] and groups[1].label == DEFAULT_GROUP_LABEL then
+		SeedGroupMembers(unit, PriorityGroupKey(groups[1].id))
+	end
+end
+
+local function PriorityStorageUnit(unit)
+	if ns:IsElementLinked(unit, PRIORITY_SECTION) then
+		return ns.ALL_KEY
+	end
+
+	return unit
+end
+
+function ns:GetPriorityMembers(unit, key)
+	return ReadNested(PriorityStorageUnit(unit), "groups", key) or EMPTY
+end
+
+local function FindMemberIndex(members, element)
+	for index = 1, #members do
+		if members[index] == element then
+			return index
+		end
+	end
+end
+
+function ns:GetPriorityGroupOf(unit, element)
+	local storageUnit = PriorityStorageUnit(unit)
+	local stored = ns.db.units and ns.db.units[storageUnit]
+	local groups = stored and stored.groups
+
+	if not groups then
+		return nil
+	end
+
+	for key, members in next, groups do
+		if FindMemberIndex(members, element) then
+			return key
+		end
+	end
+
+	return nil
+end
+
+function ns:GetPriorityCandidates(unit)
+	local candidates = {}
+
+	for _, element in ipairs(PRIORITY_ELEMENTS) do
+		if (unit == ns.ALL_KEY or ns:HasElement(unit, element))
+			and not ns:GetPriorityGroupOf(unit, element) then
+			candidates[#candidates + 1] = element
+		end
+	end
+
+	return candidates
+end
+
+function ns:AddPriorityMember(unit, key, element)
+	local storageUnit = PriorityStorageUnit(unit)
+	local previous = ns:GetPriorityGroupOf(unit, element)
+	local members
+
+	if previous == key then
+		return
+	end
+
+	if previous then
+		members = ReadNested(storageUnit, "groups", previous)
+		table.remove(members, FindMemberIndex(members, element))
+	end
+
+	members = ReadNested(storageUnit, "groups", key)
+
+	if not members then
+		members = {}
+		StoreNested(storageUnit, "groups", key, members)
+	end
+
+	members[#members + 1] = element
+
+	ns:UpdateElements()
+end
+
+function ns:RemovePriorityMember(unit, key, element)
+	local members = ReadNested(PriorityStorageUnit(unit), "groups", key)
+	local index = members and FindMemberIndex(members, element)
+
+	if index then
+		table.remove(members, index)
+	end
+
+	ns:UpdateElements()
+end
+
+function ns:MovePriorityMember(unit, key, element, delta)
+	local members = ReadNested(PriorityStorageUnit(unit), "groups", key)
+	local index = members and FindMemberIndex(members, element)
+	local target = index and index + delta
+
+	if index and target >= 1 and target <= #members then
+		members[index], members[target] = members[target], members[index]
+	end
+
+	ns:UpdateElements()
+end
+
 local function RestingPostUpdate(element, isResting)
 	if isResting then
 		element.Anim:Play()
@@ -758,6 +986,152 @@ function ns:ApplyElementText(frame)
 	end
 end
 
+local function PriorityWanted(frame)
+	local wanted = frame.priorityWanted
+
+	if not wanted then
+		wanted = {}
+		frame.priorityWanted = wanted
+	end
+
+	return wanted
+end
+
+local function SetPriorityShown(frame, element, shown)
+	local region = frame.elements[element]
+
+	if not region or region:IsShown() == shown then
+		return
+	end
+
+	region:SetShown(shown)
+
+	if region.Anim then
+		if shown then
+			region.Anim:Play()
+		else
+			region.Anim:Stop()
+		end
+	end
+
+	if not shown and region.Animation and region.Animation:IsPlaying() then
+		region.Animation:Stop()
+		PriorityWanted(frame)[element] = nil
+	end
+end
+
+local function ApplyPriorityGroup(frame, key)
+	local members = ns:GetPriorityMembers(frame.unitKey, key)
+	local wanted = PriorityWanted(frame)
+	local winner
+
+	for index = 1, #members do
+		if wanted[members[index]] then
+			winner = members[index]
+			break
+		end
+	end
+
+	for index = 1, #members do
+		SetPriorityShown(frame, members[index], members[index] == winner)
+	end
+end
+
+local function PriorityPostUpdate(element, ...)
+	local frame = element.__owner
+
+	PriorityWanted(frame)[element.priorityElement] = element:IsShown()
+
+	if element.priorityPostUpdate then
+		element.priorityPostUpdate(element, ...)
+	end
+
+	ApplyPriorityGroup(frame, element.priorityGroup)
+end
+
+local function PriorityFadeOut(element)
+	local frame = element.__owner
+
+	PriorityWanted(frame)[element.priorityElement] = nil
+
+	if element.priorityFadeOut then
+		element.priorityFadeOut(element)
+	end
+
+	ApplyPriorityGroup(frame, element.priorityGroup)
+end
+
+local function SetPriorityWrapper(frame, element, key)
+	local region = frame.elements[element]
+
+	if not region then
+		return
+	end
+
+	if key then
+		if region.PostUpdate ~= PriorityPostUpdate then
+			region.priorityPostUpdate = region.PostUpdate
+			region.PostUpdate = PriorityPostUpdate
+		end
+
+		if element == "readycheck" and region.PostUpdateFadeOut ~= PriorityFadeOut then
+			region.priorityFadeOut = region.PostUpdateFadeOut
+			region.PostUpdateFadeOut = PriorityFadeOut
+		end
+
+		region.priorityElement = element
+		region.priorityGroup = key
+	elseif region.PostUpdate == PriorityPostUpdate then
+		region.PostUpdate = region.priorityPostUpdate
+		region.priorityPostUpdate = nil
+
+		if region.PostUpdateFadeOut == PriorityFadeOut then
+			region.PostUpdateFadeOut = region.priorityFadeOut
+			region.priorityFadeOut = nil
+		end
+
+		region.priorityElement = nil
+		region.priorityGroup = nil
+	end
+end
+
+function ns:ApplyPriorityGroups(frame)
+	local unit = frame.unitKey
+	local wasActive = frame.priorityActive
+	local allowed = ns:HasPriorityGroups() and not ns:AnyPreviewActive(unit)
+
+	if not allowed and not wasActive then
+		return
+	end
+
+	local wanted = PriorityWanted(frame)
+	local grouped = false
+	local element, key, region
+
+	for index = 1, #PRIORITY_ELEMENTS do
+		element = PRIORITY_ELEMENTS[index]
+		key = allowed and ns:GetPriorityGroupOf(unit, element) or nil
+		grouped = grouped or key ~= nil
+		wanted[element] = nil
+		SetPriorityWrapper(frame, element, key)
+	end
+
+	frame.priorityActive = grouped or nil
+
+	if not frame.__unit or (not grouped and not wasActive) then
+		return
+	end
+
+	for index = 1, #PRIORITY_ELEMENTS do
+		element = PRIORITY_ELEMENTS[index]
+		region = frame.elements[element]
+
+		if region and frame:IsElementEnabled(PRIORITY_OUF_ELEMENTS[element]) then
+			region:ForceUpdate()
+		end
+	end
+end
+
 function ns:ApplyElements(frame)
 	local unit = frame.unitKey
 	local elements = frame.elements
@@ -816,6 +1190,8 @@ function ns:ApplyElements(frame)
 			ns:SetOUFElement(frame, "RestingIndicator", ns:IsElementShown(unit, "resting"))
 		end
 	end
+
+	ns:ApplyPriorityGroups(frame)
 end
 
 function ns:ApplyTags(frame)

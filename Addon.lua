@@ -32,6 +32,7 @@ function ns:OnLoad()
 	ns.db = oUF_ManiaDB.profiles[profileName]
 
 	ns:RebuildTextElements()
+	ns:SeedDefaultPriorityGroup()
 
 	oUF:RegisterStyle("oUF_Mania", ns.Style)
 	oUF:SetActiveStyle("oUF_Mania")

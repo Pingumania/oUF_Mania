@@ -108,6 +108,7 @@ local ELEMENTS = {
 	{ key = "pvp", label = "PvP icon" },
 	{ key = "pvpclass", label = "PvP classification" },
 	{ key = "threat", label = "Threat glow" },
+	{ key = ns.PRIORITY_SECTION, label = "Priority groups", priority = true },
 }
 
 local LINK_PADDING = 12
@@ -955,6 +956,265 @@ local function BuildCustomTextPage(body, unit)
 	ShowFields()
 end
 
+local PRIORITY_SECTION = ns.PRIORITY_SECTION
+local PRIORITY_TAB_WIDTH = 640
+local STEPPER_GAP = 4
+local PRIORITY_LIST_WIDTH = TAG_BUTTON_RIGHT
+local DELETE_PRIORITY_GROUP_POPUP = "OUF_MANIA_DELETE_PRIORITY_GROUP"
+local PRIORITY_DESCRIPTION = "Only one indicator in a group is shown at a time. The one highest in "
+	.. "the list wins, and the rest stay hidden while it is visible. Groups themselves are shared "
+	.. "by every unit, but which indicators are in them, and in what order, is set per unit."
+
+local function ElementLabel(key)
+	for _, info in ipairs(ELEMENTS) do
+		if info.key == key then
+			return info.label
+		end
+	end
+
+	return key
+end
+
+local function PriorityGroupLabel(key)
+	for _, entry in ipairs(ns:GetPriorityGroups()) do
+		if entry.key == key then
+			return entry.label
+		end
+	end
+end
+
+local function ResyncPriorityPages()
+	local page
+
+	for _, info in ipairs(UNITS) do
+		page = pages[info.key .. "/" .. PRIORITY_SECTION]
+
+		if page and page.built then
+			page.content:Resync()
+		end
+	end
+end
+
+local function BuildPriorityPage(body, unit)
+	local units = ns:GetElementUnits(PRIORITY_SECTION)
+	local multiUnit = #units > 1
+	local groups = ns:GetPriorityGroups()
+
+	body.selectedGroupKey = body.selectedGroupKey or (groups[1] and groups[1].key)
+
+	local function MemberEntries()
+		local entries = {}
+
+		if body.selectedGroupKey then
+			for _, element in ipairs(ns:GetPriorityMembers(unit, body.selectedGroupKey)) do
+				entries[#entries + 1] = { key = element, label = ElementLabel(element) }
+			end
+		end
+
+		return entries
+	end
+
+	local function Candidates()
+		local options = {}
+
+		for _, element in ipairs(ns:GetPriorityCandidates(unit)) do
+			options[#options + 1] = { value = element, label = ElementLabel(element) }
+		end
+
+		return options
+	end
+
+	local function Layout()
+		local hasGroup = body.selectedGroupKey ~= nil
+		local candidates
+
+		if body.pendingElement and ns:GetPriorityGroupOf(unit, body.pendingElement) then
+			body.pendingElement = nil
+		end
+
+		if not body.pendingElement then
+			candidates = Candidates()
+			body.pendingElement = candidates[1] and candidates[1].value
+		end
+
+		body.members:SetShown(hasGroup)
+		body.list:SetShown(hasGroup)
+		body.list:SetEntries(MemberEntries())
+
+		body.contentHeight = body.description:GetHeight() + PAGE_GAP + body.strip:GetHeight()
+			+ PAGE_GAP + body.links:GetHeight()
+
+		if hasGroup then
+			body.contentHeight = body.contentHeight + PAGE_GAP + body.members:GetHeight()
+				+ PAGE_GAP + body.list:GetHeight()
+		end
+
+		body:SetHeight(body.contentHeight)
+
+		if body.container then
+			UpdateScrollBar(body.container.scroll, body.container.scrollBar, body)
+		end
+	end
+
+	local function SelectGroup(key)
+		body.selectedGroupKey = key
+		body.pendingElement = nil
+		body.strip:SetEntries(ns:GetPriorityGroups(), key)
+		Layout()
+	end
+
+	local function CreateGroup(label)
+		body.selectedGroupKey = ns:AddPriorityGroup(label)
+		body.pendingElement = nil
+		ResyncPriorityPages()
+	end
+
+	local function RenameGroup(key, label)
+		ns:RenamePriorityGroup(key, label)
+		ResyncPriorityPages()
+	end
+
+	local function DoDeleteGroup(key)
+		local entries = ns:GetPriorityGroups()
+
+		if body.selectedGroupKey == key then
+			for index, entry in ipairs(entries) do
+				if entry.key == key then
+					body.selectedGroupKey = (entries[index - 1] or entries[index + 1] or EMPTY).key
+					break
+				end
+			end
+		end
+
+		ns:RemovePriorityGroup(key)
+		ResyncPriorityPages()
+		RefreshAll()
+	end
+
+	local function DeleteGroup(key)
+		StaticPopup_Show(DELETE_PRIORITY_GROUP_POPUP, PriorityGroupLabel(key), nil, function()
+			DoDeleteGroup(key)
+		end)
+	end
+
+	body.description = ns:CreateDescription(body, PRIORITY_TAB_WIDTH - LABEL_INSET,
+		PRIORITY_DESCRIPTION)
+	body.description:SetPoint("TOPLEFT", body, "TOPLEFT", LABEL_INSET, 0)
+
+	body.strip = ns:CreateEditableTabStrip(body, PRIORITY_TAB_WIDTH, SelectGroup, CreateGroup,
+		RenameGroup, DeleteGroup)
+	body.strip:SetPoint("TOPLEFT", body.description, "BOTTOMLEFT", -LABEL_INSET, -PAGE_GAP)
+
+	local links = CreateFrame("Frame", nil, body)
+	links.refreshers = {}
+	links.controls = {}
+	links.contentHeight = 0
+	links:SetPoint("TOPLEFT", body.strip, "BOTTOMLEFT", 0, -PAGE_GAP)
+	links:SetPoint("RIGHT", body, "RIGHT", 0, 0)
+	body.links = links
+
+	if unit == ALL_KEY then
+		if multiUnit then
+			AddLinkRow(links, nil, PRIORITY_SECTION, units)
+		end
+	elseif multiUnit then
+		AddToggleRow(links, nil, "Use All units settings", function()
+			return ns:IsElementLinked(unit, PRIORITY_SECTION)
+		end, function(value)
+			ns:SetElementLinked(unit, PRIORITY_SECTION, value)
+			ResyncPriorityPages()
+			RefreshAll()
+		end)
+	end
+
+	links:SetHeight(links.contentHeight)
+
+	local members = CreateFrame("Frame", nil, body)
+	members.refreshers = {}
+	members.controls = {}
+	members.contentHeight = 0
+	members:SetPoint("TOPLEFT", links, "BOTTOMLEFT", 0, -PAGE_GAP)
+	members:SetPoint("RIGHT", body, "RIGHT", 0, 0)
+	body.members = members
+
+	local addButton, addDropdown, addRow
+
+	AddControlRow(members, nil, "Add indicator", DROPDOWN_OFFSET, function(controlRow)
+		local dropdown = ns:CreateDropdown(controlRow, Candidates, function()
+			return body.pendingElement
+		end, function(value)
+			body.pendingElement = value
+		end)
+
+		addDropdown = dropdown
+		addRow = controlRow
+
+		addButton = ns:CreateButton(controlRow, "Add", function()
+			if body.pendingElement and body.selectedGroupKey then
+				ns:AddPriorityMember(unit, body.selectedGroupKey, body.pendingElement)
+				body.pendingElement = nil
+				ResyncPriorityPages()
+				RefreshAll()
+			end
+		end)
+		addButton:SetSize(LINK_BUTTON_WIDTH, BUTTON_HEIGHT)
+
+		return dropdown
+	end, function(dropdown)
+		dropdown:GenerateMenu()
+	end)
+
+	addButton:SetPoint("RIGHT", addRow, "LEFT", TAG_BUTTON_RIGHT, 0)
+
+	addDropdown:ClearAllPoints()
+	addDropdown:SetPoint("RIGHT", addButton, "LEFT",
+		-(TAG_BUTTON_OFFSET + STEPPER_GAP + addDropdown.IncrementButton:GetWidth()), 0)
+
+	members:SetHeight(members.contentHeight)
+
+	body.list = ns:CreateOrderedList(body, PRIORITY_LIST_WIDTH, function(key, delta)
+		ns:MovePriorityMember(unit, body.selectedGroupKey, key, delta)
+		ResyncPriorityPages()
+	end, function(key)
+		ns:RemovePriorityMember(unit, body.selectedGroupKey, key)
+		body.pendingElement = nil
+		ResyncPriorityPages()
+		RefreshAll()
+	end)
+	body.list:SetPoint("TOP", members, "BOTTOM", 0, -PAGE_GAP)
+
+	function body:Resync()
+		if not PriorityGroupLabel(body.selectedGroupKey) then
+			body.selectedGroupKey = (ns:GetPriorityGroups()[1] or EMPTY).key
+		end
+
+		body.strip:SetEntries(ns:GetPriorityGroups(), body.selectedGroupKey)
+		Layout()
+	end
+
+	body.refreshers[#body.refreshers + 1] = function()
+		local editable = unit == ALL_KEY or not ns:IsElementLinked(unit, PRIORITY_SECTION)
+
+		for _, entry in ipairs(members.controls) do
+			SetRowEnabled(entry, editable)
+		end
+
+		addButton:SetEnabled(editable and body.pendingElement ~= nil)
+		body.list:SetEnabled(editable)
+
+		for _, refresh in ipairs(links.refreshers) do
+			refresh()
+		end
+
+		for _, refresh in ipairs(members.refreshers) do
+			refresh()
+		end
+	end
+
+	body.strip:SetEntries(groups, body.selectedGroupKey)
+	Layout()
+end
+
 local function CreatePage(parent)
 	local container = CreateFrame("Frame", nil, parent)
 	container:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -PAGE_GAP)
@@ -1038,6 +1298,10 @@ local function SelectSection(index)
 	elseif element.custom then
 		ShowPage(unit.key, element.key, function(body)
 			BuildCustomTextPage(body, unit.key)
+		end)
+	elseif element.priority then
+		ShowPage(unit.key, element.key, function(body)
+			BuildPriorityPage(body, unit.key)
 		end)
 	else
 		ShowPage(unit.key, element.key, function(body)
@@ -1161,6 +1425,8 @@ local function ResetGeneral()
 	db.powerColorMode = nil
 end
 
+local RESYNC_SECTIONS = { CUSTOM_TEXT_SECTION, PRIORITY_SECTION }
+
 local function ResetAll()
 	local needsReload
 
@@ -1173,14 +1439,17 @@ local function ResetAll()
 	ResetGeneral()
 	ns:ResetCustomTextElements()
 	ns.db.units = nil
+	ns:ResetPriorityGroups()
 
 	local page
 
 	for _, info in ipairs(UNITS) do
-		page = pages[info.key .. "/" .. CUSTOM_TEXT_SECTION]
+		for _, section in ipairs(RESYNC_SECTIONS) do
+			page = pages[info.key .. "/" .. section]
 
-		if page and page.built then
-			page.content:Resync()
+			if page and page.built then
+				page.content:Resync()
+			end
 		end
 	end
 
@@ -1230,6 +1499,18 @@ local function ResetPage()
 			db.roleIcon = nil
 		elseif elementKey == "pvp" then
 			db.pvpIcon = nil
+		elseif elementKey == PRIORITY_SECTION then
+			if stored then
+				stored.groups = nil
+			end
+
+			ns:ResetPriorityMembers(storageUnit)
+
+			local page = pages[unit.key .. "/" .. PRIORITY_SECTION]
+
+			if page and page.built then
+				page.content:Resync()
+			end
 		end
 	elseif unit.key == ALL_KEY then
 		ResetGeneral()
@@ -1261,6 +1542,18 @@ StaticPopupDialogs[DEFAULTS_POPUP] = {
 	button3 = CURRENT_SETTINGS or "These Settings",
 	OnAccept = ResetAll,
 	OnAlt = ResetPage,
+	timeout = 0,
+	whileDead = true,
+	hideOnEscape = true,
+}
+
+StaticPopupDialogs[DELETE_PRIORITY_GROUP_POPUP] = {
+	text = "Delete %s?",
+	button1 = DELETE or "Delete",
+	button2 = CANCEL,
+	OnAccept = function(self)
+		self.data()
+	end,
 	timeout = 0,
 	whileDead = true,
 	hideOnEscape = true,
