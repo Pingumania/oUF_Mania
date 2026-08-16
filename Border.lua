@@ -16,6 +16,9 @@ ns.BORDER_GAP = 6
 
 local BACKGROUND_COLOR = { 0, 0, 0, 0.4 }
 
+local MAX_DIVIDERS = 4
+local MAX_PANELS = MAX_DIVIDERS + 1
+
 local CORNER = "border-corner-bottom-right"
 
 local CORNERS = {
@@ -47,12 +50,15 @@ local function CreateTexture(parent, file, left, right, top, bottom)
 	return texture
 end
 
-local function CreateSideEdge(parent, side, left, right, from, fromPoint, to, toPoint)
-	local edge = CreateTexture(parent, EDGE_V, left, right, 0, 1)
+local function PointSideEdge(edge, side, from, fromPoint, to, toPoint)
+	edge:ClearAllPoints()
 	ns:SetPoint(edge, "TOP" .. side, from, fromPoint .. side, 0, 0)
 	ns:SetPoint(edge, "BOTTOM" .. side, to, toPoint .. side, 0, 0)
 	ns:SetWidth(edge, BORDER_THICKNESS)
-	return edge
+end
+
+local function CreateSideEdge(parent, side, left, right)
+	return CreateTexture(parent, EDGE_V, left, right, 0, 1)
 end
 
 local function CreateBackground(frame)
@@ -61,15 +67,39 @@ local function CreateBackground(frame)
 	return background
 end
 
-function ns:CreateBorder(frame, dividerAnchor)
+local function CreateDivider(frame, overlay)
+	local divider = {}
+
+	local line = CreateTexture(overlay, DIVIDER_LINE_TEXTURE, 0, 1, DIVIDER_TRIM, 1 - DIVIDER_TRIM)
+	ns:SetPoint(line, "LEFT", frame, "LEFT", BORDER_THICKNESS, 0)
+	ns:SetPoint(line, "RIGHT", frame, "RIGHT", -BORDER_THICKNESS, 0)
+	ns:SetHeight(line, DIVIDER_HEIGHT)
+	divider.line = line
+
+	local side, inner, left, right, junction
+
+	for _, entry in ipairs(SIDES) do
+		side, left, right = unpack(entry)
+		inner = side == "LEFT" and "RIGHT" or "LEFT"
+
+		junction = CreateTexture(overlay, DIVIDER_END, left, right, DIVIDER_TRIM, 1 - DIVIDER_TRIM)
+		ns:SetPoint(junction, "TOP" .. inner, line, "TOP" .. side, 0, 0)
+		ns:SetSize(junction, BORDER_THICKNESS, DIVIDER_HEIGHT)
+		divider[side] = junction
+	end
+
+	return divider
+end
+
+function ns:CreateBorder(frame)
 	local overlay = CreateFrame("Frame", nil, frame)
 	overlay:SetAllPoints()
 	overlay:SetFrameLevel(frame:GetFrameLevel() + BORDER_LEVEL)
 	frame.borderOverlay = overlay
 
 	local corners = {}
-	local point, side, inner, left, right, top, bottom
-	local corner, edge, junction
+	local point, side, left, right, top, bottom
+	local corner, edge, edges
 
 	for _, entry in ipairs(CORNERS) do
 		point, left, right, top, bottom = unpack(entry)
@@ -87,90 +117,94 @@ function ns:CreateBorder(frame, dividerAnchor)
 		ns:SetHeight(edge, BORDER_THICKNESS)
 	end
 
-	local whole = {}
+	local dividers = {}
+	local panels = {}
+	local sides = {}
+
+	for index = 1, MAX_DIVIDERS do
+		dividers[index] = CreateDivider(frame, overlay)
+	end
+
+	for index = 1, MAX_PANELS do
+		panels[index] = CreateBackground(frame)
+	end
 
 	for _, entry in ipairs(SIDES) do
 		side, left, right = unpack(entry)
-		whole[#whole + 1] = CreateSideEdge(overlay, side, left, right, corners["TOP" .. side], "BOTTOM",
-			corners["BOTTOM" .. side], "TOP")
+		edges = {}
+
+		for index = 1, MAX_PANELS do
+			edges[index] = CreateSideEdge(overlay, side, left, right)
+		end
+
+		sides[side] = edges
 	end
 
-	local background = CreateBackground(frame)
-	ns:SetPoint(background, "TOPLEFT", frame, "TOPLEFT", BORDER_THICKNESS, -BORDER_THICKNESS)
-	ns:SetPoint(background, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", -BORDER_THICKNESS, BORDER_THICKNESS)
-	whole[#whole + 1] = background
+	frame.borderCorners = corners
+	frame.borderDividers = dividers
+	frame.borderPanels = panels
+	frame.borderSides = sides
 
-	frame.wholeEdges = whole
+	ns:SetBorderDividers(frame)
+end
 
-	if not dividerAnchor then
-		return
+function ns:SetBorderDividers(frame, anchors, count)
+	count = count or 0
+
+	local corners = frame.borderCorners
+	local dividers = frame.borderDividers
+	local panels = frame.borderPanels
+	local divider, panel, side, edges, edge, above, below
+
+	for index = 1, MAX_DIVIDERS do
+		divider = dividers[index]
+
+		if index <= count then
+			ns:SetPoint(divider.line, "TOP", anchors[index], "BOTTOM", 0, DIVIDER_LINE)
+		end
+
+		divider.line:SetShown(index <= count)
+		divider.LEFT:SetShown(index <= count)
+		divider.RIGHT:SetShown(index <= count)
 	end
 
-	local split = {}
+	for index = 1, MAX_PANELS do
+		panel = panels[index]
 
-	local line = CreateTexture(overlay, DIVIDER_LINE_TEXTURE, 0, 1, DIVIDER_TRIM, 1 - DIVIDER_TRIM)
-	ns:SetPoint(line, "TOP", dividerAnchor, "BOTTOM", 0, DIVIDER_LINE)
-	ns:SetPoint(line, "LEFT", frame, "LEFT", BORDER_THICKNESS, 0)
-	ns:SetPoint(line, "RIGHT", frame, "RIGHT", -BORDER_THICKNESS, 0)
-	ns:SetHeight(line, DIVIDER_HEIGHT)
-	split[#split + 1] = line
+		if index <= count + 1 then
+			panel:ClearAllPoints()
 
-	local above = CreateBackground(frame)
-	ns:SetPoint(above, "TOPLEFT", frame, "TOPLEFT", BORDER_THICKNESS, -BORDER_THICKNESS)
-	ns:SetPoint(above, "BOTTOMRIGHT", line, "TOPRIGHT", 0, 0)
-	split[#split + 1] = above
+			if index == 1 then
+				ns:SetPoint(panel, "TOPLEFT", frame, "TOPLEFT", BORDER_THICKNESS, -BORDER_THICKNESS)
+			else
+				ns:SetPoint(panel, "TOPLEFT", dividers[index - 1].line, "BOTTOMLEFT", 0, 0)
+			end
 
-	local below = CreateBackground(frame)
-	ns:SetPoint(below, "TOPLEFT", line, "BOTTOMLEFT", 0, 0)
-	ns:SetPoint(below, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", -BORDER_THICKNESS, BORDER_THICKNESS)
-	split[#split + 1] = below
+			if index == count + 1 then
+				ns:SetPoint(panel, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", -BORDER_THICKNESS,
+					BORDER_THICKNESS)
+			else
+				ns:SetPoint(panel, "BOTTOMRIGHT", dividers[index].line, "TOPRIGHT", 0, 0)
+			end
+		end
+
+		panel:SetShown(index <= count + 1)
+	end
 
 	for _, entry in ipairs(SIDES) do
-		side, left, right = unpack(entry)
-		inner = side == "LEFT" and "RIGHT" or "LEFT"
+		side = entry[1]
+		edges = frame.borderSides[side]
 
-		junction = CreateTexture(overlay, DIVIDER_END, left, right, DIVIDER_TRIM, 1 - DIVIDER_TRIM)
-		ns:SetPoint(junction, "TOP" .. inner, line, "TOP" .. side, 0, 0)
-		ns:SetSize(junction, BORDER_THICKNESS, DIVIDER_HEIGHT)
-		split[#split + 1] = junction
+		for index = 1, MAX_PANELS do
+			edge = edges[index]
 
-		split[#split + 1] = CreateSideEdge(overlay, side, left, right, corners["TOP" .. side], "BOTTOM",
-			junction, "TOP")
-		split[#split + 1] = CreateSideEdge(overlay, side, left, right, junction, "BOTTOM",
-			corners["BOTTOM" .. side], "TOP")
+			if index <= count + 1 then
+				above = index == 1 and corners["TOP" .. side] or dividers[index - 1][side]
+				below = index == count + 1 and corners["BOTTOM" .. side] or dividers[index][side]
+				PointSideEdge(edge, side, above, "BOTTOM", below, "TOP")
+			end
+
+			edge:SetShown(index <= count + 1)
+		end
 	end
-
-	frame.splitEdges = split
-end
-
-function ns:ApplyPowerShown(frame)
-	local shown = frame.powerShown
-
-	frame.Power:SetShown(shown)
-
-	for _, region in ipairs(frame.splitEdges) do
-		region:SetShown(shown)
-	end
-
-	for _, region in ipairs(frame.wholeEdges) do
-		region:SetShown(not shown)
-	end
-
-	if shown then
-		ns:SetPoint(frame.healthBox, "BOTTOMLEFT", frame.Power, "TOPLEFT", 0, 0)
-		ns:SetPoint(frame.healthBox, "BOTTOMRIGHT", frame.Power, "TOPRIGHT", 0, 0)
-	else
-		ns:SetPoint(frame.healthBox, "BOTTOMLEFT", frame, "BOTTOMLEFT", ns.BAR_INSET, ns.BAR_INSET)
-		ns:SetPoint(frame.healthBox, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", -ns.BAR_INSET,
-			ns.BAR_INSET)
-	end
-end
-
-function ns:SetPowerShown(frame, shown)
-	if frame.powerShown == shown then
-		return
-	end
-
-	frame.powerShown = shown
-	ns:ApplyPowerShown(frame)
 end

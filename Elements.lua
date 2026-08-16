@@ -5,8 +5,20 @@ local EMPTY = {}
 ns.ALL_KEY = "all"
 ns.ELEMENT_GROUPS = {
 	"elements", "offsets", "anchors", "widths", "sizes", "tags", "linked", "levels", "colors",
-	"alphas",
+	"alphas", "placements",
 }
+
+ns.PLACEMENT_INSIDE = "inside"
+ns.PLACEMENT_OUTSIDE = "outside"
+
+local PLACEMENTS = {
+	{ value = ns.PLACEMENT_INSIDE, label = "Inside the frame" },
+	{ value = ns.PLACEMENT_OUTSIDE, label = "Below the frame" },
+}
+
+function ns:GetPlacements()
+	return PLACEMENTS
+end
 
 ns.PREDICTION_SECTION = "prediction"
 
@@ -566,6 +578,10 @@ function ns:SetElementShown(unit, element, shown)
 	StoreNested(unit, "elements", element, shown)
 	ns:UpdateElements()
 	ns:ApplyElementColors()
+
+	if ns:HasElementPlacement(element) then
+		ns:DeferMethod(ns, "UpdatePixelGeometry", GeometryKey(unit))
+	end
 end
 
 function ns:GetElementOffset(unit, element)
@@ -613,6 +629,28 @@ end
 
 function ns:SetElementAnchor(unit, element, point)
 	StoreGeometry(unit, "anchors", element, point)
+end
+
+function ns:HasElementPlacement(element)
+	local info = ns.Defaults.elements[element]
+	return not not (info and info.placement)
+end
+
+function ns:GetElementPlacement(unit, element)
+	local stored = ReadElement(unit, "placements", element)
+
+	if stored then
+		return stored
+	end
+
+	local info = ns.Defaults.elements[element]
+	local placements = info and info.placement
+
+	return placements and (placements[unit] or placements.default)
+end
+
+function ns:SetElementPlacement(unit, element, placement)
+	StoreGeometry(unit, "placements", element, placement)
 end
 
 function ns:HasElementWidth(element)

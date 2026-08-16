@@ -186,7 +186,7 @@ ns.Defaults = {
 			size = { default = 32, pet = 22, targettarget = 22 },
 			level = OVERLAY_LEVEL,
 		},
-		castbar = { size = { default = 16 } },
+		castbar = { size = { default = 16 }, placement = { default = "outside" } },
 		castbarWidth = { size = { default = 0 } },
 		threat = { size = { default = 3 }, level = 0 },
 	},

@@ -367,58 +367,208 @@ local function PowerPostUpdate(element, unit, _, _, max)
 	ns:SetPowerShown(element.__owner, shown)
 end
 
-local function LayoutFrame(frame)
-	local width, height, powerHeight = ns:GetUnitSizes(frame.unitKey)
+local function CastbarSlot(frame)
+	local unit = frame.unitKey
 
-	ns:SetSize(frame, width, height)
+	if not frame.Castbar or not ns:IsElementShown(unit, "castbar") then
+		return nil
+	end
 
-	ns:SetPoint(frame.healthBox, "TOPLEFT", frame, "TOPLEFT", ns.BAR_INSET, -ns.BAR_INSET)
-	ns:SetPoint(frame.healthBox, "TOPRIGHT", frame, "TOPRIGHT", -ns.BAR_INSET, -ns.BAR_INSET)
+	return frame.Castbar, ns:GetElementSize(unit, "castbar")
+end
 
-	ns:SetPoint(frame.Power, "BOTTOMLEFT", frame, "BOTTOMLEFT", ns.BAR_INSET, ns.BAR_INSET)
-	ns:SetPoint(frame.Power, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", -ns.BAR_INSET, ns.BAR_INSET)
-	ns:SetHeight(frame.Power, powerHeight)
+local function PlaceCastbar(frame, placement, stackY)
+	local castbar = frame.Castbar
 
-	ns:ApplyPowerShown(frame)
-	ns:ApplyHealthWidth(frame, width - 2 * ns.BAR_INSET)
+	if not castbar then
+		return
+	end
 
-	if frame.Castbar then
-		local castbarHeight = ns:GetElementSize(frame.unitKey, "castbar")
-		local castbarWidth = ns:GetElementSize(frame.unitKey, "castbarWidth")
-		local x, y = ns:GetElementOffset(frame.unitKey, "castbar")
-		local border = frame.castbarBorder
+	local border = frame.castbarBorder
+	local outside = placement == ns.PLACEMENT_OUTSIDE
+
+	frame.castbarOutside = outside
+
+	if not outside then
+		border:Hide()
+	end
+
+	if not placement then
+		return
+	end
+
+	local unit = frame.unitKey
+	local height = ns:GetElementSize(unit, "castbar")
+	local icon = castbar.Icon
+	local iconX, iconY = ns:GetElementOffset(unit, "castbarIcon")
+	local rightSide = ns:GetElementAnchor(unit, "castbarIcon") == "RIGHT"
+	local shield = castbar.Shield
+	local iconSize, sparkHeight
+
+	castbar:ClearAllPoints()
+	icon:ClearAllPoints()
+	shield:ClearAllPoints()
+
+	if outside then
+		local width = ns:GetElementSize(unit, "castbarWidth")
+		local x, y = ns:GetElementOffset(unit, "castbar")
 
 		border:ClearAllPoints()
-		ns:SetPoint(border, "TOPLEFT", frame, "BOTTOMLEFT", x, -ns.BORDER_GAP + y)
+		ns:SetPoint(border, "TOPLEFT", frame, "BOTTOMLEFT", x, stackY + y)
 
-		if castbarWidth > 0 then
-			ns:SetWidth(border, castbarWidth)
+		if width > 0 then
+			ns:SetWidth(border, width)
 		else
-			ns:SetPoint(border, "TOPRIGHT", frame, "BOTTOMRIGHT", x, -ns.BORDER_GAP + y)
+			ns:SetPoint(border, "TOPRIGHT", frame, "BOTTOMRIGHT", x, stackY + y)
 		end
 
-		ns:SetHeight(border, castbarHeight + 2 * ns.BAR_INSET)
+		ns:SetHeight(border, height + 2 * ns.BAR_INSET)
+		border:SetShown(castbar:IsShown())
 
-		ns:SetPoint(frame.Castbar, "TOPLEFT", border, "TOPLEFT", ns.BAR_INSET, -ns.BAR_INSET)
-		ns:SetPoint(frame.Castbar, "BOTTOMRIGHT", border, "BOTTOMRIGHT", -ns.BAR_INSET, ns.BAR_INSET)
+		ns:SetPoint(castbar, "TOPLEFT", border, "TOPLEFT", ns.BAR_INSET, -ns.BAR_INSET)
+		ns:SetPoint(castbar, "BOTTOMRIGHT", border, "BOTTOMRIGHT", -ns.BAR_INSET, ns.BAR_INSET)
 
-		local boxHeight = castbarHeight + 2 * ns.BAR_INSET
-		local icon = frame.Castbar.Icon
-		local iconX, iconY = ns:GetElementOffset(frame.unitKey, "castbarIcon")
+		iconSize = height + 2 * ns.BAR_INSET
+		shield:SetAllPoints(border)
 
-		icon:ClearAllPoints()
-
-		if ns:GetElementAnchor(frame.unitKey, "castbarIcon") == "RIGHT" then
+		if rightSide then
 			ns:SetPoint(icon, "TOPLEFT", border, "TOPRIGHT", ns.BORDER_GAP + iconX, iconY)
 		else
 			ns:SetPoint(icon, "TOPRIGHT", border, "TOPLEFT", -ns.BORDER_GAP + iconX, iconY)
 		end
+	else
+		iconSize = height
+		shield:SetAllPoints(castbar)
 
-		ns:SetSize(icon, boxHeight, boxHeight)
-		local sparkHeight = castbarHeight + SPARK_OVERHANG
-		ns:SetSize(frame.Castbar.Spark, sparkHeight * SPARK_RATIO, sparkHeight)
+		if rightSide then
+			ns:SetPoint(icon, "TOPLEFT", castbar, "TOPRIGHT",
+				ns.BAR_INSET + ns.BORDER_GAP + iconX, iconY)
+		else
+			ns:SetPoint(icon, "TOPRIGHT", castbar, "TOPLEFT",
+				-(ns.BAR_INSET + ns.BORDER_GAP) + iconX, iconY)
+		end
 	end
 
+	ns:SetSize(icon, iconSize, iconSize)
+
+	sparkHeight = height + SPARK_OVERHANG
+	ns:SetSize(castbar.Spark, sparkHeight * SPARK_RATIO, sparkHeight)
+end
+
+local STACK = {
+	{ key = "castbar", Slot = CastbarSlot, Place = PlaceCastbar },
+}
+
+local stackRegions = {}
+local stackHeights = {}
+local stackAnchors = {}
+
+local function ChainInside(frame, count)
+	local healthBox = frame.healthBox
+	local previous, region
+
+	for index = count, 1, -1 do
+		region = stackRegions[index]
+		ns:SetHeight(region, stackHeights[index])
+
+		if previous then
+			ns:SetPoint(region, "BOTTOMLEFT", previous, "TOPLEFT", 0, 0)
+			ns:SetPoint(region, "BOTTOMRIGHT", previous, "TOPRIGHT", 0, 0)
+		else
+			ns:SetPoint(region, "BOTTOMLEFT", frame, "BOTTOMLEFT", ns.BAR_INSET, ns.BAR_INSET)
+			ns:SetPoint(region, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", -ns.BAR_INSET, ns.BAR_INSET)
+		end
+
+		previous = region
+	end
+
+	ns:SetPoint(healthBox, "TOPLEFT", frame, "TOPLEFT", ns.BAR_INSET, -ns.BAR_INSET)
+	ns:SetPoint(healthBox, "TOPRIGHT", frame, "TOPRIGHT", -ns.BAR_INSET, -ns.BAR_INSET)
+
+	if previous then
+		ns:SetPoint(healthBox, "BOTTOMLEFT", previous, "TOPLEFT", 0, 0)
+		ns:SetPoint(healthBox, "BOTTOMRIGHT", previous, "TOPRIGHT", 0, 0)
+	else
+		ns:SetPoint(healthBox, "BOTTOMLEFT", frame, "BOTTOMLEFT", ns.BAR_INSET, ns.BAR_INSET)
+		ns:SetPoint(healthBox, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", -ns.BAR_INSET, ns.BAR_INSET)
+	end
+
+	stackAnchors[1] = healthBox
+
+	for index = 2, count do
+		stackAnchors[index] = stackRegions[index - 1]
+	end
+
+	ns:SetBorderDividers(frame, stackAnchors, count)
+end
+
+local function ApplyBarStack(frame)
+	local unit = frame.unitKey
+	local count = 0
+	local stackY = 0
+	local region, height, placement
+
+	frame.Power:SetShown(not not frame.powerShown)
+
+	if frame.powerShown then
+		count = count + 1
+		stackRegions[count] = frame.Power
+		stackHeights[count] = select(3, ns:GetUnitSizes(unit))
+	end
+
+	for _, entry in ipairs(STACK) do
+		region, height = entry.Slot(frame)
+		placement = region and ns:GetElementPlacement(unit, entry.key) or nil
+
+		if placement == ns.PLACEMENT_INSIDE then
+			count = count + 1
+			stackRegions[count] = region
+			stackHeights[count] = height
+		elseif placement then
+			stackY = stackY - ns.BORDER_GAP
+		end
+
+		entry.Place(frame, placement, stackY)
+
+		if placement == ns.PLACEMENT_OUTSIDE then
+			stackY = stackY - height - 2 * ns.BAR_INSET
+		end
+	end
+
+	ChainInside(frame, count)
+end
+
+function ns:SetPowerShown(frame, shown)
+	if frame.powerShown == shown then
+		return
+	end
+
+	frame.powerShown = shown
+	ApplyBarStack(frame)
+end
+
+local function InsideHeight(frame)
+	local unit = frame.unitKey
+	local total = 0
+	local region, height
+
+	for _, entry in ipairs(STACK) do
+		region, height = entry.Slot(frame)
+
+		if region and ns:GetElementPlacement(unit, entry.key) == ns.PLACEMENT_INSIDE then
+			total = total + height
+		end
+	end
+
+	return total
+end
+
+local function LayoutFrame(frame)
+	local width, height = ns:GetUnitSizes(frame.unitKey)
+
+	ns:SetSize(frame, width, height + InsideHeight(frame))
+	ApplyBarStack(frame)
+	ns:ApplyHealthWidth(frame, width - 2 * ns.BAR_INSET)
 	ns:PlaceElements(frame)
 end
 
@@ -494,7 +644,7 @@ local function Style(self, unit)
 	costPrediction:SetPoint("RIGHT", power:GetStatusBarTexture(), "RIGHT", 0, 0)
 	power.CostPrediction = costPrediction
 
-	ns:CreateBorder(self, healthBox)
+	ns:CreateBorder(self)
 
 	self.elements = {}
 
@@ -523,7 +673,7 @@ local function Style(self, unit)
 		border:SetShown(castbar:IsShown())
 
 		castbar:HookScript("OnShow", function()
-			border:Show()
+			border:SetShown(self.castbarOutside)
 		end)
 
 		castbar:HookScript("OnHide", function()
@@ -549,7 +699,7 @@ local function Style(self, unit)
 		shield:SetAllPoints(border)
 		castbar.Shield = shield
 
-		castbar.Icon = border:CreateTexture(nil, "ARTWORK")
+		castbar.Icon = castbar:CreateTexture(nil, "ARTWORK")
 		castbar.SafeZone = castbar:CreateTexture(nil, "BACKGROUND")
 
 		self.Castbar = castbar

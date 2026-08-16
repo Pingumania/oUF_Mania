@@ -682,6 +682,14 @@ local function BuildElementPage(body, unit, info)
 		end)
 	end
 
+	if ns:HasElementPlacement(info.key) then
+		row = AddDropdownRow(body, row, "Placement", ns:GetPlacements(), function()
+			return ns:GetElementPlacement(storageUnit, info.key)
+		end, function(placement)
+			ns:SetElementPlacement(storageUnit, info.key, placement)
+		end)
+	end
+
 	if ns:HasElementLevel(info.key) then
 		local minLevel, maxLevel = ns:GetElementLevelRange()
 
