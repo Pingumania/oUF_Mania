@@ -95,7 +95,15 @@ local function PlaceFrame(key, frame, anchor)
 
 	placed[key] = { frame = frame, anchor = anchor }
 
+	if InCombatLockdown() then
+		return
+	end
+
 	ns:SetPoint(frame, anchor[1], anchor[2], anchor[3], anchor[4] + x, anchor[5] + y)
+
+	if frame.standalone then
+		ns:SnapToPixelGrid(frame)
+	end
 end
 
 function ns:UpdatePositions()
@@ -162,6 +170,10 @@ local function SpawnParty()
 end
 
 function ns:ApplyGroupLayout()
+	if InCombatLockdown() then
+		return
+	end
+
 	local spacing = ns:GetUnitSpacing("boss")
 
 	for index = 2, #bossFrames do

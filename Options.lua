@@ -36,6 +36,7 @@ local TAG_BUTTON_WIDTH = 30
 local SLIDER_STEP = 1
 
 local OFFSET_MIN, OFFSET_MAX = -200, 200
+local FREE_WIDTH_MIN, FREE_WIDTH_MAX = 40, 400
 local POSITION_MIN, POSITION_MAX = -1000, 1000
 local SIZE_MIN, SIZE_MAX = 0, 64
 local TEXT_WIDTH_MIN, TEXT_WIDTH_MAX = 0, 300
@@ -95,6 +96,8 @@ local ELEMENTS = {
 	{ key = ns.PREDICTION_SECTION, label = "Health prediction", prediction = true,
 		extra = ns.PREDICTION_ELEMENTS },
 	{ key = "castbar", label = "Cast bar", extra = { "castbarIcon", "castbarLatency", "castbarWidth" } },
+	{ key = ns.CLASS_SLOT, label = "Class resource", bar = true },
+	{ key = ns.POWER_SLOT, label = "Additional power", bar = true },
 	{ key = "resting", label = "Resting icon" },
 	{ key = "combat", label = "Combat icon" },
 	{ key = "leader", label = "Leader icon" },
@@ -161,6 +164,8 @@ local buttons = {}
 local unitIndex = 1
 local refreshing
 local RefreshListLabels
+local ReflowBody
+local UpdateScrollBar
 
 local function PreviewTarget()
 	local unit = UNITS[unitIndex]
@@ -265,6 +270,12 @@ end
 local function RegisterControl(body, row, control)
 	body.controls[#body.controls + 1] = { row = row, control = control }
 	return row
+end
+
+local function TagRows(body, from, IsVisible)
+	for index = from, #body.controls do
+		body.controls[index].IsVisible = IsVisible
+	end
 end
 
 local function PlaceRow(body, row, previous, height)
@@ -476,7 +487,7 @@ local function BuildFramePage(body, unit)
 
 	for index, size in ipairs(SIZE_ROWS) do
 		row = AddSliderRow(body, row, size.label, size.min, size.max, function()
-			return select(index, ns:GetUnitSizes(unit))
+			return math.floor(select(index, ns:GetUnitSizes(unit)) + 0.5)
 		end, function(value)
 			ns:SetUnitSize(unit, size.field, value)
 		end)
@@ -644,6 +655,22 @@ local function BuildElementPage(body, unit, info)
 	local storageUnit = StorageUnit(unit, info.key)
 	local row
 
+	local function IsDetached()
+		return ns:GetElementPlacement(storageUnit, info.key) == ns.PLACEMENT_FREE
+	end
+
+	local function IsBelow()
+		return ns:GetElementPlacement(storageUnit, info.key) == ns.PLACEMENT_OUTSIDE
+	end
+
+	local function IsStacked()
+		return not IsDetached()
+	end
+
+	local function IsBoxed()
+		return IsBelow() or IsDetached()
+	end
+
 	if unit == ALL_KEY then
 		if multiUnit then
 			row = AddLinkRow(body, nil, info.key, units)
@@ -683,11 +710,45 @@ local function BuildElementPage(body, unit, info)
 	end
 
 	if ns:HasElementPlacement(info.key) then
-		row = AddDropdownRow(body, row, "Placement", ns:GetPlacements(), function()
+		row = AddDropdownRow(body, row, "Placement", ns:GetPlacements(info.key), function()
 			return ns:GetElementPlacement(storageUnit, info.key)
 		end, function(placement)
 			ns:SetElementPlacement(storageUnit, info.key, placement)
+			ReflowBody(body)
 		end)
+	end
+
+	if ns:HasFreePlacement(info.key) then
+		local from = #body.controls + 1
+
+		if info.key ~= "castbar" then
+			row = AddSliderRow(body, row, "Width", FREE_WIDTH_MIN, FREE_WIDTH_MAX, function()
+				return ns:GetElementSize(storageUnit, info.key .. "Width")
+			end, function(value)
+				ns:SetElementSize(storageUnit, info.key .. "Width", value)
+			end)
+		end
+
+		row = AddAxisRows(body, row, "Position", POSITION_MIN, POSITION_MAX,
+			function()
+				return ns:GetElementPosition(storageUnit, info.key)
+			end, function(axis, value)
+				ns:SetElementPosition(storageUnit, info.key, axis, value)
+			end)
+
+		TagRows(body, from, IsDetached)
+	end
+
+	if ns:HasElementPixelSnap(info.key) then
+		local from = #body.controls + 1
+
+		row = AddToggleRow(body, row, "Snap frame width to fit the bars", function()
+			return ns:IsElementPixelSnapped(storageUnit, info.key)
+		end, function(value)
+			ns:SetElementPixelSnapped(storageUnit, info.key, value)
+		end)
+
+		TagRows(body, from, IsStacked)
 	end
 
 	if ns:HasElementLevel(info.key) then
@@ -700,11 +761,17 @@ local function BuildElementPage(body, unit, info)
 		end)
 	end
 
+	local offsetFrom = #body.controls + 1
+
 	row = AddAxisRows(body, row, "Offset", OFFSET_MIN, OFFSET_MAX, function()
 		return ns:GetElementOffset(storageUnit, info.key)
 	end, function(axis, value)
 		ns:SetElementOffset(storageUnit, info.key, axis, value)
 	end)
+
+	if ns:HasElementPlacement(info.key) then
+		TagRows(body, offsetFrom, IsBelow)
+	end
 
 	if info.key == "castbar" then
 		row = AddDropdownRow(body, row, "Icon side", ICON_SIDES, function()
@@ -725,12 +792,16 @@ local function BuildElementPage(body, unit, info)
 			ns:SetElementSize(storageUnit, "castbar", value)
 		end)
 
+		local widthFrom = #body.controls + 1
+
 		row = AddSliderRow(body, row, "Width (0 = match frame)", CASTBAR_WIDTH_MIN,
 			CASTBAR_WIDTH_MAX, function()
 				return ns:GetElementSize(storageUnit, "castbarWidth")
 			end, function(value)
 				ns:SetElementSize(storageUnit, "castbarWidth", value)
 			end)
+
+		TagRows(body, widthFrom, IsBoxed)
 
 		if storageUnit == "player" or storageUnit == ALL_KEY then
 			row = AddToggleRow(body, row, "Show latency", function()
@@ -766,10 +837,24 @@ local function BuildElementPage(body, unit, info)
 	end
 
 	if info.key ~= "castbar" and ns:HasElementSize(info.key) then
-		row = AddSliderRow(body, row, "Size", SIZE_MIN, SIZE_MAX, function()
+		row = AddSliderRow(body, row, info.bar and "Height" or "Size", SIZE_MIN, SIZE_MAX, function()
 			return ns:GetElementSize(storageUnit, info.key)
 		end, function(value)
 			ns:SetElementSize(storageUnit, info.key, value)
+		end)
+	end
+
+	if ns:HasElementColorMode(info.key) then
+		row = AddDropdownRow(body, row, "Color", ns:GetBarColorModes(), function()
+			return ns:GetElementColorMode(storageUnit, info.key)
+		end, function(value)
+			ns:SetElementColorMode(storageUnit, info.key, value)
+		end)
+
+		row = AddColorRow(body, row, "Custom color", function()
+			return ns:GetElementColor(storageUnit, info.key)
+		end, function(r, g, b)
+			ns:SetElementColor(storageUnit, info.key, r, g, b)
 		end)
 	end
 
@@ -781,6 +866,8 @@ local function BuildElementPage(body, unit, info)
 				ns:SetElementWidth(storageUnit, info.key, value)
 			end)
 	end
+
+	ReflowBody(body)
 
 	if unit == ALL_KEY or not multiUnit then
 		return
@@ -928,7 +1015,32 @@ local function GateMouseWheel(scroll)
 	end)
 end
 
-local function UpdateScrollBar(scroll, scrollBar, content)
+function ReflowBody(body)
+	local previous
+	local visible
+
+	body.contentHeight = 0
+
+	for _, entry in ipairs(body.controls) do
+		visible = not entry.IsVisible or entry.IsVisible()
+
+		entry.row:SetShown(visible)
+
+		if visible then
+			entry.row:ClearAllPoints()
+			PlaceRow(body, entry.row, previous)
+			previous = entry.row
+		end
+	end
+
+	body:SetHeight(body.contentHeight)
+
+	if body.page then
+		UpdateScrollBar(body.page.scroll, body.page.scrollBar, body)
+	end
+end
+
+function UpdateScrollBar(scroll, scrollBar, content)
 	local viewport = scroll:GetHeight()
 	local overflow = content:GetHeight() - viewport
 
@@ -1370,6 +1482,7 @@ local function ShowPage(unit, section, build)
 
 	if not page.built then
 		page.built = true
+		page.content.page = page
 		build(page.content)
 		page.content:SetHeight(page.content.contentHeight)
 	end

@@ -17,6 +17,7 @@ Tags.lua
 Addon.lua
 Border.lua
 Elements.lua
+Resources.lua
 Preview.lua
 Style.lua
 Units.lua

@@ -5,19 +5,46 @@ local EMPTY = {}
 ns.ALL_KEY = "all"
 ns.ELEMENT_GROUPS = {
 	"elements", "offsets", "anchors", "widths", "sizes", "tags", "linked", "levels", "colors",
-	"alphas", "placements",
+	"alphas", "placements", "modes", "pixels", "positions",
 }
 
 ns.PLACEMENT_INSIDE = "inside"
 ns.PLACEMENT_OUTSIDE = "outside"
+ns.PLACEMENT_FREE = "free"
 
-local PLACEMENTS = {
-	{ value = ns.PLACEMENT_INSIDE, label = "Inside the frame" },
-	{ value = ns.PLACEMENT_OUTSIDE, label = "Below the frame" },
-}
+local INSIDE_OPTION = { value = ns.PLACEMENT_INSIDE, label = "Inside the frame" }
+local BELOW_OPTION = { value = ns.PLACEMENT_OUTSIDE, label = "Below the frame" }
+local DETACHED_OPTION = { value = ns.PLACEMENT_FREE, label = "Detached" }
 
-function ns:GetPlacements()
-	return PLACEMENTS
+local PLACEMENTS = { INSIDE_OPTION, BELOW_OPTION }
+local FREE_PLACEMENTS = { INSIDE_OPTION, BELOW_OPTION, DETACHED_OPTION }
+local BOXED_PLACEMENTS = { BELOW_OPTION, DETACHED_OPTION }
+
+function ns:HasFreePlacement(element)
+	local info = ns.Defaults.elements[element]
+	return not not (info and info.freePlacement)
+end
+
+function ns:GetPlacements(element)
+	local info = ns.Defaults.elements[element]
+
+	if not (info and info.freePlacement) then
+		return PLACEMENTS
+	elseif info.noInside then
+		return BOXED_PLACEMENTS
+	end
+
+	return FREE_PLACEMENTS
+end
+
+local function IsPlacementAllowed(element, value)
+	for _, option in ipairs(ns:GetPlacements(element)) do
+		if option.value == value then
+			return true
+		end
+	end
+
+	return false
 end
 
 ns.PREDICTION_SECTION = "prediction"
@@ -631,6 +658,34 @@ function ns:SetElementAnchor(unit, element, point)
 	StoreGeometry(unit, "anchors", element, point)
 end
 
+function ns:HasElementPixelSnap(element)
+	local info = ns.Defaults.elements[element]
+	return not not (info and info.pixelSnap)
+end
+
+function ns:IsElementPixelSnapped(unit, element)
+	local stored = ReadElement(unit, "pixels", element)
+
+	if stored ~= nil then
+		return stored
+	end
+
+	local info = ns.Defaults.elements[element]
+	local snap = info and info.pixelSnap
+	local value = snap and snap[unit]
+
+	if value == nil then
+		value = snap and snap.default
+	end
+
+	return not not value
+end
+
+function ns:SetElementPixelSnapped(unit, element, value)
+	StoreNested(unit, "pixels", element, value)
+	ns:DeferMethod(ns, "UpdatePixelGeometry", GeometryKey(unit))
+end
+
 function ns:HasElementPlacement(element)
 	local info = ns.Defaults.elements[element]
 	return not not (info and info.placement)
@@ -639,7 +694,7 @@ end
 function ns:GetElementPlacement(unit, element)
 	local stored = ReadElement(unit, "placements", element)
 
-	if stored then
+	if stored and IsPlacementAllowed(element, stored) then
 		return stored
 	end
 
@@ -702,6 +757,29 @@ function ns:SetElementColor(unit, element, r, g, b)
 	ns:ApplyElementColors()
 end
 
+function ns:HasElementColorMode(element)
+	local info = ns.Defaults.elements[element]
+	return not not (info and info.colorMode)
+end
+
+function ns:GetElementColorMode(unit, element)
+	local stored = ReadElement(unit, "modes", element)
+
+	if stored then
+		return stored
+	end
+
+	local info = ns.Defaults.elements[element]
+	local modes = info and info.colorMode
+
+	return modes and (modes[unit] or modes.default)
+end
+
+function ns:SetElementColorMode(unit, element, mode)
+	StoreNested(unit, "modes", element, mode)
+	ns:ApplyElementColors()
+end
+
 function ns:HasElementAlpha(element)
 	local info = ns.Defaults.elements[element]
 	return info and info.alpha ~= nil
@@ -744,6 +822,33 @@ end
 
 function ns:SetElementSize(unit, element, size)
 	StoreGeometry(unit, "sizes", element, size)
+end
+
+function ns:GetElementPosition(unit, element)
+	local info = ns.Defaults.elements[element]
+	local default = info and info.position
+	local x = default and default[1] or 0
+	local y = default and default[2] or 0
+	local position = ReadElement(unit, "positions", element)
+
+	if position then
+		x = position.x or x
+		y = position.y or y
+	end
+
+	return x, y
+end
+
+function ns:SetElementPosition(unit, element, axis, value)
+	local position = ReadNested(unit, "positions", element)
+
+	if not position then
+		position = {}
+		StoreNested(unit, "positions", element, position)
+	end
+
+	position[axis] = value
+	ns:DeferMethod(ns, "UpdatePixelGeometry", GeometryKey(unit))
 end
 
 function ns:SetElementOffset(unit, element, axis, value)
@@ -1240,6 +1345,8 @@ function ns:ApplyElements(frame)
 	else
 		ns:StopPredictionPreview(frame)
 	end
+
+	ns:ApplyResourceSlots(frame)
 
 	if elements.castbar then
 		if ns:ShouldPreview(unit, "castbar") then

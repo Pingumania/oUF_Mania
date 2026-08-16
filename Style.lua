@@ -286,6 +286,7 @@ end
 function ns:ApplyElementColors()
 	for frame in next, styled do
 		ApplyPrediction(frame)
+		ns:ApplyResourceColors(frame)
 	end
 end
 
@@ -370,7 +371,9 @@ end
 local function CastbarSlot(frame)
 	local unit = frame.unitKey
 
-	if not frame.Castbar or not ns:IsElementShown(unit, "castbar") then
+	if not frame.Castbar then
+		return nil
+	elseif not ns:IsElementShown(unit, "castbar") and not ns:ShouldPreview(unit, "castbar") then
 		return nil
 	end
 
@@ -385,11 +388,12 @@ local function PlaceCastbar(frame, placement, stackY)
 	end
 
 	local border = frame.castbarBorder
-	local outside = placement == ns.PLACEMENT_OUTSIDE
+	local detached = placement == ns.PLACEMENT_FREE
+	local boxed = detached or placement == ns.PLACEMENT_OUTSIDE
 
-	frame.castbarOutside = outside
+	frame.castbarOutside = boxed
 
-	if not outside then
+	if not boxed then
 		border:Hide()
 	end
 
@@ -409,20 +413,34 @@ local function PlaceCastbar(frame, placement, stackY)
 	icon:ClearAllPoints()
 	shield:ClearAllPoints()
 
-	if outside then
+	if boxed then
 		local width = ns:GetElementSize(unit, "castbarWidth")
-		local x, y = ns:GetElementOffset(unit, "castbar")
 
 		border:ClearAllPoints()
-		ns:SetPoint(border, "TOPLEFT", frame, "BOTTOMLEFT", x, stackY + y)
 
-		if width > 0 then
-			ns:SetWidth(border, width)
+		if detached then
+			local x, y = ns:GetElementPosition(unit, "castbar")
+
+			ns:SetPoint(border, "BOTTOM", UIParent, "BOTTOM", x, y)
+			ns:SetWidth(border, width > 0 and width or ns:GetUnitSizes(unit))
 		else
-			ns:SetPoint(border, "TOPRIGHT", frame, "BOTTOMRIGHT", x, stackY + y)
+			local x, y = ns:GetElementOffset(unit, "castbar")
+
+			ns:SetPoint(border, "TOPLEFT", frame, "BOTTOMLEFT", x, stackY + y)
+
+			if width > 0 then
+				ns:SetWidth(border, width)
+			else
+				ns:SetPoint(border, "TOPRIGHT", frame, "BOTTOMRIGHT", x, stackY + y)
+			end
 		end
 
 		ns:SetHeight(border, height + 2 * ns.BAR_INSET)
+
+		if detached then
+			ns:SnapToPixelGrid(border)
+		end
+
 		border:SetShown(castbar:IsShown())
 
 		ns:SetPoint(castbar, "TOPLEFT", border, "TOPLEFT", ns.BAR_INSET, -ns.BAR_INSET)
@@ -455,7 +473,33 @@ local function PlaceCastbar(frame, placement, stackY)
 	ns:SetSize(castbar.Spark, sparkHeight * SPARK_RATIO, sparkHeight)
 end
 
+local function ResourceSlot(frame, key)
+	if not ns:IsResourceSlotFilled(frame, key) then
+		return nil
+	end
+
+	return ns:GetResourceSlotRegion(frame, key), ns:GetElementSize(frame.unitKey, key)
+end
+
+local function AdditionalPowerSlot(frame)
+	return ResourceSlot(frame, ns.POWER_SLOT)
+end
+
+local function PlaceAdditionalPower(frame, placement, stackY)
+	ns:PlaceResourceSlot(frame, ns.POWER_SLOT, placement, stackY)
+end
+
+local function ClassResourceSlot(frame)
+	return ResourceSlot(frame, ns.CLASS_SLOT)
+end
+
+local function PlaceClassResource(frame, placement, stackY)
+	ns:PlaceResourceSlot(frame, ns.CLASS_SLOT, placement, stackY)
+end
+
 local STACK = {
+	{ key = ns.POWER_SLOT, Slot = AdditionalPowerSlot, Place = PlaceAdditionalPower },
+	{ key = ns.CLASS_SLOT, Slot = ClassResourceSlot, Place = PlaceClassResource },
 	{ key = "castbar", Slot = CastbarSlot, Place = PlaceCastbar },
 }
 
@@ -524,7 +568,7 @@ local function ApplyBarStack(frame)
 			count = count + 1
 			stackRegions[count] = region
 			stackHeights[count] = height
-		elseif placement then
+		elseif placement == ns.PLACEMENT_OUTSIDE then
 			stackY = stackY - ns.BORDER_GAP
 		end
 
@@ -536,6 +580,7 @@ local function ApplyBarStack(frame)
 	end
 
 	ChainInside(frame, count)
+	ns:LayoutResourceBars(frame)
 end
 
 function ns:SetPowerShown(frame, shown)
@@ -547,16 +592,23 @@ function ns:SetPowerShown(frame, shown)
 	ApplyBarStack(frame)
 end
 
+local function IsInsideReserved(unit, key)
+	if not ns:HasElement(unit, key) then
+		return false
+	elseif ns:GetElementPlacement(unit, key) ~= ns.PLACEMENT_INSIDE then
+		return false
+	end
+
+	return ns:IsElementShown(unit, key) or ns:ShouldPreview(unit, key)
+end
+
 local function InsideHeight(frame)
 	local unit = frame.unitKey
 	local total = 0
-	local region, height
 
 	for _, entry in ipairs(STACK) do
-		region, height = entry.Slot(frame)
-
-		if region and ns:GetElementPlacement(unit, entry.key) == ns.PLACEMENT_INSIDE then
-			total = total + height
+		if IsInsideReserved(unit, entry.key) then
+			total = total + ns:GetElementSize(unit, entry.key)
 		end
 	end
 
@@ -566,7 +618,14 @@ end
 local function LayoutFrame(frame)
 	local width, height = ns:GetUnitSizes(frame.unitKey)
 
-	ns:SetSize(frame, width, height + InsideHeight(frame))
+	if not InCombatLockdown() then
+		ns:SetSize(frame, width, height + InsideHeight(frame))
+
+		if frame.standalone then
+			ns:SnapToPixelGrid(frame)
+		end
+	end
+
 	ApplyBarStack(frame)
 	ns:ApplyHealthWidth(frame, width - 2 * ns.BAR_INSET)
 	ns:PlaceElements(frame)
@@ -844,6 +903,8 @@ function ns:ApplyMedia()
 		if frame.Castbar and texture then
 			frame.Castbar:SetStatusBarTexture(texture)
 		end
+
+		ns:ApplyResourceMedia(frame, texture)
 
 		for _, text in ipairs(texts) do
 			SetTextFont(text, font, size)

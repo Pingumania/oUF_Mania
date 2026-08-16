@@ -186,7 +186,32 @@ ns.Defaults = {
 			size = { default = 32, pet = 22, targettarget = 22 },
 			level = OVERLAY_LEVEL,
 		},
-		castbar = { size = { default = 16 }, placement = { default = "outside" } },
+		classresource = {
+			size = { default = 10 },
+			color = { 1, 1, 1 },
+			colorMode = { default = "blizzard" },
+			placement = { default = "outside" },
+			pixelSnap = { default = false },
+			freePlacement = true,
+			position = { 0, 240 },
+		},
+		classresourceWidth = { size = { default = 200 } },
+		additionalpower = {
+			size = { default = 8 },
+			color = { 1, 1, 1 },
+			colorMode = { default = "blizzard" },
+			placement = { default = "outside" },
+			freePlacement = true,
+			position = { 0, 224 },
+		},
+		additionalpowerWidth = { size = { default = 200 } },
+		castbar = {
+			size = { default = 16 },
+			placement = { default = "outside" },
+			freePlacement = true,
+			noInside = true,
+			position = { 0, 200 },
+		},
 		castbarWidth = { size = { default = 0 } },
 		threat = { size = { default = 3 }, level = 0 },
 	},
@@ -194,6 +219,8 @@ ns.Defaults = {
 
 ns.ELEMENT_UNITS = {
 	castbar = { player = true, target = true, focus = true, boss = true },
+	classresource = { player = true },
+	additionalpower = { player = true },
 	resting = { player = true },
 	readycheck = { player = true, target = true, targettarget = true, focus = true, party = true },
 	leader = { player = true, target = true, targettarget = true, focus = true, party = true },
@@ -209,6 +236,8 @@ ns.PREVIEWABLE = {
 	threat = true,
 	resting = true,
 	castbar = true,
+	classresource = true,
+	additionalpower = true,
 	leader = true,
 	assistant = true,
 	raidrole = true,
@@ -306,6 +335,10 @@ function ns:GetSyncedKeys(key)
 end
 
 function ns:SetUnitSize(key, field, value)
+	if field == "width" then
+		value = ns:SnapWidthToPips(key, value)
+	end
+
 	local members = ns:GetSyncedKeys(key)
 
 	if members then
