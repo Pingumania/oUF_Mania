@@ -92,6 +92,8 @@ local CUSTOM_TEXT_SECTION = "customtext"
 
 local ELEMENTS = {
 	{ key = CUSTOM_TEXT_SECTION, label = "Text", custom = true },
+	{ key = ns.PREDICTION_SECTION, label = "Health prediction", prediction = true,
+		extra = ns.PREDICTION_ELEMENTS },
 	{ key = "castbar", label = "Cast bar", extra = { "castbarIcon", "castbarLatency", "castbarWidth" } },
 	{ key = "resting", label = "Resting icon" },
 	{ key = "combat", label = "Combat icon" },
@@ -787,6 +789,103 @@ local function BuildElementPage(body, unit, info)
 	end
 end
 
+local PREDICTION_SECTION = ns.PREDICTION_SECTION
+local PREDICTION_TAB_WIDTH = 640
+local ALPHA_PERCENT_MAX = 100
+
+local PREDICTION_DESCRIPTION = "Incoming healing and absorbs are drawn inside the health bar. An "
+	.. "amount that does not fit is marked at the bar's edge rather than drawn past it."
+
+local PREDICTION_LABELS = {
+	healingPlayer = "Your incoming heals",
+	healingOther = "Other incoming heals",
+	damageAbsorb = "Damage absorbs",
+	healAbsorb = "Heal absorbs",
+	tempLoss = "Max health loss",
+}
+
+local function AddDescriptionRow(body, previous, text)
+	local description = ns:CreateDescription(body, PREDICTION_TAB_WIDTH - LABEL_INSET, text)
+	local row = CreateRow(body, previous, nil, description:GetHeight())
+
+	description:SetParent(row)
+	description:SetPoint("TOPLEFT", row, "TOPLEFT", LABEL_INSET, 0)
+
+	return row
+end
+
+local function AddHeaderRow(body, previous, label)
+	local row = CreateRow(body, previous, nil, ROW_HEIGHT)
+	local header = ns:CreateSectionHeader(row, label)
+
+	ns:SetPoint(header, "TOPLEFT", row, "TOPLEFT", LABEL_INSET, 0)
+	ns:SetPoint(header, "TOPRIGHT", row, "TOPRIGHT", -LABEL_INSET, 0)
+
+	return row
+end
+
+local function AddPredictionRows(body, previous, unit, element)
+	local row = AddHeaderRow(body, previous, PREDICTION_LABELS[element])
+
+	row = AddToggleRow(body, row, "Show", function()
+		return ns:IsElementShown(unit, element)
+	end, function(value)
+		ns:SetElementShown(unit, element, value)
+	end)
+
+	row = AddColorRow(body, row, "Color", function()
+		return ns:GetElementColor(unit, element)
+	end, function(r, g, b)
+		ns:SetElementColor(unit, element, r, g, b)
+	end)
+
+	return AddSliderRow(body, row, "Opacity", 0, ALPHA_PERCENT_MAX, function()
+		return Round(ns:GetElementAlpha(unit, element) * ALPHA_PERCENT_MAX)
+	end, function(value)
+		ns:SetElementAlpha(unit, element, value / ALPHA_PERCENT_MAX)
+	end)
+end
+
+local function BuildPredictionPage(body, unit)
+	local units = ns:GetElementUnits(PREDICTION_SECTION)
+	local multiUnit = #units > 1
+	local storageUnit = StorageUnit(unit, PREDICTION_SECTION)
+	local row = AddDescriptionRow(body, nil, PREDICTION_DESCRIPTION)
+
+	if unit == ALL_KEY then
+		if multiUnit then
+			row = AddLinkRow(body, row, PREDICTION_SECTION, units)
+		end
+	elseif multiUnit then
+		row = AddToggleRow(body, row, "Use All units settings", function()
+			return ns:IsElementLinked(unit, PREDICTION_SECTION)
+		end, function(value)
+			ns:SetElementLinked(unit, PREDICTION_SECTION, value)
+			RefreshAll()
+		end)
+	end
+
+	local first = #body.controls + 1
+
+	for _, element in ipairs(ns.PREDICTION_ELEMENTS) do
+		row = AddPredictionRows(body, row, storageUnit, element)
+	end
+
+	if unit == ALL_KEY or not multiUnit then
+		return
+	end
+
+	local last = #body.controls
+
+	body.refreshers[#body.refreshers + 1] = function()
+		local enabled = not ns:IsElementLinked(unit, PREDICTION_SECTION)
+
+		for index = first, last do
+			SetRowEnabled(body.controls[index], enabled)
+		end
+	end
+end
+
 local CUSTOM_TEXT_TAB_WIDTH = 640
 local DELETE_CUSTOM_TEXT_POPUP = "OUF_MANIA_DELETE_CUSTOM_TEXT"
 
@@ -1299,6 +1398,10 @@ local function SelectSection(index)
 		ShowPage(unit.key, element.key, function(body)
 			BuildCustomTextPage(body, unit.key)
 		end)
+	elseif element.prediction then
+		ShowPage(unit.key, element.key, function(body)
+			BuildPredictionPage(body, unit.key)
+		end)
 	elseif element.priority then
 		ShowPage(unit.key, element.key, function(body)
 			BuildPriorityPage(body, unit.key)
@@ -1396,6 +1499,7 @@ local function ApplyChanges(needsReload)
 	ns:ApplyMedia()
 	ns:ApplyHealthColorMode()
 	ns:ApplyPowerColorMode()
+	ns:ApplyElementColors()
 	ns:UpdatePower()
 	ns:UpdateElements()
 	ns:UpdateTags()
