@@ -4,6 +4,17 @@ local THREAT_PREVIEW_COLOR = { 1, 0, 0 }
 local CASTBAR_PREVIEW_SPELL = 133
 local CASTBAR_PREVIEW_DURATION = 3
 
+local PREDICTION_PREVIEW_MAX = 100
+local PREDICTION_PREVIEW_HEALTH = 45
+local PREDICTION_PREVIEW_TEMP_LOSS = 0.15
+
+local PREDICTION_PREVIEW_VALUES = {
+	healingPlayer = 15,
+	healingOther = 12,
+	damageAbsorb = 10,
+	healAbsorb = 12,
+}
+
 local wholeUnitPreviews = {}
 local elementPreviews = {}
 local previewRotation = {}
@@ -189,6 +200,48 @@ function ns:StopCastPreview(frame)
 	end
 
 	castbar:Hide()
+end
+
+function ns:ShowPredictionPreview(frame)
+	local regions = frame.predictionRegions
+	local unit = frame.unitKey
+	local bar
+
+	frame:DisableElement("Health")
+	ns:ApplyPredictionVisuals(frame)
+
+	frame.Health:SetMinMaxValues(0, PREDICTION_PREVIEW_MAX)
+	frame.Health:SetValue(PREDICTION_PREVIEW_HEALTH)
+
+	for element, value in next, PREDICTION_PREVIEW_VALUES do
+		bar = regions[element]
+		bar:SetMinMaxValues(0, PREDICTION_PREVIEW_MAX)
+		bar:SetValue(ns:IsElementShown(unit, element) and value or 0)
+	end
+
+	frame.healthLossPerc = ns:IsElementShown(unit, "tempLoss") and PREDICTION_PREVIEW_TEMP_LOSS or 0
+	frame.healthBox:SetValue(frame.healthLossPerc)
+	ns:ApplyHealthWidth(frame)
+
+	regions.overHeal:SetAlpha(1)
+	regions.overDamageAbsorb:SetAlpha(1)
+	regions.overHealAbsorb:SetAlpha(1)
+end
+
+function ns:StopPredictionPreview(frame)
+	if frame:IsElementEnabled("Health") then
+		return
+	end
+
+	local regions = frame.predictionRegions
+
+	regions.overHeal:SetAlpha(0)
+	regions.overDamageAbsorb:SetAlpha(0)
+	regions.overHealAbsorb:SetAlpha(0)
+
+	frame:EnableElement("Health")
+	ns:ApplyPredictionVisuals(frame)
+	frame.Health:ForceUpdate()
 end
 
 function ns:ShowThreatPreview(frame)

@@ -64,6 +64,8 @@ ns.RESTING_SIZE = RESTING_SIZE
 
 local OVERLAY_LEVEL = 5
 
+local PREDICTION_ALPHA = 0.55
+
 ns.Defaults = {
 	iconSize = 12,
 	fontSize = 12,
@@ -85,6 +87,11 @@ ns.Defaults = {
 
 	elements = {
 		castbarIcon = { anchor = { default = "LEFT", target = "RIGHT" } },
+		healingPlayer = { color = { 0.25, 0.8, 0.3 }, alpha = PREDICTION_ALPHA },
+		healingOther = { color = { 0.13, 0.5, 0.2 }, alpha = PREDICTION_ALPHA },
+		damageAbsorb = { color = { 0.4, 0.68, 1 }, alpha = PREDICTION_ALPHA },
+		healAbsorb = { color = { 0.8, 0.24, 0.24 }, alpha = PREDICTION_ALPHA },
+		tempLoss = { color = { 0.25, 0.08, 0.08 }, alpha = 1 },
 		name = {
 			anchor = { default = "LEFT" },
 			tag = { default = "[difficulty][mania:smartlevel<$ ][mania:reset][name]", pet = "[name]",
@@ -198,6 +205,7 @@ ns.ELEMENT_UNITS = {
 }
 
 ns.PREVIEWABLE = {
+	prediction = true,
 	threat = true,
 	resting = true,
 	castbar = true,

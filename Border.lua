@@ -157,11 +157,12 @@ function ns:ApplyPowerShown(frame)
 	end
 
 	if shown then
-		ns:SetPoint(frame.Health, "BOTTOMLEFT", frame.Power, "TOPLEFT", 0, 0)
-		ns:SetPoint(frame.Health, "BOTTOMRIGHT", frame.Power, "TOPRIGHT", 0, 0)
+		ns:SetPoint(frame.healthBox, "BOTTOMLEFT", frame.Power, "TOPLEFT", 0, 0)
+		ns:SetPoint(frame.healthBox, "BOTTOMRIGHT", frame.Power, "TOPRIGHT", 0, 0)
 	else
-		ns:SetPoint(frame.Health, "BOTTOMLEFT", frame, "BOTTOMLEFT", ns.BAR_INSET, ns.BAR_INSET)
-		ns:SetPoint(frame.Health, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", -ns.BAR_INSET, ns.BAR_INSET)
+		ns:SetPoint(frame.healthBox, "BOTTOMLEFT", frame, "BOTTOMLEFT", ns.BAR_INSET, ns.BAR_INSET)
+		ns:SetPoint(frame.healthBox, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", -ns.BAR_INSET,
+			ns.BAR_INSET)
 	end
 end
 

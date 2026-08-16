@@ -4,8 +4,21 @@ local EMPTY = {}
 
 ns.ALL_KEY = "all"
 ns.ELEMENT_GROUPS = {
-	"elements", "offsets", "anchors", "widths", "sizes", "tags", "linked", "levels",
+	"elements", "offsets", "anchors", "widths", "sizes", "tags", "linked", "levels", "colors",
+	"alphas",
 }
+
+ns.PREDICTION_SECTION = "prediction"
+
+ns.PREDICTION_ELEMENTS = {
+	"healingPlayer", "healingOther", "damageAbsorb", "healAbsorb", "tempLoss",
+}
+
+local LINK_SECTIONS = {}
+
+for _, element in ipairs(ns.PREDICTION_ELEMENTS) do
+	LINK_SECTIONS[element] = ns.PREDICTION_SECTION
+end
 
 local INDICATOR_SIZE = ns.INDICATOR_SIZE
 local INDICATOR_SUBLEVEL = 2
@@ -492,12 +505,13 @@ function ns:IsElementLinked(unit, element)
 		return false
 	end
 
-	return ReadNested(unit, "linked", element) == true
+	return ReadNested(unit, "linked", LINK_SECTIONS[element] or element) == true
 end
 
 function ns:SetElementLinked(unit, element, linked)
-	StoreNested(unit, "linked", element, linked or nil)
+	StoreNested(unit, "linked", LINK_SECTIONS[element] or element, linked or nil)
 	ns:UpdateElements()
+	ns:ApplyElementColors()
 	ns:UpdateTags()
 	ns:DeferMethod(ns, "UpdatePixelGeometry", GeometryKey(unit))
 end
@@ -551,6 +565,7 @@ end
 function ns:SetElementShown(unit, element, shown)
 	StoreNested(unit, "elements", element, shown)
 	ns:UpdateElements()
+	ns:ApplyElementColors()
 end
 
 function ns:GetElementOffset(unit, element)
@@ -629,6 +644,46 @@ end
 
 function ns:SetElementLevel(unit, element, level)
 	StoreGeometry(unit, "levels", element, level)
+end
+
+function ns:HasElementColor(element)
+	local info = ns.Defaults.elements[element]
+	return not not (info and info.color)
+end
+
+function ns:GetElementColor(unit, element)
+	local info = ns.Defaults.elements[element]
+	local default = (info and info.color) or EMPTY
+	local stored = ReadElement(unit, "colors", element) or default
+
+	return stored[1] or 1, stored[2] or 1, stored[3] or 1
+end
+
+function ns:SetElementColor(unit, element, r, g, b)
+	StoreNested(unit, "colors", element, { r, g, b })
+	ns:ApplyElementColors()
+end
+
+function ns:HasElementAlpha(element)
+	local info = ns.Defaults.elements[element]
+	return info and info.alpha ~= nil
+end
+
+function ns:GetElementAlpha(unit, element)
+	local stored = ReadElement(unit, "alphas", element)
+
+	if stored then
+		return stored
+	end
+
+	local info = ns.Defaults.elements[element]
+
+	return (info and info.alpha) or 1
+end
+
+function ns:SetElementAlpha(unit, element, alpha)
+	StoreNested(unit, "alphas", element, alpha)
+	ns:ApplyElementColors()
 end
 
 function ns:HasElementSize(element)
@@ -1142,6 +1197,12 @@ function ns:ApplyElements(frame)
 		return
 	end
 
+	if ns:ShouldPreview(unit, ns.PREDICTION_SECTION) then
+		ns:ShowPredictionPreview(frame)
+	else
+		ns:StopPredictionPreview(frame)
+	end
+
 	if elements.castbar then
 		if ns:ShouldPreview(unit, "castbar") then
 			ns:StartCastPreview(frame)
@@ -1263,7 +1324,7 @@ local function PlaceText(frame, text, unit, element)
 
 	text:ClearAllPoints()
 	text:SetJustifyH(point)
-	ns:SetPoint(text, point, frame.Health, point, TextInset(point) + x, y)
+	ns:SetPoint(text, point, frame.healthBox, point, TextInset(point) + x, y)
 
 	if width > 0 then
 		ns:SetWidth(text, width)

@@ -12,6 +12,13 @@ local SPARK_ATLAS = "ui-castingbar-pip"
 local SPARK_OVERHANG = 4
 local SPARK_RATIO = 0.4
 
+local PREDICTION_LEVEL = 1
+local ABSORB_LEVEL = 2
+local HEALTH_OVERLAY_LEVEL = 3
+local OVER_INDICATOR_WIDTH = 6
+local OVER_INDICATOR_ALPHA = 0.8
+local MAX_HEALTH_LOSS = 0.95
+
 local styled = setmetatable({}, { __mode = "k" })
 
 ns.TEXT_PADDING = 4
@@ -68,6 +75,29 @@ local function HealthPostUpdateColor(element)
 	if ns:GetHealthColorMode() == "custom" then
 		element:SetStatusBarColor(ns:GetHealthCustomColor())
 	end
+end
+
+function ns:ApplyHealthWidth(frame, boxWidth)
+	boxWidth = boxWidth or frame.healthBox:GetWidth()
+
+	if not boxWidth or boxWidth <= 0 then
+		return
+	end
+
+	ns:SetWidth(frame.Health, boxWidth * (1 - (frame.healthLossPerc or 0)))
+end
+
+local function HealthPostUpdate(element, _, _, _, lossPerc)
+	local frame = element.__owner
+
+	lossPerc = math.max(0, math.min(lossPerc or 0, MAX_HEALTH_LOSS))
+
+	if frame.healthLossPerc == lossPerc then
+		return
+	end
+
+	frame.healthLossPerc = lossPerc
+	ns:ApplyHealthWidth(frame)
 end
 
 local function ApplyHealthColorFlags(frame)
@@ -144,6 +174,119 @@ local function CreateBar(parent)
 	local bar = CreateFrame("StatusBar", nil, parent)
 	bar:SetStatusBarTexture(ns:GetTexture())
 	return bar
+end
+
+local function CreatePredictionBar(health, level)
+	local bar = CreateBar(health)
+	bar:SetFrameLevel(health:GetFrameLevel() + level)
+	bar:SetPoint("TOP", health, "TOP", 0, 0)
+	bar:SetPoint("BOTTOM", health, "BOTTOM", 0, 0)
+	return bar
+end
+
+local function CreateOverIndicator(parent, health, side, offset)
+	local texture = parent:CreateTexture(nil, "OVERLAY")
+	texture:SetPoint("TOP", health, "TOP", 0, 0)
+	texture:SetPoint("BOTTOM", health, "BOTTOM", 0, 0)
+	texture:SetPoint(side, health, side, offset, 0)
+	texture:SetWidth(OVER_INDICATOR_WIDTH)
+	texture:SetAlpha(0)
+	return texture
+end
+
+local function ApplyPredictionBar(bar, unit, element, shown)
+	local r, g, b = ns:GetElementColor(unit, element)
+
+	bar:SetStatusBarColor(r, g, b)
+	bar:SetAlpha(ns:GetElementAlpha(unit, element))
+
+	if not shown then
+		bar:SetValue(0)
+	end
+end
+
+function ns:ApplyPredictionVisuals(frame)
+	local health = frame.Health
+	local regions = frame.predictionRegions
+	local unit = frame.unitKey
+	local r, g, b
+
+	local player = ns:IsElementShown(unit, "healingPlayer")
+	local other = ns:IsElementShown(unit, "healingOther")
+	local damage = ns:IsElementShown(unit, "damageAbsorb")
+	local heal = ns:IsElementShown(unit, "healAbsorb")
+
+	ApplyPredictionBar(regions.healingPlayer, unit, "healingPlayer", player)
+	ApplyPredictionBar(regions.healingOther, unit, "healingOther", other)
+	ApplyPredictionBar(regions.damageAbsorb, unit, "damageAbsorb", damage)
+	ApplyPredictionBar(regions.healAbsorb, unit, "healAbsorb", heal)
+	ApplyPredictionBar(frame.healthBox, unit, "tempLoss", ns:IsElementShown(unit, "tempLoss"))
+
+	r, g, b = ns:GetElementColor(unit, "healingOther")
+	regions.overHeal:SetColorTexture(r, g, b, OVER_INDICATOR_ALPHA)
+
+	r, g, b = ns:GetElementColor(unit, "damageAbsorb")
+	regions.overDamageAbsorb:SetColorTexture(r, g, b, OVER_INDICATOR_ALPHA)
+
+	r, g, b = ns:GetElementColor(unit, "healAbsorb")
+	regions.overHealAbsorb:SetColorTexture(r, g, b, OVER_INDICATOR_ALPHA)
+
+	health:Show()
+	frame.healthBox:Show()
+	regions.healingPlayer:SetShown(player)
+	regions.healingOther:SetShown(other)
+	regions.damageAbsorb:SetShown(damage)
+	regions.healAbsorb:SetShown(heal)
+	regions.overHeal:SetShown(player or other)
+	regions.overDamageAbsorb:SetShown(damage)
+	regions.overHealAbsorb:SetShown(heal)
+end
+
+local function ApplyPrediction(frame)
+	local health = frame.Health
+	local regions = frame.predictionRegions
+	local unit = frame.unitKey
+
+	local player = ns:IsElementShown(unit, "healingPlayer")
+	local other = ns:IsElementShown(unit, "healingOther")
+	local damage = ns:IsElementShown(unit, "damageAbsorb")
+	local heal = ns:IsElementShown(unit, "healAbsorb")
+	local loss = ns:IsElementShown(unit, "tempLoss")
+
+	health.HealingPlayer = player and regions.healingPlayer or nil
+	health.HealingOther = other and regions.healingOther or nil
+	health.OverHealIndicator = (player or other) and regions.overHeal or nil
+	health.DamageAbsorb = damage and regions.damageAbsorb or nil
+	health.OverDamageAbsorbIndicator = damage and regions.overDamageAbsorb or nil
+	health.HealAbsorb = heal and regions.healAbsorb or nil
+	health.OverHealAbsorbIndicator = heal and regions.overHealAbsorb or nil
+	health.TempLoss = loss and frame.healthBox or nil
+
+	local state = (player and 1 or 0) + (other and 2 or 0) + (damage and 4 or 0)
+		+ (heal and 8 or 0) + (loss and 16 or 0)
+	local changed = frame.predictionState ~= state
+	local previewed = frame.elementsReady
+		and ns:ShouldPreview(unit, ns.PREDICTION_SECTION)
+
+	frame.predictionState = state
+
+	if changed and frame.elementsReady and not previewed then
+		frame:DisableElement("Health")
+		frame:EnableElement("Health")
+		health:ForceUpdate()
+	end
+
+	if previewed then
+		ns:ShowPredictionPreview(frame)
+	else
+		ns:ApplyPredictionVisuals(frame)
+	end
+end
+
+function ns:ApplyElementColors()
+	for frame in next, styled do
+		ApplyPrediction(frame)
+	end
 end
 
 local function UpdateTooltip(frame)
@@ -229,14 +372,15 @@ local function LayoutFrame(frame)
 
 	ns:SetSize(frame, width, height)
 
-	ns:SetPoint(frame.Health, "TOPLEFT", frame, "TOPLEFT", ns.BAR_INSET, -ns.BAR_INSET)
-	ns:SetPoint(frame.Health, "TOPRIGHT", frame, "TOPRIGHT", -ns.BAR_INSET, -ns.BAR_INSET)
+	ns:SetPoint(frame.healthBox, "TOPLEFT", frame, "TOPLEFT", ns.BAR_INSET, -ns.BAR_INSET)
+	ns:SetPoint(frame.healthBox, "TOPRIGHT", frame, "TOPRIGHT", -ns.BAR_INSET, -ns.BAR_INSET)
 
 	ns:SetPoint(frame.Power, "BOTTOMLEFT", frame, "BOTTOMLEFT", ns.BAR_INSET, ns.BAR_INSET)
 	ns:SetPoint(frame.Power, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", -ns.BAR_INSET, ns.BAR_INSET)
 	ns:SetHeight(frame.Power, powerHeight)
 
 	ns:ApplyPowerShown(frame)
+	ns:ApplyHealthWidth(frame, width - 2 * ns.BAR_INSET)
 
 	if frame.Castbar then
 		local castbarHeight = ns:GetElementSize(frame.unitKey, "castbar")
@@ -294,13 +438,52 @@ local function Style(self, unit)
 	power.PostUpdate = PowerPostUpdate
 	self.Power = power
 
+	local healthBox = CreateBar(self)
+	healthBox:SetReverseFill(true)
+	healthBox:SetMinMaxValues(0, 1)
+	self.healthBox = healthBox
+
 	local health = CreateBar(self)
 	health.smoothing = Enum.StatusBarInterpolation.ExponentialEaseOut
 	health.colorTapping = true
 	health.colorDisconnected = true
+	health.incomingHealOverflow = 1
+	health.PostUpdate = HealthPostUpdate
 	health.PostUpdateColor = HealthPostUpdateColor
+	health:SetPoint("TOPLEFT", healthBox, "TOPLEFT", 0, 0)
+	health:SetPoint("BOTTOMLEFT", healthBox, "BOTTOMLEFT", 0, 0)
 	self.Health = health
 
+	local healingPlayer = CreatePredictionBar(health, PREDICTION_LEVEL)
+	healingPlayer:SetPoint("LEFT", health:GetStatusBarTexture(), "RIGHT", 0, 0)
+
+	local healingOther = CreatePredictionBar(health, PREDICTION_LEVEL)
+	healingOther:SetPoint("LEFT", healingPlayer:GetStatusBarTexture(), "RIGHT", 0, 0)
+
+	local damageAbsorb = CreatePredictionBar(health, ABSORB_LEVEL)
+	damageAbsorb:SetPoint("LEFT", healingOther:GetStatusBarTexture(), "RIGHT", 0, 0)
+
+	local healAbsorb = CreatePredictionBar(health, ABSORB_LEVEL)
+	healAbsorb:SetReverseFill(true)
+	healAbsorb:SetPoint("RIGHT", health:GetStatusBarTexture(), "RIGHT", 0, 0)
+
+	local healthOverlay = CreateFrame("Frame", nil, health)
+	healthOverlay:SetAllPoints()
+	healthOverlay:SetFrameLevel(health:GetFrameLevel() + HEALTH_OVERLAY_LEVEL)
+	self.healthOverlay = healthOverlay
+
+	self.predictionRegions = {
+		healingPlayer = healingPlayer,
+		healingOther = healingOther,
+		damageAbsorb = damageAbsorb,
+		healAbsorb = healAbsorb,
+		overHeal = CreateOverIndicator(healthOverlay, health, "RIGHT", 0),
+		overDamageAbsorb = CreateOverIndicator(healthOverlay, health, "RIGHT",
+			-OVER_INDICATOR_WIDTH),
+		overHealAbsorb = CreateOverIndicator(healthOverlay, health, "LEFT", 0),
+	}
+
+	ApplyPrediction(self)
 	ApplyHealthColorFlags(self)
 	ApplyPowerColorFlags(self)
 
@@ -311,14 +494,15 @@ local function Style(self, unit)
 	costPrediction:SetPoint("RIGHT", power:GetStatusBarTexture(), "RIGHT", 0, 0)
 	power.CostPrediction = costPrediction
 
-	ns:CreateBorder(self, health)
+	ns:CreateBorder(self, healthBox)
 
 	self.elements = {}
 
 	local texts = {}
 
 	for _, element in ipairs(ns.TEXT_ELEMENTS) do
-		self.elements[element] = CreateText(health, ns:GetElementAnchor(self.unitKey, element))
+		self.elements[element] = CreateText(healthOverlay,
+			ns:GetElementAnchor(self.unitKey, element))
 		texts[#texts + 1] = self.elements[element]
 	end
 
@@ -447,7 +631,7 @@ function ns:CreateLiveTextElement(key)
 	local text
 
 	for frame, texts in next, styled do
-		text = CreateText(frame.Health, ns:GetElementAnchor(frame.unitKey, key))
+		text = CreateText(frame.healthOverlay, ns:GetElementAnchor(frame.unitKey, key))
 		frame.elements[key] = text
 		texts[#texts + 1] = text
 	end
@@ -495,6 +679,11 @@ function ns:ApplyMedia()
 	for frame, texts in next, styled do
 		if texture then
 			frame.Health:SetStatusBarTexture(texture)
+			frame.healthBox:SetStatusBarTexture(texture)
+			frame.predictionRegions.healingPlayer:SetStatusBarTexture(texture)
+			frame.predictionRegions.healingOther:SetStatusBarTexture(texture)
+			frame.predictionRegions.damageAbsorb:SetStatusBarTexture(texture)
+			frame.predictionRegions.healAbsorb:SetStatusBarTexture(texture)
 		end
 
 		if frame.Power and texture then
