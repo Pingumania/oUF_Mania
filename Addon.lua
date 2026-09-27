@@ -73,6 +73,7 @@ ns.Defaults = {
 	powerColorMode = "blizzard",
 	barCustomColor = { 1, 1, 1 },
 	powerHeight = 10,
+	backgroundAlpha = 0.7,
 
 	units = {
 		player = { width = 200, height = 46 },

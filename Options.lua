@@ -161,6 +161,7 @@ local GROWTH_OPTIONS = {
 
 local SPACING_MIN, SPACING_MAX = 0, 60
 local ICON_SIZE_MIN, ICON_SIZE_MAX = 8, 32
+local ALPHA_PERCENT_MAX = 100
 
 local SIZE_ROWS = {
 	{ label = "Frame width", field = "width", min = 40, max = 400 },
@@ -464,6 +465,12 @@ local function BuildGeneralPage(body)
 		return ns:GetIconTagSize()
 	end, function(value)
 		ns:SetIconTagSize(value)
+	end)
+
+	row = AddSliderRow(body, row, "Background opacity", 0, ALPHA_PERCENT_MAX, function()
+		return Round(ns:GetBackgroundAlpha() * ALPHA_PERCENT_MAX)
+	end, function(value)
+		ns:SetBackgroundAlpha(value / ALPHA_PERCENT_MAX)
 	end)
 
 	row = AddDropdownRow(body, row, "Health color", ns:GetBarColorModes(), function()
@@ -936,7 +943,6 @@ end
 
 local PREDICTION_SECTION = ns.PREDICTION_SECTION
 local PREDICTION_TAB_WIDTH = 640
-local ALPHA_PERCENT_MAX = 100
 
 local PREDICTION_DESCRIPTION = "Incoming healing and absorbs are drawn inside the health bar. An "
 	.. "amount that does not fit is marked at the bar's edge rather than drawn past it."
@@ -1668,6 +1674,7 @@ end
 
 local function ApplyChanges(needsReload)
 	ns:ApplyMedia()
+	ns:ApplyBackgroundAlpha()
 	ns:ApplyHealthColorMode()
 	ns:ApplyPowerColorMode()
 	ns:ApplyElementColors()
@@ -1691,6 +1698,7 @@ local function ResetGeneral()
 	db.font = nil
 	db.fontSize = nil
 	db.iconSize = nil
+	db.backgroundAlpha = nil
 	db.sync = nil
 	db.questIcon = nil
 	db.roleIcon = nil

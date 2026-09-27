@@ -17,7 +17,7 @@ local DIVIDER_TEXELS = TEXTURE_TEXELS * (1 - 2 * DIVIDER_TRIM)
 local DIVIDER_LINE_TEXELS = TEXTURE_TEXELS * (7 / 16 - DIVIDER_TRIM)
 ns.BORDER_GAP = 6
 
-local BACKGROUND_COLOR = { 0, 0, 0, 0.4 }
+local BACKGROUND_COLOR = { 0, 0, 0 }
 
 local MAX_DIVIDERS = 4
 local MAX_PANELS = MAX_DIVIDERS + 1
@@ -64,10 +64,31 @@ local function CreateSideEdge(parent, side, left, right)
 	return CreateTexture(parent, EDGE_V, left, right, 0, 1)
 end
 
-local function CreateBackground(frame)
-	local background = frame:CreateTexture(nil, "BACKGROUND")
-	background:SetColorTexture(unpack(BACKGROUND_COLOR))
-	return background
+local bordered = setmetatable({}, { __mode = "k" })
+
+function ns:GetBackgroundAlpha()
+	return ns.db.backgroundAlpha or ns.Defaults.backgroundAlpha
+end
+
+local function ApplyFrameBackground(frame, alpha)
+	local r, g, b = unpack(BACKGROUND_COLOR)
+
+	for _, panel in ipairs(frame.borderPanels) do
+		panel:SetColorTexture(r, g, b, alpha)
+	end
+end
+
+function ns:ApplyBackgroundAlpha()
+	local alpha = ns:GetBackgroundAlpha()
+
+	for frame in next, bordered do
+		ApplyFrameBackground(frame, alpha)
+	end
+end
+
+function ns:SetBackgroundAlpha(alpha)
+	ns.db.backgroundAlpha = alpha
+	ns:ApplyBackgroundAlpha()
 end
 
 local function CreateDivider(frame, overlay)
@@ -130,7 +151,7 @@ function ns:CreateBorder(frame)
 	end
 
 	for index = 1, MAX_PANELS do
-		panels[index] = CreateBackground(frame)
+		panels[index] = frame:CreateTexture(nil, "BACKGROUND")
 	end
 
 	for _, entry in ipairs(SIDES) do
@@ -148,6 +169,9 @@ function ns:CreateBorder(frame)
 	frame.borderDividers = dividers
 	frame.borderPanels = panels
 	frame.borderSides = sides
+	bordered[frame] = true
+
+	ApplyFrameBackground(frame, ns:GetBackgroundAlpha())
 
 	ns:SetBorderDividers(frame)
 end
