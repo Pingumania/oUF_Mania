@@ -130,6 +130,10 @@ local function BuildClassSlot(frame, holder)
 	runes.PostUpdateColor = PipsPostUpdateColor
 	frame.Runes = runes
 
+	if not MonkStaggerBar then
+		return
+	end
+
 	local stagger = CreateBar(holder)
 	stagger:SetAllPoints(holder)
 	stagger.slotKey = CLASS_SLOT
