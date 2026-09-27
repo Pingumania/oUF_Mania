@@ -12,6 +12,13 @@ local SPARK_ATLAS = "ui-castingbar-pip"
 local SPARK_OVERHANG = 4
 local SPARK_RATIO = 0.4
 
+local SWING_TIMER_KEY = "swingtimer"
+local SWING_COMBAT_KEY = "swingtimerCombat"
+local SWING_TIME_KEY = "swingtimerTime"
+local SWING_BAR_KEYS = { "MainHand", "OffHand", "Ranged" }
+
+ns.SWING_BAR_KEYS = SWING_BAR_KEYS
+
 local PREDICTION_LEVEL = 1
 local ABSORB_LEVEL = 2
 local HEALTH_OVERLAY_LEVEL = 3
@@ -176,6 +183,125 @@ local function CreateBar(parent)
 	return bar
 end
 
+local function SwingTimerPostUpdate(element)
+	local frame = element.__owner
+	local count = 0
+
+	for _, key in ipairs(SWING_BAR_KEYS) do
+		if element[key]:IsShown() then
+			count = count + 1
+		end
+	end
+
+	if frame.swingCount ~= count then
+		frame.swingCount = count
+		ns:DeferMethod(ns, "UpdatePixelGeometry", frame.unitKey)
+	end
+end
+
+local swingFormatter
+
+local function CreateSwingFormatter()
+	local formatter = C_StringUtil.CreateSecondsFormatter()
+	formatter:SetDefaultAbbreviation(Enum.SecondsFormatterAbbreviation.OneLetter)
+	formatter:SetMinInterval(Enum.SecondsFormatterInterval.Seconds)
+	formatter:SetMillisecondsThreshold(60)
+	return formatter
+end
+
+local function CreateSwingTimer(frame)
+	local swingTimer = CreateFrame("Frame", nil, frame)
+	swingTimer:SetFrameLevel(frame:GetFrameLevel())
+	swingTimer:Hide()
+	ns:CreateBorder(swingTimer)
+
+	swingFormatter = swingFormatter or CreateSwingFormatter()
+
+	local bar, time
+
+	for _, key in ipairs(SWING_BAR_KEYS) do
+		bar = CreateBar(swingTimer)
+		bar:SetMinMaxValues(0, 1)
+
+		time = CreateText(bar, "RIGHT")
+		time:SetPoint("RIGHT", bar, "RIGHT", -ns.TEXT_PADDING, 0)
+		time:Hide()
+		time.binding = C_DurationUtil.CreateDurationTextBinding()
+		time.binding:SetFormatter(swingFormatter)
+		time.binding:SetFontString(time)
+		time.binding:SetEnabled(false)
+		bar.timeText = time
+
+		swingTimer[key] = bar
+	end
+
+	swingTimer.PostUpdate = SwingTimerPostUpdate
+
+	return swingTimer
+end
+
+local function UpdateSwingTimerShown(frame)
+	local unit = frame.unitKey
+	local allowed = frame.swingInCombat
+		or not ns:IsElementShown(unit, SWING_COMBAT_KEY)
+		or ns:ShouldPreview(unit, SWING_TIMER_KEY)
+
+	frame.SwingTimer:SetShown(frame.swingPlaced and allowed)
+end
+
+local function OnSwingCombatChanged(frame, event)
+	frame.swingInCombat = event == "PLAYER_REGEN_DISABLED"
+	UpdateSwingTimerShown(frame)
+end
+
+function ns:ApplySwingTimerCombat(frame)
+	local unit = frame.unitKey
+
+	if ns:IsElementShown(unit, SWING_TIMER_KEY) and ns:IsElementShown(unit, SWING_COMBAT_KEY) then
+		frame.swingInCombat = UnitAffectingCombat("player")
+		frame:RegisterEvent("PLAYER_REGEN_DISABLED", OnSwingCombatChanged, true)
+		frame:RegisterEvent("PLAYER_REGEN_ENABLED", OnSwingCombatChanged, true)
+	else
+		frame.swingInCombat = nil
+		frame:UnregisterEvent("PLAYER_REGEN_DISABLED", OnSwingCombatChanged)
+		frame:UnregisterEvent("PLAYER_REGEN_ENABLED", OnSwingCombatChanged)
+	end
+
+	UpdateSwingTimerShown(frame)
+end
+
+function ns:ApplySwingTimerTime(frame)
+	local shown = ns:IsElementShown(frame.unitKey, SWING_TIME_KEY)
+
+	if frame.swingTimeShown == shown then
+		return
+	end
+
+	frame.swingTimeShown = shown
+	frame.swingCount = nil
+	frame:DisableElement("SwingTimer")
+
+	local bar
+
+	for _, key in ipairs(SWING_BAR_KEYS) do
+		bar = frame.SwingTimer[key]
+		bar.Time = shown and bar.timeText or nil
+		bar.timeText:SetShown(shown)
+
+		if not shown then
+			bar.timeText.binding:SetEnabled(false)
+		end
+	end
+end
+
+local function ApplySwingTimerColors(frame)
+	local unit = frame.unitKey
+
+	for _, key in ipairs(SWING_BAR_KEYS) do
+		frame.SwingTimer[key]:SetStatusBarColor(ns:GetElementColor(unit, SWING_TIMER_KEY .. key))
+	end
+end
+
 local function CreatePredictionBar(health, level)
 	local bar = CreateBar(health)
 	bar:SetFrameLevel(health:GetFrameLevel() + level)
@@ -287,6 +413,10 @@ function ns:ApplyElementColors()
 	for frame in next, styled do
 		ApplyPrediction(frame)
 		ns:ApplyResourceColors(frame)
+
+		if frame.SwingTimer then
+			ApplySwingTimerColors(frame)
+		end
 	end
 end
 
@@ -497,10 +627,89 @@ local function PlaceClassResource(frame, placement, stackY)
 	ns:PlaceResourceSlot(frame, ns.CLASS_SLOT, placement, stackY)
 end
 
+local function SwingTimerSlot(frame)
+	local unit = frame.unitKey
+
+	if not frame.SwingTimer or not frame.swingCount or frame.swingCount == 0 then
+		return nil
+	elseif not ns:IsElementShown(unit, SWING_TIMER_KEY) and not ns:ShouldPreview(unit, SWING_TIMER_KEY) then
+		return nil
+	end
+
+	return frame.SwingTimer, frame.swingCount * ns:GetElementSize(unit, SWING_TIMER_KEY)
+end
+
+local swingAnchors = {}
+
+local function PlaceSwingTimer(frame, placement, stackY)
+	local swingTimer = frame.SwingTimer
+
+	if not swingTimer then
+		return
+	elseif not placement then
+		frame.swingPlaced = false
+		swingTimer:Hide()
+		return
+	end
+
+	local unit = frame.unitKey
+	local height = ns:GetElementSize(unit, SWING_TIMER_KEY)
+	local count = 0
+	local x, y, previous, bar
+
+	swingTimer:ClearAllPoints()
+
+	if placement == ns.PLACEMENT_FREE then
+		x, y = ns:GetElementPosition(unit, SWING_TIMER_KEY)
+		ns:SetPoint(swingTimer, "BOTTOM", UIParent, "BOTTOM", x, y)
+		ns:SetWidth(swingTimer, ns:GetElementSize(unit, SWING_TIMER_KEY .. "Width"))
+	elseif placement == ns.PLACEMENT_ABOVE then
+		x, y = ns:GetElementOffset(unit, SWING_TIMER_KEY)
+		ns:SetPoint(swingTimer, "BOTTOMLEFT", frame, "TOPLEFT", x, ns.BORDER_GAP + y)
+		ns:SetPoint(swingTimer, "BOTTOMRIGHT", frame, "TOPRIGHT", x, ns.BORDER_GAP + y)
+	else
+		x, y = ns:GetElementOffset(unit, SWING_TIMER_KEY)
+		ns:SetPoint(swingTimer, "TOPLEFT", frame, "BOTTOMLEFT", x, stackY + y)
+		ns:SetPoint(swingTimer, "TOPRIGHT", frame, "BOTTOMRIGHT", x, stackY + y)
+	end
+
+	ns:SetHeight(swingTimer, frame.swingCount * height + 2 * ns.BAR_INSET)
+
+	if placement == ns.PLACEMENT_FREE then
+		ns:SnapToPixelGrid(swingTimer)
+	end
+
+	for _, key in ipairs(SWING_BAR_KEYS) do
+		bar = swingTimer[key]
+
+		if bar:IsShown() then
+			bar:ClearAllPoints()
+
+			if previous then
+				ns:SetPoint(bar, "TOPLEFT", previous, "BOTTOMLEFT", 0, 0)
+				ns:SetPoint(bar, "TOPRIGHT", previous, "BOTTOMRIGHT", 0, 0)
+			else
+				ns:SetPoint(bar, "TOPLEFT", swingTimer, "TOPLEFT", ns.BAR_INSET, -ns.BAR_INSET)
+				ns:SetPoint(bar, "TOPRIGHT", swingTimer, "TOPRIGHT", -ns.BAR_INSET, -ns.BAR_INSET)
+			end
+
+			ns:SetHeight(bar, height)
+			count = count + 1
+			swingAnchors[count] = bar
+			previous = bar
+		end
+	end
+
+	ns:SetBorderDividers(swingTimer, swingAnchors, count - 1)
+	frame.swingPlaced = true
+	UpdateSwingTimerShown(frame)
+end
+
 local STACK = {
 	{ key = ns.POWER_SLOT, Slot = AdditionalPowerSlot, Place = PlaceAdditionalPower },
 	{ key = ns.CLASS_SLOT, Slot = ClassResourceSlot, Place = PlaceClassResource },
 	{ key = "castbar", Slot = CastbarSlot, Place = PlaceCastbar },
+	{ key = SWING_TIMER_KEY, Slot = SwingTimerSlot, Place = PlaceSwingTimer },
 }
 
 local stackRegions = {}
@@ -721,6 +930,15 @@ local function Style(self, unit)
 		local resting = ns:CreateRestingIndicator(self)
 		self.RestingIndicator = resting
 		self.elements.resting = resting
+
+		if C_SwingTimer then
+			self.SwingTimer = CreateSwingTimer(self)
+			ApplySwingTimerColors(self)
+
+			for _, key in ipairs(SWING_BAR_KEYS) do
+				texts[#texts + 1] = self.SwingTimer[key].timeText
+			end
+		end
 	end
 
 	if ns:HasElement(self.unitKey, "castbar") then
@@ -902,6 +1120,14 @@ function ns:ApplyMedia()
 
 		if frame.Castbar and texture then
 			frame.Castbar:SetStatusBarTexture(texture)
+		end
+
+		if frame.SwingTimer and texture then
+			for _, key in ipairs(SWING_BAR_KEYS) do
+				frame.SwingTimer[key]:SetStatusBarTexture(texture)
+			end
+
+			ApplySwingTimerColors(frame)
 		end
 
 		ns:ApplyResourceMedia(frame, texture)

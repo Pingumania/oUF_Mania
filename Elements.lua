@@ -11,14 +11,17 @@ ns.ELEMENT_GROUPS = {
 ns.PLACEMENT_INSIDE = "inside"
 ns.PLACEMENT_OUTSIDE = "outside"
 ns.PLACEMENT_FREE = "free"
+ns.PLACEMENT_ABOVE = "above"
 
 local INSIDE_OPTION = { value = ns.PLACEMENT_INSIDE, label = "Inside the frame" }
 local BELOW_OPTION = { value = ns.PLACEMENT_OUTSIDE, label = "Below the frame" }
 local DETACHED_OPTION = { value = ns.PLACEMENT_FREE, label = "Detached" }
+local ABOVE_OPTION = { value = ns.PLACEMENT_ABOVE, label = "Above the frame" }
 
 local PLACEMENTS = { INSIDE_OPTION, BELOW_OPTION }
 local FREE_PLACEMENTS = { INSIDE_OPTION, BELOW_OPTION, DETACHED_OPTION }
 local BOXED_PLACEMENTS = { BELOW_OPTION, DETACHED_OPTION }
+local EDGE_PLACEMENTS = { BELOW_OPTION, ABOVE_OPTION, DETACHED_OPTION }
 
 function ns:HasFreePlacement(element)
 	local info = ns.Defaults.elements[element]
@@ -30,6 +33,8 @@ function ns:GetPlacements(element)
 
 	if not (info and info.freePlacement) then
 		return PLACEMENTS
+	elseif info.noInside and info.above then
+		return EDGE_PLACEMENTS
 	elseif info.noInside then
 		return BOXED_PLACEMENTS
 	end
@@ -1357,6 +1362,19 @@ function ns:ApplyElements(frame)
 		end
 
 		elements.castbar.SafeZone:SetShown(ns:IsElementShown(unit, "castbarLatency"))
+	end
+
+	if frame.SwingTimer then
+		ns:ApplySwingTimerTime(frame)
+
+		if ns:ShouldPreview(unit, "swingtimer") then
+			ns:StartSwingPreview(frame)
+		else
+			ns:StopSwingPreview(frame)
+			ns:SetOUFElement(frame, "SwingTimer", ns:IsElementShown(unit, "swingtimer"))
+		end
+
+		ns:ApplySwingTimerCombat(frame)
 	end
 
 	for _, info in ipairs(INDICATORS) do

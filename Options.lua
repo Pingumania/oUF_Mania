@@ -116,6 +116,23 @@ local ELEMENTS = {
 	{ key = ns.PRIORITY_SECTION, label = "Priority groups", priority = true },
 }
 
+if C_SwingTimer then
+	for index, info in ipairs(ELEMENTS) do
+		if info.key == ns.POWER_SLOT then
+			table.insert(ELEMENTS, index + 1, {
+				key = "swingtimer",
+				label = "Swing timer",
+				bar = true,
+				extra = {
+					"swingtimerWidth", "swingtimerCombat", "swingtimerTime",
+					"swingtimerMainHand", "swingtimerOffHand", "swingtimerRanged",
+				},
+			})
+			break
+		end
+	end
+end
+
 local LINK_PADDING = 12
 local LINK_WIDTH = TAG_BUTTON_RIGHT + LINK_PADDING
 local LINK_TOGGLE_GAP = 2
@@ -125,6 +142,12 @@ local LINK_BUTTON_GAP = 6
 
 local EMPTY = {}
 local AXES = { "x", "y" }
+
+local SWING_BAR_COLORS = {
+	{ key = "swingtimerMainHand", label = "Main hand color" },
+	{ key = "swingtimerOffHand", label = "Off hand color" },
+	{ key = "swingtimerRanged", label = "Ranged color" },
+}
 
 local ICON_SIDES = {
 	{ value = "LEFT", label = "Left" },
@@ -663,6 +686,11 @@ local function BuildElementPage(body, unit, info)
 		return ns:GetElementPlacement(storageUnit, info.key) == ns.PLACEMENT_OUTSIDE
 	end
 
+	local function IsAttached()
+		local placement = ns:GetElementPlacement(storageUnit, info.key)
+		return placement == ns.PLACEMENT_OUTSIDE or placement == ns.PLACEMENT_ABOVE
+	end
+
 	local function IsStacked()
 		return not IsDetached()
 	end
@@ -770,7 +798,7 @@ local function BuildElementPage(body, unit, info)
 	end)
 
 	if ns:HasElementPlacement(info.key) then
-		TagRows(body, offsetFrom, IsBelow)
+		TagRows(body, offsetFrom, IsAttached)
 	end
 
 	if info.key == "castbar" then
@@ -808,6 +836,28 @@ local function BuildElementPage(body, unit, info)
 				return ns:IsElementShown(storageUnit, "castbarLatency")
 			end, function(value)
 				ns:SetElementShown(storageUnit, "castbarLatency", value)
+			end)
+		end
+	end
+
+	if info.key == "swingtimer" then
+		row = AddToggleRow(body, row, "Only show in combat", function()
+			return ns:IsElementShown(storageUnit, "swingtimerCombat")
+		end, function(value)
+			ns:SetElementShown(storageUnit, "swingtimerCombat", value)
+		end)
+
+		row = AddToggleRow(body, row, "Show timer", function()
+			return ns:IsElementShown(storageUnit, "swingtimerTime")
+		end, function(value)
+			ns:SetElementShown(storageUnit, "swingtimerTime", value)
+		end)
+
+		for _, entry in ipairs(SWING_BAR_COLORS) do
+			row = AddColorRow(body, row, entry.label, function()
+				return ns:GetElementColor(storageUnit, entry.key)
+			end, function(r, g, b)
+				ns:SetElementColor(storageUnit, entry.key, r, g, b)
 			end)
 		end
 	end

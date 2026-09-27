@@ -3,6 +3,7 @@ local _, ns = ...
 local THREAT_PREVIEW_COLOR = { 1, 0, 0 }
 local CASTBAR_PREVIEW_SPELL = 133
 local CASTBAR_PREVIEW_DURATION = 3
+local SWING_PREVIEW_DURATION = 2.4
 
 local PREDICTION_PREVIEW_MAX = 100
 local PREDICTION_PREVIEW_HEALTH = 45
@@ -203,6 +204,64 @@ function ns:StopCastPreview(frame)
 	end
 
 	castbar:Hide()
+end
+
+local swingPreviews = {}
+
+local function RunPreviewSwing(swingTimer)
+	local bar
+
+	for _, key in ipairs(ns.SWING_BAR_KEYS) do
+		bar = swingTimer[key]
+		bar.previewDuration:SetTimeFromStart(GetTime(), SWING_PREVIEW_DURATION)
+		bar:SetTimerDuration(bar.previewDuration, Enum.StatusBarInterpolation.Immediate,
+			Enum.StatusBarTimerDirection.ElapsedTime)
+
+		if bar.Time then
+			bar.Time.binding:SetEnabled(true)
+			bar.Time.binding:SetDuration(bar.previewDuration)
+		end
+	end
+end
+
+function ns:StartSwingPreview(frame)
+	if swingPreviews[frame] then
+		return
+	end
+
+	local swingTimer = frame.SwingTimer
+	local bar
+
+	ns:SetOUFElement(frame, "SwingTimer", false)
+
+	for _, key in ipairs(ns.SWING_BAR_KEYS) do
+		bar = swingTimer[key]
+		bar.previewDuration = bar.previewDuration or C_DurationUtil.CreateDuration()
+		bar:Show()
+	end
+
+	frame.swingCount = #ns.SWING_BAR_KEYS
+	RunPreviewSwing(swingTimer)
+
+	swingPreviews[frame] = C_Timer.NewTicker(SWING_PREVIEW_DURATION, function()
+		RunPreviewSwing(swingTimer)
+	end)
+end
+
+function ns:StopSwingPreview(frame)
+	local ticker = swingPreviews[frame]
+
+	if not ticker then
+		return
+	end
+
+	ticker:Cancel()
+	swingPreviews[frame] = nil
+	frame.swingCount = nil
+
+	for _, key in ipairs(ns.SWING_BAR_KEYS) do
+		frame.SwingTimer[key].timeText.binding:SetEnabled(false)
+	end
 end
 
 function ns:ShowPredictionPreview(frame)
