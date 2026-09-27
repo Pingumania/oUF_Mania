@@ -131,6 +131,14 @@ end
 
 oUF.Tags.Events["mania:smartlevel"] = oUF.Tags.Events["smartlevel"]
 
+oUF.Tags.Methods["mania:difficulty"] = function(unit)
+	local level = UnitEffectiveLevel(unit)
+	local color = GetCreatureDifficultyColor(level > 0 and level or 999)
+	return "|c" .. C_ColorUtil.GenerateTextColorCode(color)
+end
+
+oUF.Tags.Events["mania:difficulty"] = oUF.Tags.Events["difficulty"]
+
 local function Icon(atlas)
 	local size = ns:GetIconTagSize()
 	return CreateAtlasMarkup(atlas, size, size)

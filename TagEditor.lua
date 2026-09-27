@@ -72,6 +72,8 @@ local MANIA_TAGS = {
 	{ tag = "[mania:maxpp]", text = "Maximum power, abbreviated", sample = "1.0k" },
 	{ tag = "[mania:smartlevel]", text = "Same as [smartlevel], blank once at max level",
 		sample = "70+" },
+	{ tag = "[mania:difficulty]", text = "Color prefix: level difficulty, friendly units included",
+		sample = "|cffffd100Example|r", colorPrefix = "|cffffd100" },
 	{ tag = "[mania:reset]", text = "Cancel a color prefix (difficulty/powercolor/raidcolor/threatcolor)",
 		sample = "|r" },
 }

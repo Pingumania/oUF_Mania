@@ -94,7 +94,7 @@ ns.Defaults = {
 		tempLoss = { color = { 0.25, 0.08, 0.08 }, alpha = 1 },
 		name = {
 			anchor = { default = "LEFT" },
-			tag = { default = "[difficulty][mania:smartlevel<$ ][mania:reset][name]", pet = "[name]",
+			tag = { default = "[mania:difficulty][mania:smartlevel<$ ][mania:reset][name]", pet = "[name]",
 				focus = "[name]", boss = "[name]", targettarget = "[name]" },
 		},
 		health = {
