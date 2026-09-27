@@ -8,10 +8,13 @@ local BORDER_THICKNESS = BORDER_SIZE * (1 - BORDER_TRIM)
 local CORNER_TRIM = 2 / 16
 local CORNER_SIZE = BORDER_SIZE * (1 - CORNER_TRIM)
 local DIVIDER_TRIM = 5 / 16
-local DIVIDER_HEIGHT = BORDER_SIZE * (1 - 2 * DIVIDER_TRIM)
 ns.BAR_INSET = BORDER_THICKNESS - 1
 local BORDER_LEVEL = 5
-local DIVIDER_LINE = BORDER_SIZE * (7 / 16 - DIVIDER_TRIM)
+
+local TEXTURE_TEXELS = 16
+local EDGE_TEXELS = TEXTURE_TEXELS * (1 - BORDER_TRIM)
+local DIVIDER_TEXELS = TEXTURE_TEXELS * (1 - 2 * DIVIDER_TRIM)
+local DIVIDER_LINE_TEXELS = TEXTURE_TEXELS * (7 / 16 - DIVIDER_TRIM)
 ns.BORDER_GAP = 6
 
 local BACKGROUND_COLOR = { 0, 0, 0, 0.4 }
@@ -73,7 +76,6 @@ local function CreateDivider(frame, overlay)
 	local line = CreateTexture(overlay, DIVIDER_LINE_TEXTURE, 0, 1, DIVIDER_TRIM, 1 - DIVIDER_TRIM)
 	ns:SetPoint(line, "LEFT", frame, "LEFT", BORDER_THICKNESS, 0)
 	ns:SetPoint(line, "RIGHT", frame, "RIGHT", -BORDER_THICKNESS, 0)
-	ns:SetHeight(line, DIVIDER_HEIGHT)
 	divider.line = line
 
 	local side, inner, left, right, junction
@@ -84,7 +86,9 @@ local function CreateDivider(frame, overlay)
 
 		junction = CreateTexture(overlay, DIVIDER_END, left, right, DIVIDER_TRIM, 1 - DIVIDER_TRIM)
 		ns:SetPoint(junction, "TOP" .. inner, line, "TOP" .. side, 0, 0)
-		ns:SetSize(junction, BORDER_THICKNESS, DIVIDER_HEIGHT)
+		ns:SetWidth(junction, BORDER_THICKNESS)
+		junction.left = left
+		junction.right = right
 		divider[side] = junction
 	end
 
@@ -154,13 +158,28 @@ function ns:SetBorderDividers(frame, anchors, count)
 	local corners = frame.borderCorners
 	local dividers = frame.borderDividers
 	local panels = frame.borderPanels
-	local divider, panel, side, edges, edge, above, below
+	local divider, panel, side, edges, edge, above, below, junction
+
+	local unit = ns:PixelSize(frame.borderOverlay)
+	local texelsPerPixel = EDGE_TEXELS / math.max(Round(BORDER_THICKNESS / unit), 1)
+	local pixels = math.max(Round(DIVIDER_TEXELS / texelsPerPixel), 1)
+	local height = pixels * unit
+	local offset = math.floor(DIVIDER_LINE_TEXELS / texelsPerPixel) * unit
+	local bottom = DIVIDER_TRIM + pixels * texelsPerPixel / TEXTURE_TEXELS
 
 	for index = 1, MAX_DIVIDERS do
 		divider = dividers[index]
 
 		if index <= count then
-			ns:SetPoint(divider.line, "TOP", anchors[index], "BOTTOM", 0, DIVIDER_LINE)
+			divider.line:SetPoint("TOP", anchors[index], "BOTTOM", 0, offset)
+			divider.line:SetHeight(height)
+			divider.line:SetTexCoord(0, 1, DIVIDER_TRIM, bottom)
+
+			for _, entry in ipairs(SIDES) do
+				junction = divider[entry[1]]
+				junction:SetHeight(height)
+				junction:SetTexCoord(junction.left, junction.right, DIVIDER_TRIM, bottom)
+			end
 		end
 
 		divider.line:SetShown(index <= count)
