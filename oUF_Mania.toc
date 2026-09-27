@@ -11,6 +11,7 @@
 Libs\LibStub\LibStub.lua
 Libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua
 Libs\oUF\oUF.xml
+Libs\oUF_SwingTimer\oUF_SwingTimer.lua
 Libs\Huddle\Embed.xml
 
 Tags.lua
