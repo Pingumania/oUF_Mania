@@ -135,10 +135,14 @@ end
 
 local function PvPPostUpdate(element, unit, status)
 	local atlas = ns:GetPvPIcon(status)
+	local size = ns:GetElementSize(element.__owner.unitKey, "pvp")
 
 	if atlas then
 		element:SetAtlas(atlas, false, nil, true)
 	end
+
+	ns:SetSize(element, size, size)
+	element:SetShown(atlas ~= nil and (status == "FFA" or UnitIsPVP(unit)))
 end
 
 local PVP_PREVIEW_ORDER = { "Alliance", "Horde", "FFA" }
@@ -1243,12 +1247,11 @@ end
 local function PriorityPostUpdate(element, ...)
 	local frame = element.__owner
 
-	PriorityWanted(frame)[element.priorityElement] = element:IsShown()
-
 	if element.priorityPostUpdate then
 		element.priorityPostUpdate(element, ...)
 	end
 
+	PriorityWanted(frame)[element.priorityElement] = element:IsShown()
 	ApplyPriorityGroup(frame, element.priorityGroup)
 end
 
