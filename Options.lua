@@ -656,7 +656,7 @@ local function AddLinkRow(body, previous, element, units)
 		end
 	end
 
-	return row
+	return RegisterControl(body, row)
 end
 
 local function StorageUnit(unit, element)
