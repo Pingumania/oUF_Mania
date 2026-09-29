@@ -289,7 +289,7 @@ local HIDDEN_POWER_UNITS = {
 }
 
 local SYNC_GROUPS = {
-	playerParty = { "player", "party" },
+	playerTarget = { "player", "target" },
 	smallFrames = { "pet", "focus", "targettarget" },
 }
 

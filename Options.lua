@@ -170,7 +170,7 @@ local SIZE_ROWS = {
 }
 
 local SYNC_OPTIONS = {
-	{ key = "playerParty", label = "Sync player and party sizes" },
+	{ key = "playerTarget", label = "Sync player and target sizes" },
 	{ key = "smallFrames", label = "Sync pet, focus and target of target sizes" },
 	{ key = "mirrorPosition", label = "Mirror player and target positions" },
 }
