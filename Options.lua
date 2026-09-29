@@ -112,7 +112,13 @@ local ELEMENTS = {
 	{ key = "quest", label = "Quest icon" },
 	{ key = "pvp", label = "PvP icon" },
 	{ key = "pvpclass", label = "PvP classification" },
-	{ key = "threat", label = "Threat glow" },
+	{
+		key = "threat",
+		label = "Threat glow",
+		sizeLabel = "Glow size",
+		noOffset = true,
+		extra = { "threatBorder" },
+	},
 	{ key = ns.PRIORITY_SECTION, label = "Priority groups", priority = true },
 }
 
@@ -796,16 +802,18 @@ local function BuildElementPage(body, unit, info)
 		end)
 	end
 
-	local offsetFrom = #body.controls + 1
+	if not info.noOffset then
+		local offsetFrom = #body.controls + 1
 
-	row = AddAxisRows(body, row, "Offset", OFFSET_MIN, OFFSET_MAX, function()
-		return ns:GetElementOffset(storageUnit, info.key)
-	end, function(axis, value)
-		ns:SetElementOffset(storageUnit, info.key, axis, value)
-	end)
+		row = AddAxisRows(body, row, "Offset", OFFSET_MIN, OFFSET_MAX, function()
+			return ns:GetElementOffset(storageUnit, info.key)
+		end, function(axis, value)
+			ns:SetElementOffset(storageUnit, info.key, axis, value)
+		end)
 
-	if ns:HasElementPlacement(info.key) then
-		TagRows(body, offsetFrom, IsAttached)
+		if ns:HasElementPlacement(info.key) then
+			TagRows(body, offsetFrom, IsAttached)
+		end
 	end
 
 	if info.key == "castbar" then
@@ -869,6 +877,32 @@ local function BuildElementPage(body, unit, info)
 		end
 	end
 
+	if info.key == "threat" then
+		row = AddDropdownRow(body, row, "Color", ns:GetThreatColorModes(), function()
+			return ns:GetThreatColorMode(storageUnit)
+		end, function(value)
+			ns:SetElementColorMode(storageUnit, info.key, value)
+		end)
+
+		row = AddColorRow(body, row, "Custom color", function()
+			return ns:GetElementColor(storageUnit, info.key)
+		end, function(r, g, b)
+			ns:SetElementColor(storageUnit, info.key, r, g, b)
+		end)
+
+		row = AddSliderRow(body, row, "Opacity", 0, ALPHA_PERCENT_MAX, function()
+			return Round(ns:GetElementAlpha(storageUnit, info.key) * ALPHA_PERCENT_MAX)
+		end, function(value)
+			ns:SetElementAlpha(storageUnit, info.key, value / ALPHA_PERCENT_MAX)
+		end)
+
+		row = AddToggleRow(body, row, "Color border", function()
+			return ns:IsElementShown(storageUnit, "threatBorder")
+		end, function(value)
+			ns:SetElementShown(storageUnit, "threatBorder", value)
+		end)
+	end
+
 	if info.key == "quest" then
 		row = AddDropdownRow(body, row, "Icon style", ns:GetQuestIconStyles(), function()
 			return ns:GetQuestIconStyle()
@@ -894,7 +928,9 @@ local function BuildElementPage(body, unit, info)
 	end
 
 	if info.key ~= "castbar" and ns:HasElementSize(info.key) then
-		row = AddSliderRow(body, row, info.bar and "Height" or "Size", SIZE_MIN, SIZE_MAX, function()
+		local label = info.sizeLabel or (info.bar and "Height" or "Size")
+
+		row = AddSliderRow(body, row, label, SIZE_MIN, SIZE_MAX, function()
 			return ns:GetElementSize(storageUnit, info.key)
 		end, function(value)
 			ns:SetElementSize(storageUnit, info.key, value)

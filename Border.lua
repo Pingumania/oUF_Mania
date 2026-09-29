@@ -169,11 +169,18 @@ function ns:CreateBorder(frame)
 	frame.borderDividers = dividers
 	frame.borderPanels = panels
 	frame.borderSides = sides
+	frame.borderTextures = { overlay:GetRegions() }
 	bordered[frame] = true
 
 	ApplyFrameBackground(frame, ns:GetBackgroundAlpha())
 
 	ns:SetBorderDividers(frame)
+end
+
+function ns:SetBorderColor(frame, r, g, b)
+	for _, texture in ipairs(frame.borderTextures) do
+		texture:SetVertexColor(r, g, b)
+	end
 end
 
 function ns:SetBorderDividers(frame, anchors, count)

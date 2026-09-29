@@ -228,7 +228,8 @@ ns.Defaults = {
 		swingtimerMainHand = { color = { 1, 0.82, 0 } },
 		swingtimerOffHand = { color = { 1, 0.5, 0 } },
 		swingtimerRanged = { color = { 0.4, 0.8, 1 } },
-		threat = { size = { default = 3 }, level = 0 },
+		threat = { size = { default = 8 }, color = { 1, 0, 0 }, alpha = 1 },
+		threatBorder = { hidden = { default = true } },
 	},
 }
 

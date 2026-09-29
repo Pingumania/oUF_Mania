@@ -64,11 +64,35 @@ for _, element in ipairs(ns.PREDICTION_ELEMENTS) do
 	LINK_SECTIONS[element] = ns.PREDICTION_SECTION
 end
 
+LINK_SECTIONS.threatBorder = "threat"
+
 local INDICATOR_SIZE = ns.INDICATOR_SIZE
 local INDICATOR_SUBLEVEL = 2
 local THREAT_FADE = 0.25
 local THREAT_SUBLEVEL = -1
-local THREAT_ATLAS = "timerunning-redbutton-backglow"
+local THREAT_MEDIA = [[Interface\AddOns\oUF_Mania\Media\threat-glow-]]
+local THREAT_CORNER = "corner-bottom-right"
+local THREAT_STATUS = "status"
+local THREAT_CUSTOM = "custom"
+
+local THREAT_COLOR_MODES = {
+	{ value = THREAT_STATUS, label = "Threat status" },
+	{ value = THREAT_CUSTOM, label = "Custom color" },
+}
+
+local THREAT_CORNERS = {
+	{ "TOPLEFT", 1, 0, 1, 0 },
+	{ "TOPRIGHT", 0, 1, 1, 0 },
+	{ "BOTTOMLEFT", 1, 0, 0, 1 },
+	{ "BOTTOMRIGHT", 0, 1, 0, 1 },
+}
+
+local THREAT_EDGES = {
+	{ "bottom", 0, 1, 1, 0, 1, 2, "TOPRIGHT", "BOTTOMLEFT" },
+	{ "bottom", 0, 1, 0, 1, 3, 4, "TOPRIGHT", "BOTTOMLEFT" },
+	{ "right", 1, 0, 0, 1, 1, 3, "BOTTOMLEFT", "TOPRIGHT" },
+	{ "right", 0, 1, 0, 1, 2, 4, "BOTTOMLEFT", "TOPRIGHT" },
+}
 
 local PVP_FFA_ATLAS = "UI-HUD-UnitFrame-Player-PVP-FFAIcon"
 
@@ -472,16 +496,96 @@ function ns:ResetCustomTextElements()
 	ns:RebuildTextElements()
 end
 
-local threatAtlasExists
+local function CreateThreatPiece(threat, file, left, right, top, bottom)
+	local piece = threat:CreateTexture(nil, "BACKGROUND", nil, THREAT_SUBLEVEL)
+	piece:SetTexture(THREAT_MEDIA .. file)
+	piece:SetTexCoord(left, right, top, bottom)
+	piece:SetBlendMode("BLEND")
+	threat.pieces[#threat.pieces + 1] = piece
+	return piece
+end
 
-local function SetThreatArt(texture)
-	if threatAtlasExists == nil then
-		threatAtlasExists = C_Texture.GetAtlasInfo(THREAT_ATLAS) ~= nil
+local function PaintThreat(threat)
+	local color = threat.custom and threat.color or threat.status
+	local r, g, b = color[1], color[2], color[3]
+
+	for _, piece in ipairs(threat.pieces) do
+		piece:SetVertexColor(r, g, b, threat.intensity)
 	end
 
-	if threatAtlasExists then
-		texture:SetAtlas(THREAT_ATLAS)
-		texture:SetDesaturated(true)
+	if threat.colorBorder and threat:IsShown() then
+		ns:SetBorderColor(threat:GetParent(), r, g, b)
+	else
+		ns:SetBorderColor(threat:GetParent(), 1, 1, 1)
+	end
+end
+
+local function SetThreatVertexColor(threat, r, g, b)
+	local status = threat.status
+
+	status[1], status[2], status[3] = r, g, b
+	PaintThreat(threat)
+end
+
+local function CreateThreatGlow(frame)
+	local threat = CreateFrame("Frame", nil, frame)
+	local piece, from, to
+
+	threat:SetFrameLevel(frame:GetFrameLevel())
+	threat.pieces = {}
+	threat.corners = {}
+	threat.status = { 1, 1, 1 }
+	threat.color = { 1, 1, 1 }
+	threat.intensity = 1
+	threat.SetVertexColor = SetThreatVertexColor
+
+	for index, info in ipairs(THREAT_CORNERS) do
+		piece = CreateThreatPiece(threat, THREAT_CORNER, info[2], info[3], info[4], info[5])
+		piece:SetPoint(info[1], threat, info[1])
+		threat.corners[index] = piece
+	end
+
+	for _, info in ipairs(THREAT_EDGES) do
+		piece = CreateThreatPiece(threat, info[1], info[2], info[3], info[4], info[5])
+		from = threat.corners[info[6]]
+		to = threat.corners[info[7]]
+		piece:SetPoint("TOPLEFT", from, info[8])
+		piece:SetPoint("BOTTOMRIGHT", to, info[9])
+	end
+
+	threat:SetScript("OnShow", PaintThreat)
+	threat:SetScript("OnHide", PaintThreat)
+
+	return threat
+end
+
+function ns:GetThreatColorModes()
+	return THREAT_COLOR_MODES
+end
+
+function ns:GetThreatColorMode(unit)
+	return ns:GetElementColorMode(unit, "threat") or THREAT_STATUS
+end
+
+function ns:ApplyThreatColor(frame)
+	local threat = frame.elements.threat
+	local unit = frame.unitKey
+	local color = threat.color
+
+	threat.custom = ns:GetThreatColorMode(unit) == THREAT_CUSTOM
+	color[1], color[2], color[3] = ns:GetElementColor(unit, "threat")
+	threat.intensity = ns:GetElementAlpha(unit, "threat")
+	threat.colorBorder = ns:IsElementShown(unit, "threatBorder")
+	PaintThreat(threat)
+end
+
+local function PlaceThreatGlow(frame, threat, reach)
+	threat:ClearAllPoints()
+	ns:SetPoint(threat, "TOPLEFT", frame, "TOPLEFT", -reach, reach)
+	ns:SetPoint(threat, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", reach, -reach)
+
+	for _, corner in ipairs(threat.corners) do
+		ns:SetSize(corner, reach + ns.BAR_INSET, reach + ns.BAR_INSET)
 	end
 end
 
@@ -1151,9 +1255,7 @@ function ns:CreateIndicators(frame)
 		frame.elements[info.key] = indicator
 	end
 
-	local threat = frame:CreateTexture(nil, "BACKGROUND", nil, THREAT_SUBLEVEL)
-	SetThreatArt(threat)
-	threat:SetBlendMode("ADD")
+	local threat = CreateThreatGlow(frame)
 	threat.threatActive = false
 	threat.PostUpdate = ThreatPostUpdate
 	threat.FadeIn = CreateThreatFade(threat, 0, 1)
@@ -1402,7 +1504,7 @@ function ns:ApplyElements(frame)
 		elements.grouprole:ForceUpdate()
 	end
 
-	SetThreatArt(elements.threat)
+	ns:ApplyThreatColor(frame)
 
 	if ns:ShouldPreview(unit, "threat") then
 		ns:ShowThreatPreview(frame)
@@ -1504,7 +1606,6 @@ end
 function ns:PlaceElements(frame)
 	local unit = frame.unitKey
 	local elements = frame.elements
-	local x, y
 
 	local healthPoint = PlaceText(frame, elements.health, unit, "health")
 	local namePoint, nameWidth = PlaceText(frame, elements.name, unit, "name")
@@ -1527,10 +1628,5 @@ function ns:PlaceElements(frame)
 		PlaceIcon(frame, elements[info.key], unit, info.key)
 	end
 
-	local padding = ns:GetElementSize(unit, "threat")
-	x, y = ns:GetElementOffset(unit, "threat")
-	ApplyLevel(frame, elements.threat, unit, "threat")
-	elements.threat:ClearAllPoints()
-	ns:SetPoint(elements.threat, "TOPLEFT", frame, "TOPLEFT", -padding + x, padding + y)
-	ns:SetPoint(elements.threat, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", padding + x, -padding + y)
+	PlaceThreatGlow(frame, elements.threat, ns:GetElementSize(unit, "threat"))
 end

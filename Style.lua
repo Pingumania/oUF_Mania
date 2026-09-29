@@ -413,6 +413,7 @@ function ns:ApplyElementColors()
 	for frame in next, styled do
 		ApplyPrediction(frame)
 		ns:ApplyResourceColors(frame)
+		ns:ApplyThreatColor(frame)
 
 		if frame.SwingTimer then
 			ApplySwingTimerColors(frame)
