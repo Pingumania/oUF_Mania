@@ -1216,6 +1216,7 @@ end
 function ns:CreateRestingIndicator(frame)
 	local indicator = CreateFrame("Frame", nil, frame.borderOverlay)
 	ns:SetSize(indicator, RESTING_SIZE, RESTING_SIZE)
+	indicator:Hide()
 
 	local texture = indicator:CreateTexture(nil, "OVERLAY")
 	texture:SetAtlas(RESTING_ATLAS)
@@ -1248,6 +1249,7 @@ function ns:CreateIndicators(frame)
 	for _, info in ipairs(INDICATORS) do
 		indicator = frame.borderOverlay:CreateTexture(nil, "OVERLAY", nil, INDICATOR_SUBLEVEL)
 		ns:SetSize(indicator, INDICATOR_SIZE, INDICATOR_SIZE)
+		indicator:Hide()
 
 		indicator.PostUpdate = info.postUpdate
 
@@ -1256,6 +1258,7 @@ function ns:CreateIndicators(frame)
 	end
 
 	local threat = CreateThreatGlow(frame)
+	threat:Hide()
 	threat.threatActive = false
 	threat.PostUpdate = ThreatPostUpdate
 	threat.FadeIn = CreateThreatFade(threat, 0, 1)
