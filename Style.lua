@@ -26,6 +26,9 @@ local OVER_INDICATOR_WIDTH = 6
 local OVER_INDICATOR_ALPHA = 0.8
 local MAX_HEALTH_LOSS = 0.95
 
+local SMOOTHING = Enum.StatusBarInterpolation.ExponentialEaseOut
+local SMOOTHED_BARS = { "Health", "Power", "AdditionalPower", "Stagger" }
+
 local styled = setmetatable({}, { __mode = "k" })
 
 ns.TEXT_PADDING = 4
@@ -841,6 +844,26 @@ local function LayoutFrame(frame)
 	ns:PlaceElements(frame)
 end
 
+local function SetBarSmoothing(frame, smoothing)
+	local bar
+
+	for _, key in ipairs(SMOOTHED_BARS) do
+		bar = frame[key]
+
+		if bar then
+			bar.smoothing = smoothing
+		end
+	end
+end
+
+local function FramePreUpdate(frame)
+	SetBarSmoothing(frame, Enum.StatusBarInterpolation.Immediate)
+end
+
+local function FramePostUpdate(frame)
+	SetBarSmoothing(frame, SMOOTHING)
+end
+
 local function Style(self, unit)
 	unit = unit or ""
 
@@ -848,9 +871,11 @@ local function Style(self, unit)
 	self:SetScript("OnEnter", OnEnter)
 	self:SetScript("OnLeave", OnLeave)
 	self.unitKey = ns:GetUnitKey(unit)
+	self.PreUpdate = FramePreUpdate
+	self.PostUpdate = FramePostUpdate
 
 	local power = CreateBar(self)
-	power.smoothing = Enum.StatusBarInterpolation.ExponentialEaseOut
+	power.smoothing = SMOOTHING
 	power.frequentUpdates = unit == "player"
 	power.colorTapping = true
 	power.colorDisconnected = true
@@ -863,7 +888,7 @@ local function Style(self, unit)
 	self.healthBox = healthBox
 
 	local health = CreateBar(self)
-	health.smoothing = Enum.StatusBarInterpolation.ExponentialEaseOut
+	health.smoothing = SMOOTHING
 	health.colorTapping = true
 	health.colorDisconnected = true
 	health.incomingHealOverflow = 1
