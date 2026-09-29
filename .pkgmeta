@@ -11,5 +11,3 @@ manual-changelog:
 
 ignore:
   - "*.md"
-  - "*.blp"
-  - "Media/*.png"
