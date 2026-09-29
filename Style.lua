@@ -856,12 +856,18 @@ local function SetBarSmoothing(frame, smoothing)
 	end
 end
 
-local function FramePreUpdate(frame)
-	SetBarSmoothing(frame, Enum.StatusBarInterpolation.Immediate)
+local function FramePreUpdate(frame, event)
+	if event ~= "OnUpdate" then
+		frame.barsSnapped = true
+		SetBarSmoothing(frame, Enum.StatusBarInterpolation.Immediate)
+	end
 end
 
 local function FramePostUpdate(frame)
-	SetBarSmoothing(frame, SMOOTHING)
+	if frame.barsSnapped then
+		frame.barsSnapped = nil
+		SetBarSmoothing(frame, SMOOTHING)
+	end
 end
 
 local function Style(self, unit)
