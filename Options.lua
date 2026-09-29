@@ -388,26 +388,9 @@ end
 
 local function AddColorRow(body, previous, label, getValue, setValue)
 	return AddControlRow(body, previous, label, 0, function(row)
-		local swatch = CreateFrame("Button", nil, row, "ColorSwatchTemplate")
-
-		swatch:SetScript("OnClick", function()
-			local info = {}
-			info.r, info.g, info.b = getValue()
-
-			info.swatchFunc = function()
-				setValue(ColorPickerFrame:GetColorRGB())
-			end
-
-			info.cancelFunc = function()
-				setValue(ColorPickerFrame:GetPreviousValues())
-			end
-
-			ColorPickerFrame:SetupColorPickerAndShow(info)
-		end)
-
-		return swatch
+		return ns:CreateColorSwatch(row, getValue, setValue)
 	end, function(swatch)
-		swatch:SetColorRGB(getValue())
+		swatch:Refresh()
 	end)
 end
 
