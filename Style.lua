@@ -576,6 +576,7 @@ local function PlaceCastbar(frame, placement, stackY)
 	local icon = castbar.Icon
 	local iconX, iconY = ns:GetElementOffset(unit, "castbarIcon")
 	local rightSide = ns:GetElementAnchor(unit, "castbarIcon") == "RIGHT"
+	local matchIcon = ns:IsElementShown(unit, "castbarIconMatch")
 	local shield = castbar.Shield
 	local iconSize, sparkHeight
 
@@ -620,21 +621,25 @@ local function PlaceCastbar(frame, placement, stackY)
 		shield:SetAllPoints(border)
 
 		if rightSide then
-			ns:SetPoint(icon, "TOPLEFT", border, "TOPRIGHT", ns.BORDER_GAP + iconX, iconY)
+			ns:SetPoint(icon, "LEFT", border, "RIGHT", ns.BORDER_GAP + iconX, iconY)
 		else
-			ns:SetPoint(icon, "TOPRIGHT", border, "TOPLEFT", -ns.BORDER_GAP + iconX, iconY)
+			ns:SetPoint(icon, "RIGHT", border, "LEFT", -ns.BORDER_GAP + iconX, iconY)
 		end
 	else
 		iconSize = height
 		shield:SetAllPoints(castbar)
 
 		if rightSide then
-			ns:SetPoint(icon, "TOPLEFT", castbar, "TOPRIGHT",
+			ns:SetPoint(icon, "LEFT", castbar, "RIGHT",
 				ns.BAR_INSET + ns.BORDER_GAP + iconX, iconY)
 		else
-			ns:SetPoint(icon, "TOPRIGHT", castbar, "TOPLEFT",
+			ns:SetPoint(icon, "RIGHT", castbar, "LEFT",
 				-(ns.BAR_INSET + ns.BORDER_GAP) + iconX, iconY)
 		end
+	end
+
+	if not matchIcon then
+		iconSize = ns:GetElementSize(unit, "castbarIcon")
 	end
 
 	ns:SetSize(icon, iconSize, iconSize)

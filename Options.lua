@@ -95,7 +95,11 @@ local ELEMENTS = {
 	{ key = CUSTOM_TEXT_SECTION, label = "Text", custom = true },
 	{ key = ns.PREDICTION_SECTION, label = "Health prediction", prediction = true,
 		extra = ns.PREDICTION_ELEMENTS },
-	{ key = "castbar", label = "Cast bar", extra = { "castbarIcon", "castbarLatency", "castbarWidth" } },
+	{
+		key = "castbar",
+		label = "Cast bar",
+		extra = { "castbarIcon", "castbarIconMatch", "castbarLatency", "castbarWidth" },
+	},
 	{ key = ns.CLASS_SLOT, label = "Class resource", bar = true },
 	{ key = ns.POWER_SLOT, label = "Additional power", bar = true },
 	{ key = "resting", label = "Resting icon" },
@@ -811,6 +815,26 @@ local function BuildElementPage(body, unit, info)
 			return ns:GetElementOffset(storageUnit, "castbarIcon")
 		end, function(axis, value)
 			ns:SetElementOffset(storageUnit, "castbarIcon", axis, value)
+		end)
+
+		row = AddToggleRow(body, row, "Match icon to cast bar height", function()
+			return ns:IsElementShown(storageUnit, "castbarIconMatch")
+		end, function(value)
+			ns:SetElementShown(storageUnit, "castbarIconMatch", value)
+			ns:DeferMethod(ns, "UpdatePixelGeometry")
+			ReflowBody(body)
+		end)
+
+		local iconSizeFrom = #body.controls + 1
+
+		row = AddSliderRow(body, row, "Icon size", ICON_SIZE_MIN, SIZE_MAX, function()
+			return ns:GetElementSize(storageUnit, "castbarIcon")
+		end, function(value)
+			ns:SetElementSize(storageUnit, "castbarIcon", value)
+		end)
+
+		TagRows(body, iconSizeFrom, function()
+			return not ns:IsElementShown(storageUnit, "castbarIconMatch")
 		end)
 
 		row = AddSliderRow(body, row, "Height", SIZE_MIN, SIZE_MAX, function()
