@@ -16,6 +16,7 @@ local SWING_TIMER_KEY = "swingtimer"
 local SWING_COMBAT_KEY = "swingtimerCombat"
 local SWING_TIME_KEY = "swingtimerTime"
 local SWING_SEPARATE_KEY = "swingtimerSeparate"
+local SWING_GAP_KEY = "swingtimerGap"
 local SWING_BAR_KEYS = { "MainHand", "OffHand", "Ranged" }
 
 ns.SWING_BAR_KEYS = SWING_BAR_KEYS
@@ -325,7 +326,8 @@ local function GetSwingTimerHeight(frame)
 	local height = frame.swingCount * ns:GetElementSize(frame.unitKey, SWING_TIMER_KEY)
 
 	if frame.swingSeparate then
-		height = height + (frame.swingCount - 1) * (2 * ns.BAR_INSET + ns.BORDER_GAP)
+		height = height + (frame.swingCount - 1)
+			* (ns.BAR_INSET + ns:GetElementSize(frame.unitKey, SWING_GAP_KEY))
 	end
 
 	return height
@@ -693,6 +695,7 @@ local function PlaceSwingTimer(frame, placement, stackY)
 	local unit = frame.unitKey
 	local height = ns:GetElementSize(unit, SWING_TIMER_KEY)
 	local separate = frame.swingSeparate
+	local gap = ns:GetElementSize(unit, SWING_GAP_KEY) - ns.BAR_INSET
 	local count = 0
 	local x, y, previous, bar, box
 
@@ -730,8 +733,8 @@ local function PlaceSwingTimer(frame, placement, stackY)
 			box:ClearAllPoints()
 
 			if previous then
-				ns:SetPoint(box, "TOPLEFT", previous, "BOTTOMLEFT", 0, -ns.BORDER_GAP)
-				ns:SetPoint(box, "TOPRIGHT", previous, "BOTTOMRIGHT", 0, -ns.BORDER_GAP)
+				ns:SetPoint(box, "TOPLEFT", previous, "BOTTOMLEFT", 0, -gap)
+				ns:SetPoint(box, "TOPRIGHT", previous, "BOTTOMRIGHT", 0, -gap)
 			else
 				ns:SetPoint(box, "TOPLEFT", swingTimer, "TOPLEFT", 0, 0)
 				ns:SetPoint(box, "TOPRIGHT", swingTimer, "TOPRIGHT", 0, 0)

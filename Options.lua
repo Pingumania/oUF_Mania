@@ -131,6 +131,7 @@ if C_SwingTimer then
 				bar = true,
 				extra = {
 					"swingtimerWidth", "swingtimerCombat", "swingtimerTime", "swingtimerSeparate",
+					"swingtimerGap",
 					"swingtimerMainHand", "swingtimerOffHand", "swingtimerRanged",
 				},
 			})
@@ -855,6 +856,19 @@ local function BuildElementPage(body, unit, info)
 			return ns:IsElementShown(storageUnit, "swingtimerSeparate")
 		end, function(value)
 			ns:SetElementShown(storageUnit, "swingtimerSeparate", value)
+			ReflowBody(body)
+		end)
+
+		local gapFrom = #body.controls + 1
+
+		row = AddSliderRow(body, row, "Gap between bars", SPACING_MIN, SPACING_MAX, function()
+			return ns:GetElementSize(storageUnit, "swingtimerGap")
+		end, function(value)
+			ns:SetElementSize(storageUnit, "swingtimerGap", value)
+		end)
+
+		TagRows(body, gapFrom, function()
+			return ns:IsElementShown(storageUnit, "swingtimerSeparate")
 		end)
 
 		for _, entry in ipairs(SWING_BAR_COLORS) do

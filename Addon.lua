@@ -226,6 +226,7 @@ ns.Defaults = {
 		swingtimerCombat = { hidden = { default = true } },
 		swingtimerTime = { hidden = { default = true } },
 		swingtimerSeparate = { hidden = { default = true } },
+		swingtimerGap = { size = { default = 6 } },
 		swingtimerMainHand = { color = { 1, 0.82, 0 } },
 		swingtimerOffHand = { color = { 1, 0.5, 0 } },
 		swingtimerRanged = { color = { 0.4, 0.8, 1 } },
