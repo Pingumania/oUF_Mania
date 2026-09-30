@@ -9,6 +9,7 @@ local CORNER_TRIM = 2 / 16
 local CORNER_SIZE = BORDER_SIZE * (1 - CORNER_TRIM)
 local DIVIDER_TRIM = 5 / 16
 ns.BAR_INSET = BORDER_THICKNESS - 1
+local PANEL_OVERLAP = BORDER_THICKNESS - ns.BAR_INSET
 local BORDER_LEVEL = 5
 
 local TEXTURE_TEXELS = 16
@@ -225,16 +226,15 @@ function ns:SetBorderDividers(frame, anchors, count)
 			panel:ClearAllPoints()
 
 			if index == 1 then
-				ns:SetPoint(panel, "TOPLEFT", frame, "TOPLEFT", BORDER_THICKNESS, -BORDER_THICKNESS)
+				ns:SetPoint(panel, "TOPLEFT", frame, "TOPLEFT", ns.BAR_INSET, -ns.BAR_INSET)
 			else
-				ns:SetPoint(panel, "TOPLEFT", dividers[index - 1].line, "BOTTOMLEFT", 0, 0)
+				ns:SetPoint(panel, "TOPLEFT", dividers[index - 1].line, "LEFT", -PANEL_OVERLAP, 0)
 			end
 
 			if index == count + 1 then
-				ns:SetPoint(panel, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", -BORDER_THICKNESS,
-					BORDER_THICKNESS)
+				ns:SetPoint(panel, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", -ns.BAR_INSET, ns.BAR_INSET)
 			else
-				ns:SetPoint(panel, "BOTTOMRIGHT", dividers[index].line, "TOPRIGHT", 0, 0)
+				ns:SetPoint(panel, "BOTTOMRIGHT", dividers[index].line, "RIGHT", PANEL_OVERLAP, 0)
 			end
 		end
 
