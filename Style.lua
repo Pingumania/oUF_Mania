@@ -15,6 +15,7 @@ local SPARK_RATIO = 0.4
 local SWING_TIMER_KEY = "swingtimer"
 local SWING_COMBAT_KEY = "swingtimerCombat"
 local SWING_TIME_KEY = "swingtimerTime"
+local SWING_SEPARATE_KEY = "swingtimerSeparate"
 local SWING_BAR_KEYS = { "MainHand", "OffHand", "Ranged" }
 
 ns.SWING_BAR_KEYS = SWING_BAR_KEYS
@@ -212,11 +213,20 @@ local function CreateSwingFormatter()
 	return formatter
 end
 
+local function CreateSwingBox(swingTimer)
+	local box = CreateFrame("Frame", nil, swingTimer)
+	box:SetFrameLevel(swingTimer:GetFrameLevel())
+	ns:CreateBorder(box)
+	return box
+end
+
 local function CreateSwingTimer(frame)
 	local swingTimer = CreateFrame("Frame", nil, frame)
 	swingTimer:SetFrameLevel(frame:GetFrameLevel())
 	swingTimer:Hide()
-	ns:CreateBorder(swingTimer)
+
+	swingTimer.box = CreateSwingBox(swingTimer)
+	swingTimer.box:SetAllPoints()
 
 	swingFormatter = swingFormatter or CreateSwingFormatter()
 
@@ -224,7 +234,10 @@ local function CreateSwingTimer(frame)
 
 	for _, key in ipairs(SWING_BAR_KEYS) do
 		bar = CreateBar(swingTimer)
+		bar:SetFrameLevel(swingTimer:GetFrameLevel() + 1)
 		bar:SetMinMaxValues(0, 1)
+		bar.box = CreateSwingBox(swingTimer)
+		bar.box:Hide()
 
 		time = CreateText(bar, "RIGHT")
 		time:SetPoint("RIGHT", bar, "RIGHT", -ns.TEXT_PADDING, 0)
@@ -295,6 +308,27 @@ function ns:ApplySwingTimerTime(frame)
 			bar.timeText.binding:SetEnabled(false)
 		end
 	end
+end
+
+function ns:ApplySwingTimerSeparate(frame)
+	local separate = ns:IsElementShown(frame.unitKey, SWING_SEPARATE_KEY)
+
+	if frame.swingSeparate == separate then
+		return
+	end
+
+	frame.swingSeparate = separate
+	ns:DeferMethod(ns, "UpdatePixelGeometry", frame.unitKey)
+end
+
+local function GetSwingTimerHeight(frame)
+	local height = frame.swingCount * ns:GetElementSize(frame.unitKey, SWING_TIMER_KEY)
+
+	if frame.swingSeparate then
+		height = height + (frame.swingCount - 1) * (2 * ns.BAR_INSET + ns.BORDER_GAP)
+	end
+
+	return height
 end
 
 local function ApplySwingTimerColors(frame)
@@ -640,7 +674,7 @@ local function SwingTimerSlot(frame)
 		return nil
 	end
 
-	return frame.SwingTimer, frame.swingCount * ns:GetElementSize(unit, SWING_TIMER_KEY)
+	return frame.SwingTimer, GetSwingTimerHeight(frame)
 end
 
 local swingAnchors = {}
@@ -658,8 +692,9 @@ local function PlaceSwingTimer(frame, placement, stackY)
 
 	local unit = frame.unitKey
 	local height = ns:GetElementSize(unit, SWING_TIMER_KEY)
+	local separate = frame.swingSeparate
 	local count = 0
-	local x, y, previous, bar
+	local x, y, previous, bar, box
 
 	swingTimer:ClearAllPoints()
 
@@ -677,16 +712,38 @@ local function PlaceSwingTimer(frame, placement, stackY)
 		ns:SetPoint(swingTimer, "TOPRIGHT", frame, "BOTTOMRIGHT", x, stackY + y)
 	end
 
-	ns:SetHeight(swingTimer, frame.swingCount * height + 2 * ns.BAR_INSET)
+	ns:SetHeight(swingTimer, GetSwingTimerHeight(frame) + 2 * ns.BAR_INSET)
 
 	if placement == ns.PLACEMENT_FREE then
 		ns:SnapToPixelGrid(swingTimer)
 	end
 
+	swingTimer.box:SetShown(not separate)
+
 	for _, key in ipairs(SWING_BAR_KEYS) do
 		bar = swingTimer[key]
+		box = bar.box
+		box:SetShown(separate and bar:IsShown())
 
-		if bar:IsShown() then
+		if bar:IsShown() and separate then
+			bar:ClearAllPoints()
+			box:ClearAllPoints()
+
+			if previous then
+				ns:SetPoint(box, "TOPLEFT", previous, "BOTTOMLEFT", 0, -ns.BORDER_GAP)
+				ns:SetPoint(box, "TOPRIGHT", previous, "BOTTOMRIGHT", 0, -ns.BORDER_GAP)
+			else
+				ns:SetPoint(box, "TOPLEFT", swingTimer, "TOPLEFT", 0, 0)
+				ns:SetPoint(box, "TOPRIGHT", swingTimer, "TOPRIGHT", 0, 0)
+			end
+
+			ns:SetHeight(box, height + 2 * ns.BAR_INSET)
+			ns:SetPoint(bar, "TOPLEFT", box, "TOPLEFT", ns.BAR_INSET, -ns.BAR_INSET)
+			ns:SetPoint(bar, "TOPRIGHT", box, "TOPRIGHT", -ns.BAR_INSET, -ns.BAR_INSET)
+			ns:SetHeight(bar, height)
+			ns:SetBorderDividers(box)
+			previous = box
+		elseif bar:IsShown() then
 			bar:ClearAllPoints()
 
 			if previous then
@@ -704,7 +761,7 @@ local function PlaceSwingTimer(frame, placement, stackY)
 		end
 	end
 
-	ns:SetBorderDividers(swingTimer, swingAnchors, count - 1)
+	ns:SetBorderDividers(swingTimer.box, swingAnchors, count - 1)
 	frame.swingPlaced = true
 	UpdateSwingTimerShown(frame)
 end

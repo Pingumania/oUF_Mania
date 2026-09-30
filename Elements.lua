@@ -1474,6 +1474,7 @@ function ns:ApplyElements(frame)
 
 	if frame.SwingTimer then
 		ns:ApplySwingTimerTime(frame)
+		ns:ApplySwingTimerSeparate(frame)
 
 		if ns:ShouldPreview(unit, "swingtimer") then
 			ns:StartSwingPreview(frame)

@@ -130,7 +130,7 @@ if C_SwingTimer then
 				label = "Swing timer",
 				bar = true,
 				extra = {
-					"swingtimerWidth", "swingtimerCombat", "swingtimerTime",
+					"swingtimerWidth", "swingtimerCombat", "swingtimerTime", "swingtimerSeparate",
 					"swingtimerMainHand", "swingtimerOffHand", "swingtimerRanged",
 				},
 			})
@@ -849,6 +849,12 @@ local function BuildElementPage(body, unit, info)
 			return ns:IsElementShown(storageUnit, "swingtimerTime")
 		end, function(value)
 			ns:SetElementShown(storageUnit, "swingtimerTime", value)
+		end)
+
+		row = AddToggleRow(body, row, "Separate bars", function()
+			return ns:IsElementShown(storageUnit, "swingtimerSeparate")
+		end, function(value)
+			ns:SetElementShown(storageUnit, "swingtimerSeparate", value)
 		end)
 
 		for _, entry in ipairs(SWING_BAR_COLORS) do
