@@ -11,3 +11,4 @@ manual-changelog:
 
 ignore:
   - "*.md"
+  - Media/Backup
