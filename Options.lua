@@ -40,7 +40,7 @@ local FREE_WIDTH_MIN, FREE_WIDTH_MAX = 40, 400
 local POSITION_MIN, POSITION_MAX = -1000, 1000
 local SIZE_MIN, SIZE_MAX = 0, 64
 local TEXT_WIDTH_MIN, TEXT_WIDTH_MAX = 0, 300
-local CASTBAR_WIDTH_MIN, CASTBAR_WIDTH_MAX = 0, 400
+local CASTBAR_WIDTH_MIN, CASTBAR_WIDTH_MAX = 20, 400
 
 local SCROLL_BAR_INSET = 22
 local SCROLL_BAR_GAP = 8
@@ -99,7 +99,8 @@ local ELEMENTS = {
 		key = "castbar",
 		label = "Cast bar",
 		extra = {
-			"castbarIcon", "castbarIconGap", "castbarIconMatch", "castbarLatency", "castbarWidth",
+			"castbarIcon", "castbarIconGap", "castbarIconMatch", "castbarLatency",
+			"castbarWidth", "castbarWidthMatch",
 		},
 	},
 	{ key = ns.CLASS_SLOT, label = "Class resource", bar = true },
@@ -872,16 +873,29 @@ local function BuildElementPage(body, unit, info)
 			ns:SetElementSize(storageUnit, "castbar", value)
 		end)
 
+		local widthMatchFrom = #body.controls + 1
+
+		row = AddToggleRow(body, row, "Match cast bar to frame width", function()
+			return ns:IsElementShown(storageUnit, "castbarWidthMatch")
+		end, function(value)
+			ns:SetElementShown(storageUnit, "castbarWidthMatch", value)
+			ns:DeferMethod(ns, "UpdatePixelGeometry")
+			ReflowBody(body)
+		end)
+
+		TagRows(body, widthMatchFrom, IsBoxed)
+
 		local widthFrom = #body.controls + 1
 
-		row = AddSliderRow(body, row, "Width (0 = match frame)", CASTBAR_WIDTH_MIN,
-			CASTBAR_WIDTH_MAX, function()
-				return ns:GetElementSize(storageUnit, "castbarWidth")
-			end, function(value)
-				ns:SetElementSize(storageUnit, "castbarWidth", value)
-			end)
+		row = AddSliderRow(body, row, "Width", CASTBAR_WIDTH_MIN, CASTBAR_WIDTH_MAX, function()
+			return ns:GetElementSize(storageUnit, "castbarWidth")
+		end, function(value)
+			ns:SetElementSize(storageUnit, "castbarWidth", value)
+		end)
 
-		TagRows(body, widthFrom, IsBoxed)
+		TagRows(body, widthFrom, function()
+			return IsBoxed() and not ns:IsElementShown(storageUnit, "castbarWidthMatch")
+		end)
 
 		if storageUnit == "player" or storageUnit == ALL_KEY then
 			row = AddToggleRow(body, row, "Show latency", function()

@@ -242,7 +242,7 @@ ns.Defaults = {
 			noInside = true,
 			position = { 0, 200 },
 		},
-		castbarWidth = { size = { default = 0 } },
+		castbarWidth = { size = { default = 200 } },
 		swingtimer = {
 			size = { default = 6 },
 			placement = { default = "outside" },

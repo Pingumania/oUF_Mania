@@ -588,6 +588,7 @@ local function PlaceCastbar(frame, placement, stackY)
 
 	if boxed then
 		local width = ns:GetElementSize(unit, "castbarWidth")
+		local matchWidth = ns:IsElementShown(unit, "castbarWidthMatch")
 
 		border:ClearAllPoints()
 
@@ -595,16 +596,16 @@ local function PlaceCastbar(frame, placement, stackY)
 			local x, y = ns:GetElementPosition(unit, "castbar")
 
 			ns:SetPoint(border, "BOTTOM", UIParent, "BOTTOM", x, y)
-			ns:SetWidth(border, width > 0 and width or ns:GetUnitSizes(unit))
+			ns:SetWidth(border, matchWidth and ns:GetUnitSizes(unit) or width)
 		else
 			local x, y = ns:GetElementOffset(unit, "castbar")
 
 			ns:SetPoint(border, "TOPLEFT", frame, "BOTTOMLEFT", x, stackY + y)
 
-			if width > 0 then
-				ns:SetWidth(border, width)
-			else
+			if matchWidth then
 				ns:SetPoint(border, "TOPRIGHT", frame, "BOTTOMRIGHT", x, stackY + y)
+			else
+				ns:SetWidth(border, width)
 			end
 		end
 
