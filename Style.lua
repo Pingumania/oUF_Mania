@@ -8,8 +8,7 @@ local FONT_SIZE_MIN = 8
 local FONT_SIZE_MAX = 20
 
 local PREVIEW_UNIT = "player"
-local SPARK_ATLAS = "ui-castingbar-pip"
-local SPARK_OVERHANG = 4
+local SPARK_ATLAS = "ui-castingbar-pip-2x"
 local SPARK_RATIO = 0.4
 local ICON_ZOOM = 0.08
 
@@ -580,7 +579,7 @@ local function PlaceCastbar(frame, placement, stackY)
 	local rightSide = ns:GetElementAnchor(unit, "castbarIcon") == "RIGHT"
 	local matchIcon = ns:IsElementShown(unit, "castbarIconMatch")
 	local shield = castbar.Shield
-	local iconSize, sparkHeight
+	local iconSize
 
 	castbar:ClearAllPoints()
 	iconBorder:ClearAllPoints()
@@ -648,8 +647,7 @@ local function PlaceCastbar(frame, placement, stackY)
 	iconSize = iconSize + 2 * ns.BAR_INSET
 	ns:SetSize(iconBorder, iconSize, iconSize)
 
-	sparkHeight = height + SPARK_OVERHANG
-	ns:SetSize(castbar.Spark, sparkHeight * SPARK_RATIO, sparkHeight)
+	ns:SetSize(castbar.Spark, height * SPARK_RATIO, height)
 end
 
 local function ResourceSlot(frame, key)
@@ -1070,6 +1068,7 @@ local function Style(self, unit)
 
 		local spark = castbar:CreateTexture(nil, "OVERLAY")
 		spark:SetAtlas(SPARK_ATLAS)
+		spark:SetBlendMode("ADD")
 		spark:SetPoint("CENTER", castbar:GetStatusBarTexture(), "RIGHT", 0, 0)
 		castbar.Spark = spark
 
