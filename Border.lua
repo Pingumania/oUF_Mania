@@ -18,18 +18,36 @@ local DIVIDER_TEXELS = TEXTURE_TEXELS * (DIVIDER_BOTTOM - DIVIDER_TOP)
 ns.BORDER_GAP = 6
 
 local BACKGROUND_COLOR = { 0, 0, 0 }
-local RIM_COLOR = { 0, 0, 0, 0.62 }
 
 local MAX_DIVIDERS = 4
 local MAX_PANELS = MAX_DIVIDERS + 1
 
 local CORNER = "border-corner-bottom-right"
 
-local RIM_EDGES = {
-	{ "TOPLEFT", "BOTTOMRIGHT", "BOTTOMLEFT", 1, 1 },
-	{ "BOTTOMLEFT", "TOPRIGHT", "BOTTOMRIGHT", -1, 1 },
-	{ "BOTTOMRIGHT", "TOPLEFT", "TOPRIGHT", -1, -1 },
-	{ "TOPRIGHT", "BOTTOMLEFT", "TOPLEFT", 1, -1 },
+local SHADE = "inner-shade"
+local SHADE_SHEET_WIDTH = 64
+local SHADE_SHEET_HEIGHT = 256
+local SHADE_TEXELS = 2
+local SHADE_PAD = 2
+local SHADE_PITCH = 20
+local SHADE_ROUNDED = 0
+local SHADE_SQUARE = 1
+local SHADE_EDGE = 2
+ns.SHADE_SIZE_MIN = 1
+ns.SHADE_SIZE_MAX = 8
+
+local SHADE_CORNERS = {
+	{ "TOPLEFT", false, false },
+	{ "TOPRIGHT", true, false },
+	{ "BOTTOMLEFT", false, true },
+	{ "BOTTOMRIGHT", true, true },
+}
+
+local SHADE_EDGES = {
+	{ "TOP", "TOPLEFT", "TOPRIGHT", "TOPRIGHT", "BOTTOMLEFT" },
+	{ "BOTTOM", "BOTTOMLEFT", "TOPRIGHT", "BOTTOMRIGHT", "BOTTOMLEFT" },
+	{ "LEFT", "TOPLEFT", "BOTTOMLEFT", "BOTTOMLEFT", "TOPRIGHT" },
+	{ "RIGHT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT", "TOPRIGHT" },
 }
 
 local CORNERS = {
@@ -72,21 +90,127 @@ local function CreateSideEdge(parent, side, left, right)
 	return CreateTexture(parent, EDGE_V, left, right, 0, 1)
 end
 
-local function CreateRim(overlay, panel)
-	local rim = {}
-	local edge
+local function CreateShade(overlay)
+	local shade = {}
+	local texture
 
-	for index, entry in ipairs(RIM_EDGES) do
-		edge = overlay:CreateTexture(nil, "ARTWORK")
-		edge:SetColorTexture(unpack(RIM_COLOR))
-		edge:SetPoint(entry[1], panel, entry[1], 0, 0)
-		rim[index] = edge
+	for _, entry in ipairs(SHADE_CORNERS) do
+		texture = overlay:CreateTexture(nil, "ARTWORK")
+		texture:SetTexture(MEDIA .. SHADE)
+		shade[entry[1]] = texture
 	end
 
-	return rim
+	for _, entry in ipairs(SHADE_EDGES) do
+		texture = overlay:CreateTexture(nil, "ARTWORK")
+		texture:SetTexture(MEDIA .. SHADE)
+		texture:SetPoint("TOPLEFT", shade[entry[2]], entry[3], 0, 0)
+		texture:SetPoint("BOTTOMRIGHT", shade[entry[4]], entry[5], 0, 0)
+		shade[entry[1]] = texture
+	end
+
+	return shade
+end
+
+local function ShadeCell(column, size, pixels, total)
+	local left = (column * SHADE_PITCH + SHADE_PAD) / SHADE_SHEET_WIDTH
+	local top = ((size - 1) * SHADE_PITCH + SHADE_PAD) / SHADE_SHEET_HEIGHT
+	local extent = size * SHADE_TEXELS * pixels / total
+	return left, left + extent / SHADE_SHEET_WIDTH, top, top + extent / SHADE_SHEET_HEIGHT
+end
+
+local function SetEdgeTexCoord(texture, side, left, right, top, bottom)
+	if side == "TOP" then
+		texture:SetTexCoord(left, top, right, top, left, bottom, right, bottom)
+	elseif side == "BOTTOM" then
+		texture:SetTexCoord(right, top, left, top, right, bottom, left, bottom)
+	elseif side == "LEFT" then
+		texture:SetTexCoord(left, right, top, bottom)
+	else
+		texture:SetTexCoord(right, left, top, bottom)
+	end
+end
+
+local function SetShadeShown(shade, shown)
+	for _, texture in next, shade do
+		texture:SetShown(shown)
+	end
+end
+
+local function LayoutPanelShade(shade, panel, size, unit, roundedTop, roundedBottom)
+	local width, height = panel:GetSize()
+	local total = math.max(Round(size / unit), 1)
+	local panelPixels = Round(math.min(width, height) / unit)
+	local pixels = math.min(total, math.floor(panelPixels / 2))
+
+	if pixels < 1 then
+		SetShadeShown(shade, false)
+		return
+	end
+
+	local extent = pixels * unit
+	local point, flipX, flipY, rounded, texture
+	local left, right, top, bottom
+
+	for _, entry in ipairs(SHADE_CORNERS) do
+		point, flipX, flipY = unpack(entry)
+		rounded = flipY and roundedBottom or not flipY and roundedTop
+		left, right, top, bottom = ShadeCell(rounded and SHADE_ROUNDED or SHADE_SQUARE, size, pixels, total)
+
+		if flipX then
+			left, right = right, left
+		end
+
+		if flipY then
+			top, bottom = bottom, top
+		end
+
+		texture = shade[point]
+		texture:SetTexCoord(left, right, top, bottom)
+		texture:ClearAllPoints()
+		texture:SetPoint(point, panel, point, 0, 0)
+		texture:SetSize(extent, extent)
+	end
+
+	left, right, top, bottom = ShadeCell(SHADE_EDGE, size, pixels, total)
+
+	for _, entry in ipairs(SHADE_EDGES) do
+		SetEdgeTexCoord(shade[entry[1]], entry[1], left, right, top, bottom)
+	end
+
+	SetShadeShown(shade, true)
 end
 
 local bordered = setmetatable({}, { __mode = "k" })
+
+function ns:GetShadeSize()
+	return ns.db.shadeSize or ns.Defaults.shadeSize
+end
+
+local function LayoutShade(frame)
+	local count = frame.borderPanelCount
+	local panels = frame.borderPanels
+	local size = ns:GetShadeSize()
+	local unit = ns:PixelSize(frame.borderOverlay)
+
+	for index, shade in ipairs(frame.borderShades) do
+		if index <= count then
+			LayoutPanelShade(shade, panels[index], size, unit, index == 1, index == count)
+		else
+			SetShadeShown(shade, false)
+		end
+	end
+end
+
+function ns:ApplyShadeSize()
+	for frame in next, bordered do
+		LayoutShade(frame)
+	end
+end
+
+function ns:SetShadeSize(size)
+	ns.db.shadeSize = size
+	ns:ApplyShadeSize()
+end
 
 function ns:GetBackgroundAlpha()
 	return ns.db.backgroundAlpha or ns.Defaults.backgroundAlpha
@@ -191,14 +315,16 @@ function ns:CreateBorder(frame)
 	frame.borderSides = sides
 	frame.borderTextures = { overlay:GetRegions() }
 
-	local rims = {}
+	local shades = {}
 
 	for index = 1, MAX_PANELS do
-		rims[index] = CreateRim(overlay, panels[index])
+		shades[index] = CreateShade(overlay)
 	end
 
-	frame.borderRims = rims
+	frame.borderShades = shades
 	bordered[frame] = true
+
+	frame:HookScript("OnSizeChanged", LayoutShade)
 
 	ApplyFrameBackground(frame, ns:GetBackgroundAlpha())
 
@@ -217,7 +343,7 @@ function ns:SetBorderDividers(frame, anchors, count)
 	local corners = frame.borderCorners
 	local dividers = frame.borderDividers
 	local panels = frame.borderPanels
-	local divider, panel, side, edges, edge, above, below, rim
+	local divider, panel, side, edges, edge, above, below
 
 	local unit = ns:PixelSize(frame.borderOverlay)
 	local texelsPerPixel = EDGE_TEXELS / math.max(Round(BORDER_THICKNESS / unit), 1)
@@ -259,17 +385,6 @@ function ns:SetBorderDividers(frame, anchors, count)
 		end
 
 		panel:SetShown(index <= count + 1)
-		rim = frame.borderRims[index]
-
-		for edgeIndex, entry in ipairs(RIM_EDGES) do
-			edge = rim[edgeIndex]
-
-			if index <= count + 1 then
-				edge:SetPoint(entry[2], panel, entry[3], entry[4] * rimSize, entry[5] * rimSize)
-			end
-
-			edge:SetShown(index <= count + 1)
-		end
 	end
 
 	for _, entry in ipairs(SIDES) do
@@ -288,4 +403,7 @@ function ns:SetBorderDividers(frame, anchors, count)
 			edge:SetShown(index <= count + 1)
 		end
 	end
+
+	frame.borderPanelCount = count + 1
+	LayoutShade(frame)
 end

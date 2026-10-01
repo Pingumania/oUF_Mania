@@ -467,6 +467,12 @@ local function BuildGeneralPage(body)
 		ns:SetBackgroundAlpha(value / ALPHA_PERCENT_MAX)
 	end)
 
+	row = AddSliderRow(body, row, "Inner shade size", ns.SHADE_SIZE_MIN, ns.SHADE_SIZE_MAX, function()
+		return ns:GetShadeSize()
+	end, function(value)
+		ns:SetShadeSize(value)
+	end)
+
 	row = AddDropdownRow(body, row, "Health color", ns:GetBarColorModes(), function()
 		return ns:GetHealthColorMode()
 	end, function(value)
@@ -1738,6 +1744,7 @@ end
 local function ApplyChanges(needsReload)
 	ns:ApplyMedia()
 	ns:ApplyBackgroundAlpha()
+	ns:ApplyShadeSize()
 	ns:ApplyHealthColorMode()
 	ns:ApplyPowerColorMode()
 	ns:ApplyElementColors()
@@ -1762,6 +1769,7 @@ local function ResetGeneral()
 	db.fontSize = nil
 	db.iconSize = nil
 	db.backgroundAlpha = nil
+	db.shadeSize = nil
 	db.sync = nil
 	db.questIcon = nil
 	db.roleIcon = nil

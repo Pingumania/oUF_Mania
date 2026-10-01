@@ -101,6 +101,7 @@ ns.Defaults = {
 	barCustomColor = { 1, 1, 1 },
 	powerHeight = 10,
 	backgroundAlpha = 0.7,
+	shadeSize = 4,
 
 	units = {
 		player = { width = 200, height = 46 },
