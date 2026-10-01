@@ -883,6 +883,25 @@ local function BuildElementPage(body, unit, info)
 			ns:SetElementSize(storageUnit, "castbar", value)
 		end)
 
+		row = AddToggleRow(body, row, "Show spark", function()
+			return ns:IsSparkShown()
+		end, function(value)
+			ns:SetSparkShown(value)
+			ReflowBody(body)
+		end)
+
+		local sparkFrom = #body.controls + 1
+
+		row = AddDropdownRow(body, row, "Spark style", ns:GetSparkStyles(), function()
+			return ns:GetSparkStyle()
+		end, function(value)
+			ns:SetSparkStyle(value)
+		end)
+
+		TagRows(body, sparkFrom, function()
+			return ns:IsSparkShown()
+		end)
+
 		local widthMatchFrom = #body.controls + 1
 
 		row = AddToggleRow(body, row, "Match cast bar to frame width", function()

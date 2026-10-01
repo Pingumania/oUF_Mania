@@ -8,8 +8,6 @@ local FONT_SIZE_MIN = 8
 local FONT_SIZE_MAX = 20
 
 local PREVIEW_UNIT = "player"
-local SPARK_ATLAS = "ui-castingbar-pip-2x"
-local SPARK_RATIO = 0.4
 local ICON_ZOOM = 0.08
 
 local SWING_TIMER_KEY = "swingtimer"
@@ -550,6 +548,60 @@ local function CastbarSlot(frame)
 	return frame.Castbar, ns:GetElementSize(unit, "castbar")
 end
 
+local SPARK_STYLES = {
+	{ value = "plunderstorm", label = "Plunderstorm", atlas = "plunderstorm-stormbar-spark",
+		ratio = 1.45 },
+	{ value = "modern", label = "Modern", atlas = "ui-castingbar-pip-2x", ratio = 0.4 },
+	{ value = "classic", label = "Classic",
+		texture = [[Interface\CastingBar\UI-CastingBar-Spark]], ratio = 1, scale = 2.2 },
+}
+
+function ns:GetSparkStyles()
+	return SPARK_STYLES
+end
+
+function ns:GetSparkStyle()
+	return ns.db.castbarSpark or SPARK_STYLES[1].value
+end
+
+function ns:SetSparkStyle(value)
+	ns.db.castbarSpark = value
+	ns:UpdatePixelGeometry()
+end
+
+function ns:IsSparkShown()
+	return not ns.db.castbarSparkHidden
+end
+
+function ns:SetSparkShown(shown)
+	ns.db.castbarSparkHidden = not shown or nil
+	ns:UpdatePixelGeometry()
+end
+
+local function ApplySparkStyle(spark, height)
+	local value = ns:GetSparkStyle()
+	local style = SPARK_STYLES[1]
+	local sparkHeight
+
+	for _, entry in ipairs(SPARK_STYLES) do
+		if entry.value == value then
+			style = entry
+			break
+		end
+	end
+
+	if style.atlas then
+		spark:SetAtlas(style.atlas)
+	else
+		spark:SetTexture(style.texture)
+		spark:SetTexCoord(0, 1, 0, 1)
+	end
+
+	spark:SetAlpha(ns:IsSparkShown() and 1 or 0)
+	sparkHeight = height * (style.scale or 1)
+	ns:SetSize(spark, sparkHeight * style.ratio, sparkHeight)
+end
+
 local function PlaceCastbar(frame, placement, stackY)
 	local castbar = frame.Castbar
 
@@ -647,7 +699,7 @@ local function PlaceCastbar(frame, placement, stackY)
 	iconSize = iconSize + 2 * ns.BAR_INSET
 	ns:SetSize(iconBorder, iconSize, iconSize)
 
-	ns:SetSize(castbar.Spark, height * SPARK_RATIO, height)
+	ApplySparkStyle(castbar.Spark, height)
 end
 
 local function ResourceSlot(frame, key)
@@ -1067,7 +1119,6 @@ local function Style(self, unit)
 		castbar.Time = castbarTime
 
 		local spark = castbar:CreateTexture(nil, "OVERLAY")
-		spark:SetAtlas(SPARK_ATLAS)
 		spark:SetBlendMode("ADD")
 		spark:SetPoint("CENTER", castbar:GetStatusBarTexture(), "RIGHT", 0, 0)
 		castbar.Spark = spark
