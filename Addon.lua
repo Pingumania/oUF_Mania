@@ -3,6 +3,32 @@ local oUF = ns.oUF
 
 local LSM = LibStub("LibSharedMedia-3.0")
 
+local TEXTURE_NAME = "Blizzard Unit Frame"
+
+LSM:Register("statusbar", TEXTURE_NAME, [[Interface\AddOns\oUF_Mania\Media\statusbar]])
+
+local BLIZZARD_POWER_COLORS = {
+	MANA = { 0.039, 0.553, 1 },
+	RAGE = { 1, 0.217, 0.136 },
+	FOCUS = { 1, 0.724, 0.378 },
+	ENERGY = { 1, 1, 0.136 },
+	RUNIC_POWER = { 0.124, 0.993, 1 },
+	LUNAR_POWER = { 0.395, 0.486, 1 },
+	MAELSTROM = { 0.248, 0.803, 0.934 },
+	INSANITY = { 0.508, 0.178, 0.886 },
+	FURY = { 1, 0.367, 1 },
+	PAIN = { 0.853, 0.536, 0.017 },
+	EBON_MIGHT = { 0.961, 0.554, 0.263 },
+}
+
+oUF.colors.health = oUF:CreateColor(0.56, 1, 0.154)
+
+for token, color in next, BLIZZARD_POWER_COLORS do
+	if oUF.colors.power[token] then
+		oUF.colors.power[token]:SetRGB(unpack(color))
+	end
+end
+
 local DEFAULT_PROFILE = "Default"
 
 local KNOWN_ROOT_KEYS = {
@@ -69,7 +95,8 @@ local PREDICTION_ALPHA = 0.55
 ns.Defaults = {
 	iconSize = 12,
 	fontSize = 12,
-	barColorMode = "class",
+	texture = TEXTURE_NAME,
+	barColorMode = "blizzard",
 	powerColorMode = "blizzard",
 	barCustomColor = { 1, 1, 1 },
 	powerHeight = 10,

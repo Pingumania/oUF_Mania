@@ -40,7 +40,7 @@ function ns:GetFontFile()
 end
 
 function ns:GetTexture()
-	return LSM:Fetch("statusbar", ns.db.texture or LSM:GetDefault("statusbar"))
+	return LSM:Fetch("statusbar", ns.db.texture or ns.Defaults.texture)
 end
 
 function ns:GetFontSize()

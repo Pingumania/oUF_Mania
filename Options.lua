@@ -433,7 +433,7 @@ end
 local function AddMediaRow(body, previous, label, mediaType, field)
 	return AddControlRow(body, previous, label, DROPDOWN_OFFSET, function(row)
 		return ns:CreateMediaDropdown(row, mediaType, function()
-			return ns.db[field] or LSM:GetDefault(mediaType)
+			return ns.db[field] or ns.Defaults[field] or LSM:GetDefault(mediaType)
 		end, function(name)
 			ns.db[field] = name
 			ns:ApplyMedia()
