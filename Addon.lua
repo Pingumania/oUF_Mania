@@ -116,6 +116,7 @@ ns.Defaults = {
 
 	elements = {
 		castbarIcon = { anchor = { default = "LEFT", target = "RIGHT" }, size = { default = 16 } },
+		castbarIconGap = { size = { default = 0 } },
 		healingPlayer = { color = { 0.25, 0.8, 0.3 }, alpha = PREDICTION_ALPHA },
 		healingOther = { color = { 0.13, 0.5, 0.2 }, alpha = PREDICTION_ALPHA },
 		damageAbsorb = { color = { 0.4, 0.68, 1 }, alpha = PREDICTION_ALPHA },

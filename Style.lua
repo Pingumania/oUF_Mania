@@ -11,6 +11,7 @@ local PREVIEW_UNIT = "player"
 local SPARK_ATLAS = "ui-castingbar-pip"
 local SPARK_OVERHANG = 4
 local SPARK_RATIO = 0.4
+local ICON_ZOOM = 0.08
 
 local SWING_TIMER_KEY = "swingtimer"
 local SWING_COMBAT_KEY = "swingtimerCombat"
@@ -573,15 +574,16 @@ local function PlaceCastbar(frame, placement, stackY)
 
 	local unit = frame.unitKey
 	local height = ns:GetElementSize(unit, "castbar")
-	local icon = castbar.Icon
+	local iconBorder = frame.castbarIconBorder
 	local iconX, iconY = ns:GetElementOffset(unit, "castbarIcon")
+	local iconGap = ns:GetElementSize(unit, "castbarIconGap") - 2 * ns.BORDER_SHADOW
 	local rightSide = ns:GetElementAnchor(unit, "castbarIcon") == "RIGHT"
 	local matchIcon = ns:IsElementShown(unit, "castbarIconMatch")
 	local shield = castbar.Shield
 	local iconSize, sparkHeight
 
 	castbar:ClearAllPoints()
-	icon:ClearAllPoints()
+	iconBorder:ClearAllPoints()
 	shield:ClearAllPoints()
 
 	if boxed then
@@ -617,24 +619,24 @@ local function PlaceCastbar(frame, placement, stackY)
 		ns:SetPoint(castbar, "TOPLEFT", border, "TOPLEFT", ns.BAR_INSET, -ns.BAR_INSET)
 		ns:SetPoint(castbar, "BOTTOMRIGHT", border, "BOTTOMRIGHT", -ns.BAR_INSET, ns.BAR_INSET)
 
-		iconSize = height + 2 * ns.BAR_INSET
+		iconSize = height
 		shield:SetAllPoints(border)
 
 		if rightSide then
-			ns:SetPoint(icon, "LEFT", border, "RIGHT", ns.BORDER_GAP + iconX, iconY)
+			ns:SetPoint(iconBorder, "LEFT", border, "RIGHT", iconGap + iconX, iconY)
 		else
-			ns:SetPoint(icon, "RIGHT", border, "LEFT", -ns.BORDER_GAP + iconX, iconY)
+			ns:SetPoint(iconBorder, "RIGHT", border, "LEFT", -iconGap + iconX, iconY)
 		end
 	else
 		iconSize = height
 		shield:SetAllPoints(castbar)
 
 		if rightSide then
-			ns:SetPoint(icon, "LEFT", castbar, "RIGHT",
-				ns.BAR_INSET + ns.BORDER_GAP + iconX, iconY)
+			ns:SetPoint(iconBorder, "LEFT", castbar, "RIGHT",
+				ns.BAR_INSET + iconGap + iconX, iconY)
 		else
-			ns:SetPoint(icon, "RIGHT", castbar, "LEFT",
-				-(ns.BAR_INSET + ns.BORDER_GAP) + iconX, iconY)
+			ns:SetPoint(iconBorder, "RIGHT", castbar, "LEFT",
+				-(ns.BAR_INSET + iconGap) + iconX, iconY)
 		end
 	end
 
@@ -642,7 +644,8 @@ local function PlaceCastbar(frame, placement, stackY)
 		iconSize = ns:GetElementSize(unit, "castbarIcon")
 	end
 
-	ns:SetSize(icon, iconSize, iconSize)
+	iconSize = iconSize + 2 * ns.BAR_INSET
+	ns:SetSize(iconBorder, iconSize, iconSize)
 
 	sparkHeight = height + SPARK_OVERHANG
 	ns:SetSize(castbar.Spark, sparkHeight * SPARK_RATIO, sparkHeight)
@@ -1073,7 +1076,16 @@ local function Style(self, unit)
 		shield:SetAllPoints(border)
 		castbar.Shield = shield
 
-		castbar.Icon = castbar:CreateTexture(nil, "ARTWORK")
+		local iconBorder = CreateFrame("Frame", nil, castbar)
+		iconBorder:SetFrameLevel(castbar:GetFrameLevel())
+		ns:CreateBorder(iconBorder)
+		self.castbarIconBorder = iconBorder
+
+		local icon = iconBorder:CreateTexture(nil, "ARTWORK")
+		ns:SetPoint(icon, "TOPLEFT", iconBorder, "TOPLEFT", ns.BAR_INSET, -ns.BAR_INSET)
+		ns:SetPoint(icon, "BOTTOMRIGHT", iconBorder, "BOTTOMRIGHT", -ns.BAR_INSET, ns.BAR_INSET)
+		icon:SetTexCoord(ICON_ZOOM, 1 - ICON_ZOOM, ICON_ZOOM, 1 - ICON_ZOOM)
+		castbar.Icon = icon
 		castbar.SafeZone = castbar:CreateTexture(nil, "BACKGROUND")
 
 		self.Castbar = castbar

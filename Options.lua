@@ -98,7 +98,9 @@ local ELEMENTS = {
 	{
 		key = "castbar",
 		label = "Cast bar",
-		extra = { "castbarIcon", "castbarIconMatch", "castbarLatency", "castbarWidth" },
+		extra = {
+			"castbarIcon", "castbarIconGap", "castbarIconMatch", "castbarLatency", "castbarWidth",
+		},
 	},
 	{ key = ns.CLASS_SLOT, label = "Class resource", bar = true },
 	{ key = ns.POWER_SLOT, label = "Additional power", bar = true },
@@ -811,6 +813,19 @@ local function BuildElementPage(body, unit, info)
 	end
 
 	if info.key == "castbar" then
+		row = AddToggleRow(body, row, "Show icon", function()
+			return ns:IsElementShown(storageUnit, "castbarIcon")
+		end, function(value)
+			ns:SetElementShown(storageUnit, "castbarIcon", value)
+			ReflowBody(body)
+		end)
+
+		local function IsIconShown()
+			return ns:IsElementShown(storageUnit, "castbarIcon")
+		end
+
+		local iconFrom = #body.controls + 1
+
 		row = AddDropdownRow(body, row, "Icon side", ICON_SIDES, function()
 			return ns:GetElementAnchor(storageUnit, "castbarIcon")
 		end, function(point)
@@ -823,6 +838,12 @@ local function BuildElementPage(body, unit, info)
 			ns:SetElementOffset(storageUnit, "castbarIcon", axis, value)
 		end)
 
+		row = AddSliderRow(body, row, "Icon gap", SPACING_MIN, SPACING_MAX, function()
+			return ns:GetElementSize(storageUnit, "castbarIconGap")
+		end, function(value)
+			ns:SetElementSize(storageUnit, "castbarIconGap", value)
+		end)
+
 		row = AddToggleRow(body, row, "Match icon to cast bar height", function()
 			return ns:IsElementShown(storageUnit, "castbarIconMatch")
 		end, function(value)
@@ -830,6 +851,8 @@ local function BuildElementPage(body, unit, info)
 			ns:DeferMethod(ns, "UpdatePixelGeometry")
 			ReflowBody(body)
 		end)
+
+		TagRows(body, iconFrom, IsIconShown)
 
 		local iconSizeFrom = #body.controls + 1
 
@@ -840,7 +863,7 @@ local function BuildElementPage(body, unit, info)
 		end)
 
 		TagRows(body, iconSizeFrom, function()
-			return not ns:IsElementShown(storageUnit, "castbarIconMatch")
+			return IsIconShown() and not ns:IsElementShown(storageUnit, "castbarIconMatch")
 		end)
 
 		row = AddSliderRow(body, row, "Height", SIZE_MIN, SIZE_MAX, function()

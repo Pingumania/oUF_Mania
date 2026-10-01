@@ -1470,6 +1470,7 @@ function ns:ApplyElements(frame)
 		end
 
 		elements.castbar.SafeZone:SetShown(ns:IsElementShown(unit, "castbarLatency"))
+		frame.castbarIconBorder:SetShown(ns:IsElementShown(unit, "castbarIcon"))
 	end
 
 	if frame.SwingTimer then
