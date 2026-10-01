@@ -310,9 +310,15 @@ local function RegisterControl(body, row, control)
 	return row
 end
 
-local function TagRows(body, from, IsVisible)
+local function TagRows(body, from, IsEnabled)
 	for index = from, #body.controls do
-		body.controls[index].IsVisible = IsVisible
+		body.controls[index].IsEnabled = IsEnabled
+	end
+end
+
+local function TagShownRows(body, from, IsShown)
+	for index = from, #body.controls do
+		body.controls[index].IsShown = IsShown
 	end
 end
 
@@ -584,6 +590,10 @@ local function SetRowEnabled(entry, enabled)
 	entry.row.Label:SetTextColor(labelColor:GetRGB())
 end
 
+local function ApplyRowState(entry)
+	SetRowEnabled(entry, not entry.locked and (not entry.IsEnabled or entry.IsEnabled()))
+end
+
 local function AddLinkRow(body, previous, element, units)
 	local available = LINK_WIDTH - 2 * LINK_PADDING
 	local top = 2 * LINK_PADDING + BUTTON_HEIGHT
@@ -774,7 +784,7 @@ local function BuildElementPage(body, unit, info)
 				ns:SetElementPosition(storageUnit, info.key, axis, value)
 			end)
 
-		TagRows(body, from, IsDetached)
+		TagShownRows(body, from, IsDetached)
 	end
 
 	if ns:HasElementPixelSnap(info.key) then
@@ -786,7 +796,7 @@ local function BuildElementPage(body, unit, info)
 			ns:SetElementPixelSnapped(storageUnit, info.key, value)
 		end)
 
-		TagRows(body, from, IsStacked)
+		TagShownRows(body, from, IsStacked)
 	end
 
 	if ns:HasElementLevel(info.key) then
@@ -809,7 +819,7 @@ local function BuildElementPage(body, unit, info)
 		end)
 
 		if ns:HasElementPlacement(info.key) then
-			TagRows(body, offsetFrom, IsAttached)
+			TagShownRows(body, offsetFrom, IsAttached)
 		end
 	end
 
@@ -883,8 +893,6 @@ local function BuildElementPage(body, unit, info)
 			ReflowBody(body)
 		end)
 
-		TagRows(body, widthMatchFrom, IsBoxed)
-
 		local widthFrom = #body.controls + 1
 
 		row = AddSliderRow(body, row, "Width", CASTBAR_WIDTH_MIN, CASTBAR_WIDTH_MAX, function()
@@ -893,8 +901,10 @@ local function BuildElementPage(body, unit, info)
 			ns:SetElementSize(storageUnit, "castbarWidth", value)
 		end)
 
+		TagShownRows(body, widthMatchFrom, IsBoxed)
+
 		TagRows(body, widthFrom, function()
-			return IsBoxed() and not ns:IsElementShown(storageUnit, "castbarWidthMatch")
+			return not ns:IsElementShown(storageUnit, "castbarWidthMatch")
 		end)
 
 		if storageUnit == "player" or storageUnit == ALL_KEY then
@@ -1042,7 +1052,8 @@ local function BuildElementPage(body, unit, info)
 		local enabled = not ns:IsElementLinked(unit, info.key)
 
 		for index = first, last do
-			SetRowEnabled(body.controls[index], enabled)
+			body.controls[index].locked = not enabled
+			ApplyRowState(body.controls[index])
 		end
 	end
 end
@@ -1138,7 +1149,8 @@ local function BuildPredictionPage(body, unit)
 		local enabled = not ns:IsElementLinked(unit, PREDICTION_SECTION)
 
 		for index = first, last do
-			SetRowEnabled(body.controls[index], enabled)
+			body.controls[index].locked = not enabled
+			ApplyRowState(body.controls[index])
 		end
 	end
 end
@@ -1179,19 +1191,23 @@ end
 
 function ReflowBody(body)
 	local previous
-	local visible
+	local shown
 
 	body.contentHeight = 0
 
 	for _, entry in ipairs(body.controls) do
-		visible = not entry.IsVisible or entry.IsVisible()
+		shown = not entry.IsShown or entry.IsShown()
 
-		entry.row:SetShown(visible)
+		entry.row:SetShown(shown)
 
-		if visible then
+		if shown then
 			entry.row:ClearAllPoints()
 			PlaceRow(body, entry.row, previous)
 			previous = entry.row
+		end
+
+		if entry.IsEnabled then
+			ApplyRowState(entry)
 		end
 	end
 
