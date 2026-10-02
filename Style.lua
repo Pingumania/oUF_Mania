@@ -1062,6 +1062,7 @@ local function Style(self, unit)
 	health.incomingHealOverflow = 1
 	health.PostUpdate = HealthPostUpdate
 	health.PostUpdateColor = HealthPostUpdateColor
+	health:SetClipsChildren(true)
 	health:SetPoint("TOPLEFT", healthBox, "TOPLEFT", 0, 0)
 	health:SetPoint("BOTTOMLEFT", healthBox, "BOTTOMLEFT", 0, 0)
 	self.Health = health
