@@ -1248,10 +1248,33 @@ function ns:UpdateElements()
 	end
 end
 
+-- Forever client bug: a frame shown for the first time from inside an OnUpdate
+-- draws its StatusBar fills at full size for one frame. RegisterUnitWatch shows
+-- unit frames from SecureStateDriverManager's OnUpdate, so every unit frame
+-- flashes full bars on its first show. Hand OnShow back to oUF, then hide that
+-- one frame with alpha 0 and restore it on the next frame.
+local function MaskFirstShow(frame, ...)
+	local onShow = frame.firstShowOnShow
+
+	frame.firstShowOnShow = nil
+	frame:SetScript("OnShow", onShow)
+	onShow(frame, ...)
+
+	frame:SetAlpha(0)
+	C_Timer.After(0, function()
+		frame:SetAlpha(1)
+	end)
+end
+
 function ns:OnFrameInitialized(frame)
 	if styled[frame] then
 		frame.elementsReady = true
 		ns:ApplyElements(frame)
+
+		if ns:IsForever() then
+			frame.firstShowOnShow = frame:GetScript("OnShow")
+			frame:SetScript("OnShow", MaskFirstShow)
+		end
 	end
 end
 
