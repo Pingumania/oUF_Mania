@@ -99,8 +99,9 @@ local ELEMENTS = {
 		key = "castbar",
 		label = "Cast bar",
 		extra = {
-			"castbarIcon", "castbarIconGap", "castbarIconMatch", "castbarLatency",
-			"castbarWidth", "castbarWidthMatch",
+			"castbarIcon", "castbarIconGap", "castbarIconMatch", "castbarShield",
+			"castbarShieldGap", "castbarShieldMatch", "castbarLatency", "castbarWidth",
+			"castbarWidthMatch",
 		},
 	},
 	{ key = ns.CLASS_SLOT, label = "Class resource", bar = true },
@@ -165,6 +166,12 @@ local SWING_BAR_COLORS = {
 
 local ICON_SIDES = {
 	{ value = "LEFT", label = "Left" },
+	{ value = "RIGHT", label = "Right" },
+}
+
+local SHIELD_SIDES = {
+	{ value = "LEFT", label = "Left" },
+	{ value = "CENTER", label = "Center" },
 	{ value = "RIGHT", label = "Right" },
 }
 
@@ -692,6 +699,70 @@ local function AnchorOptions(element)
 	return options
 end
 
+local function AddCastbarIconRows(body, row, storageUnit, key, noun, sides)
+	local title = noun:gsub("^%l", string.upper)
+
+	local function IsShown()
+		return ns:IsElementShown(storageUnit, key)
+	end
+
+	row = AddToggleRow(body, row, "Show " .. noun, IsShown, function(value)
+		ns:SetElementShown(storageUnit, key, value)
+		ReflowBody(body)
+	end)
+
+	local from = #body.controls + 1
+
+	row = AddDropdownRow(body, row, title .. " side", sides, function()
+		return ns:GetElementAnchor(storageUnit, key)
+	end, function(point)
+		ns:SetElementAnchor(storageUnit, key, point)
+		ReflowBody(body)
+	end)
+
+	row = AddAxisRows(body, row, title .. " offset", OFFSET_MIN, OFFSET_MAX, function()
+		return ns:GetElementOffset(storageUnit, key)
+	end, function(axis, value)
+		ns:SetElementOffset(storageUnit, key, axis, value)
+	end)
+
+	local gapFrom = #body.controls + 1
+
+	row = AddSliderRow(body, row, title .. " gap", SPACING_MIN, SPACING_MAX, function()
+		return ns:GetElementSize(storageUnit, key .. "Gap")
+	end, function(value)
+		ns:SetElementSize(storageUnit, key .. "Gap", value)
+	end)
+
+	TagShownRows(body, gapFrom, function()
+		return ns:GetElementAnchor(storageUnit, key) ~= "CENTER"
+	end)
+
+	row = AddToggleRow(body, row, "Match " .. noun .. " to cast bar height", function()
+		return ns:IsElementShown(storageUnit, key .. "Match")
+	end, function(value)
+		ns:SetElementShown(storageUnit, key .. "Match", value)
+		ns:DeferMethod(ns, "UpdatePixelGeometry")
+		ReflowBody(body)
+	end)
+
+	TagRows(body, from, IsShown)
+
+	from = #body.controls + 1
+
+	row = AddSliderRow(body, row, title .. " size", ICON_SIZE_MIN, SIZE_MAX, function()
+		return ns:GetElementSize(storageUnit, key)
+	end, function(value)
+		ns:SetElementSize(storageUnit, key, value)
+	end)
+
+	TagRows(body, from, function()
+		return IsShown() and not ns:IsElementShown(storageUnit, key .. "Match")
+	end)
+
+	return row
+end
+
 local function BuildElementPage(body, unit, info)
 	local units = ns:GetElementUnits(info.key)
 	local multiUnit = #units > 1
@@ -824,57 +895,19 @@ local function BuildElementPage(body, unit, info)
 	end
 
 	if info.key == "castbar" then
-		row = AddToggleRow(body, row, "Show icon", function()
-			return ns:IsElementShown(storageUnit, "castbarIcon")
+		row = AddCastbarIconRows(body, row, storageUnit, "castbarIcon", "icon", ICON_SIDES)
+		row = AddCastbarIconRows(body, row, storageUnit, "castbarShield", "shield", SHIELD_SIDES)
+
+		local shieldStyleFrom = #body.controls + 1
+
+		row = AddDropdownRow(body, row, "Shield style", ns:GetShieldStyles(), function()
+			return ns:GetShieldStyle()
 		end, function(value)
-			ns:SetElementShown(storageUnit, "castbarIcon", value)
-			ReflowBody(body)
+			ns:SetShieldStyle(value)
 		end)
 
-		local function IsIconShown()
-			return ns:IsElementShown(storageUnit, "castbarIcon")
-		end
-
-		local iconFrom = #body.controls + 1
-
-		row = AddDropdownRow(body, row, "Icon side", ICON_SIDES, function()
-			return ns:GetElementAnchor(storageUnit, "castbarIcon")
-		end, function(point)
-			ns:SetElementAnchor(storageUnit, "castbarIcon", point)
-		end)
-
-		row = AddAxisRows(body, row, "Icon offset", OFFSET_MIN, OFFSET_MAX, function()
-			return ns:GetElementOffset(storageUnit, "castbarIcon")
-		end, function(axis, value)
-			ns:SetElementOffset(storageUnit, "castbarIcon", axis, value)
-		end)
-
-		row = AddSliderRow(body, row, "Icon gap", SPACING_MIN, SPACING_MAX, function()
-			return ns:GetElementSize(storageUnit, "castbarIconGap")
-		end, function(value)
-			ns:SetElementSize(storageUnit, "castbarIconGap", value)
-		end)
-
-		row = AddToggleRow(body, row, "Match icon to cast bar height", function()
-			return ns:IsElementShown(storageUnit, "castbarIconMatch")
-		end, function(value)
-			ns:SetElementShown(storageUnit, "castbarIconMatch", value)
-			ns:DeferMethod(ns, "UpdatePixelGeometry")
-			ReflowBody(body)
-		end)
-
-		TagRows(body, iconFrom, IsIconShown)
-
-		local iconSizeFrom = #body.controls + 1
-
-		row = AddSliderRow(body, row, "Icon size", ICON_SIZE_MIN, SIZE_MAX, function()
-			return ns:GetElementSize(storageUnit, "castbarIcon")
-		end, function(value)
-			ns:SetElementSize(storageUnit, "castbarIcon", value)
-		end)
-
-		TagRows(body, iconSizeFrom, function()
-			return IsIconShown() and not ns:IsElementShown(storageUnit, "castbarIconMatch")
+		TagRows(body, shieldStyleFrom, function()
+			return ns:IsElementShown(storageUnit, "castbarShield")
 		end)
 
 		row = AddSliderRow(body, row, "Height", SIZE_MIN, SIZE_MAX, function()

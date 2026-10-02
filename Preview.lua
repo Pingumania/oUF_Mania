@@ -168,7 +168,7 @@ function ns:StartCastPreview(frame)
 	castbar:SetMinMaxValues(0, 1)
 	castbar.Text:SetText(info and info.name or "")
 	castbar.Icon:SetTexture(info and info.iconID)
-	castbar.Shield:SetAlpha(0)
+	castbar.Shield:SetAlpha(frame.unitKey == "player" and 0 or 1)
 	castbar.Spark:Show()
 	castbar:Show()
 

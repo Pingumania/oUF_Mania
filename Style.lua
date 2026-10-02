@@ -602,6 +602,66 @@ local function ApplySparkStyle(spark, height)
 	ns:SetSize(spark, sparkHeight * style.ratio, sparkHeight)
 end
 
+local SHIELD_MEDIA = [[Interface\AddOns\oUF_Mania\Media\shield-]]
+
+local SHIELD_STYLES = {
+	{ value = "castbar", label = "Cast bar", width = 75, height = 89, canvas = 128 },
+	{ value = "tank", label = "Tank role", width = 16, height = 16, canvas = 16 },
+	{ value = "warning", label = "Timeline warning", width = 64, height = 64, canvas = 64 },
+	{ value = "groupmanager", label = "Group manager", width = 40, height = 40, canvas = 64 },
+	{ value = "grouporganizer", label = "Group organizer", width = 50, height = 50, canvas = 64 },
+	{ value = "nameplate", label = "Nameplate", width = 14, height = 16, canvas = 16 },
+}
+
+function ns:GetShieldStyles()
+	return SHIELD_STYLES
+end
+
+function ns:GetShieldStyle()
+	return ns.db.castbarShieldStyle or SHIELD_STYLES[1].value
+end
+
+function ns:SetShieldStyle(value)
+	ns.db.castbarShieldStyle = value
+	ns:UpdatePixelGeometry()
+end
+
+local function ApplyShieldStyle(holder, shield, size)
+	local value = ns:GetShieldStyle()
+	local style = SHIELD_STYLES[1]
+
+	for _, entry in ipairs(SHIELD_STYLES) do
+		if entry.value == value then
+			style = entry
+			break
+		end
+	end
+
+	shield:SetTexture(SHIELD_MEDIA .. style.value, nil, nil, "TRILINEAR")
+	shield:SetTexCoord(0, style.width / style.canvas, 0, style.height / style.canvas)
+	ns:SetSize(holder, size * style.width / style.height, size)
+end
+
+local function PlaceCastbarIcon(frame, region, key, anchor, inset)
+	local unit = frame.unitKey
+	local x, y = ns:GetElementOffset(unit, key)
+	local gap = inset + ns:GetElementSize(unit, key .. "Gap") - 2 * ns.BORDER_SHADOW
+	local size = ns:GetElementSize(unit, ns:IsElementShown(unit, key .. "Match") and "castbar" or key)
+	local side = ns:GetElementAnchor(unit, key)
+
+	region:ClearAllPoints()
+
+	if side == "CENTER" then
+		ns:SetPoint(region, "CENTER", frame.Castbar, "CENTER", x, y)
+	elseif side == "RIGHT" then
+		ns:SetPoint(region, "LEFT", anchor, "RIGHT", gap + x, y)
+	else
+		ns:SetPoint(region, "RIGHT", anchor, "LEFT", -gap + x, y)
+	end
+
+	return size
+end
+
 local function PlaceCastbar(frame, placement, stackY)
 	local castbar = frame.Castbar
 
@@ -625,17 +685,9 @@ local function PlaceCastbar(frame, placement, stackY)
 
 	local unit = frame.unitKey
 	local height = ns:GetElementSize(unit, "castbar")
-	local iconBorder = frame.castbarIconBorder
-	local iconX, iconY = ns:GetElementOffset(unit, "castbarIcon")
-	local iconGap = ns:GetElementSize(unit, "castbarIconGap") - 2 * ns.BORDER_SHADOW
-	local rightSide = ns:GetElementAnchor(unit, "castbarIcon") == "RIGHT"
-	local matchIcon = ns:IsElementShown(unit, "castbarIconMatch")
-	local shield = castbar.Shield
-	local iconSize
+	local anchor, inset, iconSize, shieldSize, shieldLevel
 
 	castbar:ClearAllPoints()
-	iconBorder:ClearAllPoints()
-	shield:ClearAllPoints()
 
 	if boxed then
 		local width = ns:GetElementSize(unit, "castbarWidth")
@@ -671,33 +723,24 @@ local function PlaceCastbar(frame, placement, stackY)
 		ns:SetPoint(castbar, "TOPLEFT", border, "TOPLEFT", ns.BAR_INSET, -ns.BAR_INSET)
 		ns:SetPoint(castbar, "BOTTOMRIGHT", border, "BOTTOMRIGHT", -ns.BAR_INSET, ns.BAR_INSET)
 
-		iconSize = height
-		shield:SetAllPoints(border)
-
-		if rightSide then
-			ns:SetPoint(iconBorder, "LEFT", border, "RIGHT", iconGap + iconX, iconY)
-		else
-			ns:SetPoint(iconBorder, "RIGHT", border, "LEFT", -iconGap + iconX, iconY)
-		end
+		anchor, inset = border, 0
 	else
-		iconSize = height
-		shield:SetAllPoints(castbar)
-
-		if rightSide then
-			ns:SetPoint(iconBorder, "LEFT", castbar, "RIGHT",
-				ns.BAR_INSET + iconGap + iconX, iconY)
-		else
-			ns:SetPoint(iconBorder, "RIGHT", castbar, "LEFT",
-				-(ns.BAR_INSET + iconGap) + iconX, iconY)
-		end
+		anchor, inset = castbar, ns.BAR_INSET
 	end
 
-	if not matchIcon then
-		iconSize = ns:GetElementSize(unit, "castbarIcon")
+	iconSize = PlaceCastbarIcon(frame, frame.castbarIconBorder, "castbarIcon", anchor, inset)
+	ns:SetSize(frame.castbarIconBorder, iconSize + 2 * ns.BAR_INSET, iconSize + 2 * ns.BAR_INSET)
+
+	shieldSize = PlaceCastbarIcon(frame, frame.castbarShieldHolder, "castbarShield", anchor, inset)
+
+	if ns:GetElementAnchor(unit, "castbarShield") == "CENTER" then
+		shieldLevel = (boxed and border or frame).borderOverlay:GetFrameLevel() + 1
+	else
+		shieldLevel = castbar:GetFrameLevel()
 	end
 
-	iconSize = iconSize + 2 * ns.BAR_INSET
-	ns:SetSize(iconBorder, iconSize, iconSize)
+	frame.castbarShieldHolder:SetFrameLevel(shieldLevel)
+	ApplyShieldStyle(frame.castbarShieldHolder, castbar.Shield, shieldSize)
 
 	ApplySparkStyle(castbar.Spark, height)
 end
@@ -1123,12 +1166,16 @@ local function Style(self, unit)
 		spark:SetPoint("CENTER", castbar:GetStatusBarTexture(), "RIGHT", 0, 0)
 		castbar.Spark = spark
 
-		local shield = castbar:CreateTexture(nil, "OVERLAY")
-		shield:SetAllPoints(border)
+		local shieldHolder = CreateFrame("Frame", nil, castbar)
+		shieldHolder:SetFrameLevel(castbar:GetFrameLevel())
+		self.castbarShieldHolder = shieldHolder
+
+		local shield = shieldHolder:CreateTexture(nil, "ARTWORK")
+		shield:SetAllPoints()
 		castbar.Shield = shield
 
 		local iconBorder = CreateFrame("Frame", nil, castbar)
-		iconBorder:SetFrameLevel(castbar:GetFrameLevel())
+		iconBorder:SetFrameLevel(castbar:GetFrameLevel() + 1)
 		ns:CreateBorder(iconBorder)
 		self.castbarIconBorder = iconBorder
 
