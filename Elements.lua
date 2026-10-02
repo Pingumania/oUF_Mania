@@ -96,6 +96,66 @@ local THREAT_EDGES = {
 
 local PVP_FFA_ATLAS = "UI-HUD-UnitFrame-Player-PVP-FFAIcon"
 
+local ICON_MEDIA = [[Interface\AddOns\oUF_Mania\Media\]]
+local ICON_FILES = {
+	["AutoQuest-Badge-Campaign"] = { size = 128, canvas = 128 },
+	["QuestNormal"] = { size = 64, canvas = 64 },
+	["QuestPortraitIcon-Alliance"] = { size = 88, canvas = 128 },
+	["QuestPortraitIcon-Horde"] = { size = 96, canvas = 128 },
+	["UI-HUD-UnitFrame-Player-PVP-AllianceIcon"] = { size = 41, canvas = 64 },
+	["UI-HUD-UnitFrame-Player-PVP-HordeIcon"] = { size = 44, canvas = 64 },
+	[PVP_FFA_ATLAS] = { size = 88, canvas = 128 },
+	["UI-LFG-RoleIcon-Tank-Micro"] = { size = 61, canvas = 64 },
+	["UI-LFG-RoleIcon-Healer-Micro"] = { size = 61, canvas = 64 },
+	["UI-LFG-RoleIcon-DPS-Micro"] = { size = 61, canvas = 64 },
+	["UI-LFG-RoleIcon-Tank-Micro-Raid"] = { size = 12, canvas = 16 },
+	["UI-LFG-RoleIcon-Healer-Micro-Raid"] = { size = 12, canvas = 16 },
+	["UI-LFG-RoleIcon-DPS-Micro-Raid"] = { size = 12, canvas = 16 },
+	["GM-icon-role-tank"] = { size = 40, canvas = 64 },
+	["GM-icon-role-healer"] = { size = 40, canvas = 64 },
+	["GM-icon-role-dps"] = { size = 40, canvas = 64 },
+	["icons_16x16_tank"] = { size = 32, canvas = 32 },
+	["icons_16x16_heal"] = { size = 32, canvas = 32 },
+	["icons_16x16_damage"] = { size = 32, canvas = 32 },
+	["groupfinder-icon-role-micro-tank"] = { size = 16, canvas = 16 },
+	["groupfinder-icon-role-micro-heal"] = { size = 16, canvas = 16 },
+	["groupfinder-icon-role-micro-dps"] = { size = 16, canvas = 16 },
+	["UI-HUD-UnitFrame-Target-PortraitOn-Boss-Quest"] = { size = 52, canvas = 64 },
+	["UI-HUD-UnitFrame-Player-Group-LeaderIcon"] = { size = 32, canvas = 32 },
+	["UI-HUD-UnitFrame-Player-Group-GuideIcon"] = { size = 32, canvas = 32 },
+	["UI-HUD-UnitFrame-Player-CombatIcon"] = { size = 32, canvas = 32 },
+	["RaidFrame-Icon-Phasing"] = { size = 44, canvas = 64 },
+	["RaidFrame-Icon-Rez"] = { size = 44, canvas = 64 },
+	["RaidFrame-Icon-SummonPending"] = { size = 44, canvas = 64 },
+}
+
+for atlas, info in pairs(ICON_FILES) do
+	info.file = ICON_MEDIA .. strlower(atlas)
+	info.coord = info.size / info.canvas
+end
+
+function ns:SetIcon(texture, atlas)
+	local info = ICON_FILES[atlas]
+
+	if info then
+		texture:SetTexture(info.file, nil, nil, "TRILINEAR")
+		texture:SetTexCoord(0, info.coord, 0, info.coord)
+	else
+		texture:SetAtlas(atlas, false, nil, true)
+	end
+end
+
+function ns:CreateIconMarkup(atlas, size)
+	local info = ICON_FILES[atlas]
+
+	if info then
+		return ("|T%s:%d:%d:0:0:%d:%d:0:%d:0:%d|t"):format(info.file, size, size,
+			info.canvas, info.canvas, info.size, info.size)
+	end
+
+	return CreateAtlasMarkup(atlas, size, size)
+end
+
 local PVP_ICON_STYLES = {
 	{ value = "questlog", label = "Quest log",
 		Alliance = "questlog-questtypeicon-alliance", Horde = "questlog-questtypeicon-horde",
@@ -151,7 +211,7 @@ function ns:GetPvPIcon(status)
 	end
 
 	if pvpAtlasExists[atlas] == nil then
-		pvpAtlasExists[atlas] = C_Texture.GetAtlasInfo(atlas) ~= nil
+		pvpAtlasExists[atlas] = ICON_FILES[atlas] ~= nil or C_Texture.GetAtlasInfo(atlas) ~= nil
 	end
 
 	return pvpAtlasExists[atlas] and atlas or nil
@@ -162,7 +222,7 @@ local function PvPPostUpdate(element, unit, status)
 	local size = ns:GetElementSize(element.__owner.unitKey, "pvp")
 
 	if atlas then
-		element:SetAtlas(atlas, false, nil, true)
+		ns:SetIcon(element, atlas)
 	end
 
 	ns:SetSize(element, size, size)
@@ -251,7 +311,7 @@ function ns:GetRoleIcon(roleString)
 	end
 
 	if roleAtlasExists[atlas] == nil then
-		roleAtlasExists[atlas] = C_Texture.GetAtlasInfo(atlas) ~= nil
+		roleAtlasExists[atlas] = ICON_FILES[atlas] ~= nil or C_Texture.GetAtlasInfo(atlas) ~= nil
 	end
 
 	return roleAtlasExists[atlas] and atlas or nil
@@ -261,7 +321,7 @@ local function RoleIndicatorPostUpdate(element, role)
 	local atlas = ns:GetRoleIcon(LFG_ROLE_STRINGS[role])
 
 	if atlas then
-		element:SetAtlas(atlas, false, nil, true)
+		ns:SetIcon(element, atlas)
 	end
 end
 
@@ -303,7 +363,7 @@ function ns:SetQuestIconStyle(atlas)
 end
 
 function ns:ApplyQuestIcon(element)
-	element:SetAtlas(ns:GetQuestIconStyle(), false, nil, true)
+	ns:SetIcon(element, ns:GetQuestIconStyle())
 end
 
 local function QuestPostUpdate(element)

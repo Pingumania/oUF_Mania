@@ -116,7 +116,7 @@ function ns:ShowIndicatorPreview(frame, info)
 			previewRotation[info.key] = rotation + 1
 		end
 
-		indicator:SetAtlas(variants[(indicator.previewSlot - 1) % #variants + 1], false, nil, true)
+		ns:SetIcon(indicator, variants[(indicator.previewSlot - 1) % #variants + 1])
 	elseif info.marker then
 		SetRaidTargetIconTexture(indicator, info.marker)
 	elseif info.key == "quest" then

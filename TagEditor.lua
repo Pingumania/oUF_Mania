@@ -42,7 +42,7 @@ local RAID_MARKER_SHEET = [[Interface\TargetingFrame\UI-RaidTargetingIcons]]
 local RESTING_SHEET = [[Interface\CharacterFrame\UI-StateIcon]]
 
 local function Icon(atlas)
-	return CreateAtlasMarkup(atlas, SAMPLE_ICON_SIZE, SAMPLE_ICON_SIZE)
+	return ns:CreateIconMarkup(atlas, SAMPLE_ICON_SIZE)
 end
 
 local RAID_MARKER_SAMPLE = ("|T%s:%d:%d:0:0:256:256:0:64:0:64|t"):format(

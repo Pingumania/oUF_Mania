@@ -140,8 +140,7 @@ end
 oUF.Tags.Events["mania:difficulty"] = oUF.Tags.Events["difficulty"]
 
 local function Icon(atlas)
-	local size = ns:GetIconTagSize()
-	return CreateAtlasMarkup(atlas, size, size)
+	return ns:CreateIconMarkup(atlas, ns:GetIconTagSize())
 end
 
 local function IconTag(name, event, Read)
