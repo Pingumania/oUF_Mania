@@ -2141,6 +2141,7 @@ ns:RegisterSettings("oUF_ManiaDB", {
 })
 
 ns:SetSettingsHandler(ns.OpenOptionsWindow)
+ns:RegisterAddonCompartment()
 
 ns:RegisterSlash("/oufmania", function()
 	ns:OpenOptionsWindow()
