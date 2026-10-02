@@ -128,6 +128,7 @@ function ns:ShowIndicatorPreview(frame, info)
 		indicator:SetTexCoord(0, 1, 0, 1)
 	end
 
+	indicator:SetAlpha(1)
 	indicator:Show()
 end
 
