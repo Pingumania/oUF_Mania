@@ -101,7 +101,7 @@ end
 
 oUF.Tags.Events["mania:maxpp"] = "UNIT_MAXPOWER"
 
-local RAID_MARKER_SHEET = [[Interface\TargetingFrame\UI-RaidTargetingIcons]]
+local RAID_MARKER_SHEET = [[Interface\AddOns\oUF_Mania\Media\ui-raidtargetingicons-small]]
 local RAID_MARKER_COLUMNS = 4
 local RESTING_SHEET = [[Interface\CharacterFrame\UI-StateIcon]]
 
@@ -234,11 +234,11 @@ local function ReadRaidTargetIcon(unit)
 	local size = ns:GetIconTagSize()
 	local column = (index - 1) % RAID_MARKER_COLUMNS
 	local row = math.floor((index - 1) / RAID_MARKER_COLUMNS)
-	local left = column * 64
-	local top = row * 64
+	local left = column * 32
+	local top = row * 32
 
-	return ("|T%s:%d:%d:0:0:256:256:%d:%d:%d:%d|t"):format(RAID_MARKER_SHEET, size, size,
-		left, left + 64, top, top + 64)
+	return ("|T%s:%d:%d:0:0:128:128:%d:%d:%d:%d|t"):format(RAID_MARKER_SHEET, size, size,
+		left, left + 32, top, top + 32)
 end
 
 IconTag("leader", "UNIT_FLAGS PARTY_LEADER_CHANGED GROUP_ROSTER_UPDATE", ReadLeaderIcon)

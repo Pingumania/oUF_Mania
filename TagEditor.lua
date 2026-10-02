@@ -38,14 +38,14 @@ local COLLAPSED_HEIGHT = INNER_Y + EDITBOX_HEIGHT + PREVIEW_GAP + PREVIEW_HEIGHT
 local EXPANDED_HEIGHT = COLLAPSED_HEIGHT + LIST_GAP + LIST_AREA_HEIGHT
 
 local SAMPLE_ICON_SIZE = 16
-local RAID_MARKER_SHEET = [[Interface\TargetingFrame\UI-RaidTargetingIcons]]
+local RAID_MARKER_SHEET = [[Interface\AddOns\oUF_Mania\Media\ui-raidtargetingicons-small]]
 local RESTING_SHEET = [[Interface\CharacterFrame\UI-StateIcon]]
 
 local function Icon(atlas)
 	return ns:CreateIconMarkup(atlas, SAMPLE_ICON_SIZE)
 end
 
-local RAID_MARKER_SAMPLE = ("|T%s:%d:%d:0:0:256:256:0:64:0:64|t"):format(
+local RAID_MARKER_SAMPLE = ("|T%s:%d:%d:0:0:128:128:0:32:0:32|t"):format(
 	RAID_MARKER_SHEET, SAMPLE_ICON_SIZE, SAMPLE_ICON_SIZE)
 local RESTING_SAMPLE = ("|T%s:%d:%d:0:0:64:64:0:32:0:27|t"):format(
 	RESTING_SHEET, SAMPLE_ICON_SIZE, SAMPLE_ICON_SIZE)

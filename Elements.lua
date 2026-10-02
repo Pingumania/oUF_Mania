@@ -97,6 +97,7 @@ local THREAT_EDGES = {
 local PVP_FFA_ATLAS = "UI-HUD-UnitFrame-Player-PVP-FFAIcon"
 
 local ICON_MEDIA = [[Interface\AddOns\oUF_Mania\Media\]]
+local ICON_MARKUP_SIZE = 32
 local ICON_FILES = {
 	["AutoQuest-Badge-Campaign"] = { size = 128, canvas = 128 },
 	["QuestNormal"] = { size = 64, canvas = 64 },
@@ -132,6 +133,16 @@ local ICON_FILES = {
 for atlas, info in pairs(ICON_FILES) do
 	info.file = ICON_MEDIA .. strlower(atlas)
 	info.coord = info.size / info.canvas
+
+	if info.size > ICON_MARKUP_SIZE then
+		info.markupFile = info.file .. "-small"
+		info.markupSize = ICON_MARKUP_SIZE
+		info.markupCanvas = ICON_MARKUP_SIZE
+	else
+		info.markupFile = info.file
+		info.markupSize = info.size
+		info.markupCanvas = info.canvas
+	end
 end
 
 function ns:SetIcon(texture, atlas)
@@ -149,8 +160,8 @@ function ns:CreateIconMarkup(atlas, size)
 	local info = ICON_FILES[atlas]
 
 	if info then
-		return ("|T%s:%d:%d:0:0:%d:%d:0:%d:0:%d|t"):format(info.file, size, size,
-			info.canvas, info.canvas, info.size, info.size)
+		return ("|T%s:%d:%d:0:0:%d:%d:0:%d:0:%d|t"):format(info.markupFile, size, size,
+			info.markupCanvas, info.markupCanvas, info.markupSize, info.markupSize)
 	end
 
 	return CreateAtlasMarkup(atlas, size, size)
