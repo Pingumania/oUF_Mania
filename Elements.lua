@@ -157,20 +157,12 @@ function ns:CreateIconMarkup(atlas, size)
 end
 
 local PVP_ICON_STYLES = {
-	{ value = "questlog", label = "Quest log",
-		Alliance = "questlog-questtypeicon-alliance", Horde = "questlog-questtypeicon-horde",
-		FFA = PVP_FFA_ATLAS },
 	{ value = "unitframe", label = "Unit frame icon",
 		Alliance = "UI-HUD-UnitFrame-Player-PVP-AllianceIcon",
 		Horde = "UI-HUD-UnitFrame-Player-PVP-HordeIcon", FFA = PVP_FFA_ATLAS },
 	{ value = "questportrait", label = "Quest portrait",
-		Alliance = "QuestPortraitIcon-Alliance-small", Horde = "QuestPortraitIcon-Horde-small",
+		Alliance = "QuestPortraitIcon-Alliance", Horde = "QuestPortraitIcon-Horde",
 		FFA = PVP_FFA_ATLAS },
-	{ value = "warfront", label = "Warfront banner",
-		Alliance = "AllianceWarfrontMapBanner", Horde = "HordeWarfrontMapBanner",
-		FFA = PVP_FFA_ATLAS },
-	{ value = "symbol", label = "Faction symbol",
-		Alliance = "AllianceSymbol", Horde = "HordeSymbol", FFA = PVP_FFA_ATLAS },
 }
 
 local PVP_STYLE_DEFAULT = PVP_ICON_STYLES[1].value
@@ -180,7 +172,13 @@ function ns:GetPvPIconStyles()
 end
 
 function ns:GetPvPIconStyle()
-	return ns.db.pvpIcon or PVP_STYLE_DEFAULT
+	for _, style in ipairs(PVP_ICON_STYLES) do
+		if style.value == ns.db.pvpIcon then
+			return style.value
+		end
+	end
+
+	return PVP_STYLE_DEFAULT
 end
 
 function ns:SetPvPIconStyle(value)
@@ -982,13 +980,12 @@ end
 
 function ns:GetElementSize(unit, element)
 	local stored = ReadElement(unit, "sizes", element)
-
-	if stored then
-		return stored
-	end
-
 	local info = ns.Defaults.elements[element]
 	local sizes = info and info.size
+
+	if stored then
+		return math.max(stored, sizes and sizes.min or 0)
+	end
 
 	return sizes and (sizes[unit] or sizes.default)
 end

@@ -191,7 +191,7 @@ ns.Defaults = {
 		pvp = {
 			anchor = { default = "BOTTOMLEFT" },
 			offset = { 0, -4 },
-			size = { default = INDICATOR_SIZE },
+			size = { default = 16, min = 16 },
 			level = OVERLAY_LEVEL,
 		},
 		pvpclass = {

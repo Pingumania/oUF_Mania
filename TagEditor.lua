@@ -61,7 +61,7 @@ local MANIA_TAGS = {
 	{ tag = "[mania:combat]", text = "In combat",
 		sample = Icon("UI-HUD-UnitFrame-Player-CombatIcon") },
 	{ tag = "[mania:resting]", text = "Resting (player only)", sample = RESTING_SAMPLE },
-	{ tag = "[mania:pvp]", text = "PvP flagged", sample = Icon("questlog-questtypeicon-alliance") },
+	{ tag = "[mania:pvp]", text = "PvP flagged", sample = Icon("UI-HUD-UnitFrame-Player-PVP-AllianceIcon") },
 	{ tag = "[mania:quest]", text = "Quest objective", sample = Icon(ns:GetQuestIconStyles()[1].value) },
 	{ tag = "[mania:phase]", text = "Phased", sample = Icon("RaidFrame-Icon-Phasing") },
 	{ tag = "[mania:resurrect]", text = "Incoming resurrect", sample = Icon("RaidFrame-Icon-Rez") },

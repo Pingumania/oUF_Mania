@@ -1062,7 +1062,7 @@ local function BuildElementPage(body, unit, info)
 	if info.key ~= "castbar" and ns:HasElementSize(info.key) then
 		local label = info.sizeLabel or (info.bar and "Height" or "Size")
 
-		row = AddSliderRow(body, row, label, SIZE_MIN, SIZE_MAX, function()
+		row = AddSliderRow(body, row, label, ns.Defaults.elements[info.key].size.min or SIZE_MIN, SIZE_MAX, function()
 			return ns:GetElementSize(storageUnit, info.key)
 		end, function(value)
 			ns:SetElementSize(storageUnit, info.key, value)
