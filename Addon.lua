@@ -115,7 +115,13 @@ ns.Defaults = {
 	unitFallback = { width = 160, height = 36 },
 
 	elements = {
-		castbarIcon = { anchor = { default = "LEFT", target = "RIGHT" }, size = { default = 16 } },
+		portrait = {
+			anchor = { default = "LEFT", target = "RIGHT" },
+			size = { default = 40 },
+			hidden = { default = true },
+		},
+		portraitGap = { size = { default = 0 } },
+		castbarIcon ={ anchor = { default = "LEFT", target = "RIGHT" }, size = { default = 16 } },
 		castbarIconGap = { size = { default = 0 } },
 		castbarShield = { anchor = { default = "LEFT", target = "RIGHT" }, size = { default = 16 } },
 		castbarShieldGap = { size = { default = 0 } },

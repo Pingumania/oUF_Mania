@@ -95,6 +95,8 @@ local ELEMENTS = {
 	{ key = CUSTOM_TEXT_SECTION, label = "Text", custom = true },
 	{ key = ns.PREDICTION_SECTION, label = "Health prediction", prediction = true,
 		extra = ns.PREDICTION_ELEMENTS },
+	{ key = "portrait", label = "Portrait", noOffset = true,
+		extra = { "portraitGap", "portraitMatch" } },
 	{
 		key = "castbar",
 		label = "Cast bar",
@@ -812,6 +814,7 @@ local function BuildElementPage(body, unit, info)
 		return ns:IsElementShown(storageUnit, info.key)
 	end, function(value)
 		ns:SetElementShown(storageUnit, info.key, value)
+		ReflowBody(body)
 	end)
 
 	if info.tag then
@@ -822,7 +825,7 @@ local function BuildElementPage(body, unit, info)
 		end)
 	end
 
-	if ns:HasElementAnchor(info.key) then
+	if ns:HasElementAnchor(info.key) and info.key ~= "portrait" then
 		row = AddDropdownRow(body, row, info.tag and "Alignment" or "Anchor point",
 			AnchorOptions(info.key), function()
 			return ns:GetElementAnchor(storageUnit, info.key)
@@ -895,6 +898,25 @@ local function BuildElementPage(body, unit, info)
 		if ns:HasElementPlacement(info.key) then
 			TagShownRows(body, offsetFrom, IsAttached)
 		end
+	end
+
+	if info.key == "portrait" then
+		local function IsShown()
+			return ns:IsElementShown(storageUnit, info.key)
+		end
+
+		local from = #body.controls + 1
+
+		row = AddDropdownRow(body, row, "Style", ns:GetPortraitStyles(), function()
+			return ns:GetPortraitStyle(storageUnit)
+		end, function(value)
+			ns:SetPortraitStyle(storageUnit, value)
+		end)
+
+		TagRows(body, from, IsShown)
+
+		row = AddSideRows(body, row, storageUnit, info.key, "Portrait", ICON_SIDES,
+			"Match portrait to frame height", IsShown)
 	end
 
 	if info.key == "castbar" then
@@ -1062,7 +1084,7 @@ local function BuildElementPage(body, unit, info)
 		end)
 	end
 
-	if info.key ~= "castbar" and ns:HasElementSize(info.key) then
+	if info.key ~= "castbar" and info.key ~= "portrait" and ns:HasElementSize(info.key) then
 		local label = info.sizeLabel or (info.bar and "Height" or "Size")
 
 		row = AddSliderRow(body, row, label, ns.Defaults.elements[info.key].size.min or SIZE_MIN, SIZE_MAX, function()

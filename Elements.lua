@@ -1044,6 +1044,27 @@ function ns:SetElementOffset(unit, element, axis, value)
 	ns:DeferMethod(ns, "UpdatePixelGeometry", GeometryKey(unit))
 end
 
+local PORTRAIT_STYLES = {
+	{ value = "class", label = "Class icon" },
+	{ value = "model", label = "3D model" },
+	{ value = "portrait", label = "2D portrait" },
+}
+
+local PORTRAIT_STYLE_DEFAULT = PORTRAIT_STYLES[1].value
+
+function ns:GetPortraitStyles()
+	return PORTRAIT_STYLES
+end
+
+function ns:GetPortraitStyle(unit)
+	return ReadElement(unit, "modes", "portrait") or PORTRAIT_STYLE_DEFAULT
+end
+
+function ns:SetPortraitStyle(unit, value)
+	StoreNested(unit, "modes", "portrait", value)
+	ns:UpdateElements()
+end
+
 function ns:GetElementTag(unit, element)
 	local stored = ReadElement(unit, "tags", element)
 
@@ -1511,6 +1532,45 @@ function ns:ApplyPriorityGroups(frame)
 	end
 end
 
+local function CreatePortrait(holder, style)
+	local portrait
+
+	if style == "model" then
+		portrait = CreateFrame("PlayerModel", nil, holder)
+	else
+		portrait = holder:CreateTexture(nil, "ARTWORK")
+		portrait.showClass = style == "class"
+	end
+
+	ns:SetPoint(portrait, "TOPLEFT", holder, "TOPLEFT", ns.BAR_INSET, -ns.BAR_INSET)
+	ns:SetPoint(portrait, "BOTTOMRIGHT", holder, "BOTTOMRIGHT", -ns.BAR_INSET, ns.BAR_INSET)
+	holder[style] = portrait
+
+	return portrait
+end
+
+local function ApplyPortrait(frame)
+	local unit = frame.unitKey
+	local holder = frame.portraitHolder
+	local shown = ns:IsElementShown(unit, "portrait")
+	local style = ns:GetPortraitStyle(unit)
+
+	holder:SetShown(shown)
+
+	if shown and frame.portraitStyle ~= style then
+		if frame.Portrait then
+			ns:SetOUFElement(frame, "Portrait", false)
+		end
+
+		frame.Portrait = holder[style] or CreatePortrait(holder, style)
+		frame.portraitStyle = style
+	end
+
+	if frame.Portrait then
+		ns:SetOUFElement(frame, "Portrait", shown)
+	end
+end
+
 function ns:ApplyElements(frame)
 	local unit = frame.unitKey
 	local elements = frame.elements
@@ -1528,6 +1588,7 @@ function ns:ApplyElements(frame)
 	end
 
 	ns:ApplyResourceSlots(frame)
+	ApplyPortrait(frame)
 
 	if elements.castbar then
 		if ns:ShouldPreview(unit, "castbar") then

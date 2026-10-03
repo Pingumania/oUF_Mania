@@ -981,11 +981,36 @@ local function InsideHeight(frame)
 	return total
 end
 
+local function PlacePortrait(frame, frameHeight)
+	local unit = frame.unitKey
+	local holder = frame.portraitHolder
+	local x, y = ns:GetElementOffset(unit, "portrait")
+	local gap = ns:GetElementSize(unit, "portraitGap") - 2 * ns.BORDER_SHADOW
+	local size = frameHeight
+
+	if not ns:IsElementShown(unit, "portraitMatch") then
+		size = ns:GetElementSize(unit, "portrait") + 2 * ns.BAR_INSET
+	end
+
+	holder:ClearAllPoints()
+
+	if ns:GetElementAnchor(unit, "portrait") == "RIGHT" then
+		ns:SetPoint(holder, "TOPLEFT", frame, "TOPRIGHT", gap + x, y)
+	else
+		ns:SetPoint(holder, "TOPRIGHT", frame, "TOPLEFT", -gap + x, y)
+	end
+
+	ns:SetSize(holder, size, size)
+end
+
 local function LayoutFrame(frame)
 	local width, height = ns:GetUnitSizes(frame.unitKey)
 
+	height = height + InsideHeight(frame)
+	PlacePortrait(frame, height)
+
 	if not InCombatLockdown() then
-		ns:SetSize(frame, width, height + InsideHeight(frame))
+		ns:SetSize(frame, width, height)
 
 		if frame.standalone then
 			ns:SnapToPixelGrid(frame)
@@ -1099,6 +1124,12 @@ local function Style(self, unit)
 	power.CostPrediction = costPrediction
 
 	ns:CreateBorder(self)
+
+	local portraitHolder = CreateFrame("Frame", nil, self)
+	portraitHolder:SetFrameLevel(self:GetFrameLevel())
+	portraitHolder:Hide()
+	ns:CreateBorder(portraitHolder)
+	self.portraitHolder = portraitHolder
 
 	self.elements = {}
 
