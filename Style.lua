@@ -17,6 +17,9 @@ local SWING_SEPARATE_KEY = "swingtimerSeparate"
 local SWING_GAP_KEY = "swingtimerGap"
 local SWING_BAR_KEYS = { "MainHand", "OffHand", "Ranged" }
 
+local HEALTH_BAR_KEY = "healthbar"
+local POWER_BAR_KEY = "powerbar"
+
 ns.SWING_BAR_KEYS = SWING_BAR_KEYS
 
 local PREDICTION_LEVEL = 1
@@ -57,35 +60,15 @@ local BAR_COLOR_MODES = {
 	{ value = "custom", label = "Custom color" },
 }
 
-local POWER_COLOR_MODES = {
-	{ value = "class", label = "Class color" },
-	{ value = "blizzard", label = "Blizzard (default)" },
-}
-
 function ns:GetBarColorModes()
 	return BAR_COLOR_MODES
 end
 
-function ns:GetPowerColorModes()
-	return POWER_COLOR_MODES
-end
+local function BarPostUpdateColor(element, _, color)
+	local unit = element.__owner.unitKey
 
-function ns:GetHealthColorMode()
-	return ns.db.healthColorMode or ns.Defaults.barColorMode
-end
-
-function ns:GetHealthCustomColor()
-	local color = ns.db.healthCustomColor or ns.Defaults.barCustomColor
-	return color[1], color[2], color[3]
-end
-
-function ns:GetPowerColorMode()
-	return ns.db.powerColorMode or ns.Defaults.powerColorMode
-end
-
-local function HealthPostUpdateColor(element)
-	if ns:GetHealthColorMode() == "custom" then
-		element:SetStatusBarColor(ns:GetHealthCustomColor())
+	if not color and ns:GetElementColorMode(unit, element.colorKey) == "custom" then
+		element:SetStatusBarColor(ns:GetElementColor(unit, element.colorKey))
 	end
 end
 
@@ -112,58 +95,20 @@ local function HealthPostUpdate(element, _, _, _, lossPerc)
 	ns:ApplyHealthWidth(frame)
 end
 
-local function ApplyHealthColorFlags(frame)
-	local health = frame.Health
-	local mode = ns:GetHealthColorMode()
-
-	health.colorClass = mode == "class"
-	health.colorReaction = mode == "class"
-	health.colorHealth = mode ~= "class"
+local function ApplyBarColorFlags(bar, mode)
+	bar.colorClass = mode == "class"
+	bar.colorReaction = mode == "class"
+	bar.colorHealth = mode == "blizzard"
+	bar.colorPower = mode == "blizzard"
 end
 
-local function ApplyPowerColorFlags(frame)
-	local power = frame.Power
+local function ApplyBarColors(frame)
+	local unit = frame.unitKey
 
-	if not power then
-		return
-	end
-
-	local mode = ns:GetPowerColorMode()
-
-	power.colorClass = mode == "class"
-	power.colorPower = mode == "blizzard"
-end
-
-function ns:ApplyHealthColorMode()
-	for frame in next, styled do
-		ApplyHealthColorFlags(frame)
-		frame.Health:ForceUpdate()
-	end
-end
-
-function ns:ApplyPowerColorMode()
-	for frame in next, styled do
-		ApplyPowerColorFlags(frame)
-
-		if frame.Power then
-			frame.Power:ForceUpdate()
-		end
-	end
-end
-
-function ns:SetHealthColorMode(value)
-	ns.db.healthColorMode = value
-	ns:ApplyHealthColorMode()
-end
-
-function ns:SetHealthCustomColor(r, g, b)
-	ns.db.healthCustomColor = { r, g, b }
-	ns:ApplyHealthColorMode()
-end
-
-function ns:SetPowerColorMode(value)
-	ns.db.powerColorMode = value
-	ns:ApplyPowerColorMode()
+	ApplyBarColorFlags(frame.Health, ns:GetElementColorMode(unit, HEALTH_BAR_KEY))
+	ApplyBarColorFlags(frame.Power, ns:GetElementColorMode(unit, POWER_BAR_KEY))
+	frame.Health:ForceUpdate()
+	frame.Power:ForceUpdate()
 end
 
 local function ApplyTextFont(text, unit)
@@ -467,6 +412,7 @@ end
 function ns:ApplyElementColors()
 	for frame in next, styled do
 		ApplyPrediction(frame)
+		ApplyBarColors(frame)
 		ns:ApplyResourceColors(frame)
 		ns:ApplyThreatColor(frame)
 
@@ -1078,6 +1024,8 @@ local function Style(self, unit)
 	power.colorTapping = true
 	power.colorDisconnected = true
 	power.PostUpdate = PowerPostUpdate
+	power.PostUpdateColor = BarPostUpdateColor
+	power.colorKey = POWER_BAR_KEY
 	self.Power = power
 
 	local healthBox = CreateBar(self)
@@ -1091,7 +1039,8 @@ local function Style(self, unit)
 	health.colorDisconnected = true
 	health.incomingHealOverflow = 1
 	health.PostUpdate = HealthPostUpdate
-	health.PostUpdateColor = HealthPostUpdateColor
+	health.PostUpdateColor = BarPostUpdateColor
+	health.colorKey = HEALTH_BAR_KEY
 	health:SetClipsChildren(true)
 	health:SetPoint("TOPLEFT", healthBox, "TOPLEFT", 0, 0)
 	health:SetPoint("BOTTOMLEFT", healthBox, "BOTTOMLEFT", 0, 0)
@@ -1127,8 +1076,8 @@ local function Style(self, unit)
 	}
 
 	ApplyPrediction(self)
-	ApplyHealthColorFlags(self)
-	ApplyPowerColorFlags(self)
+	ApplyBarColorFlags(health, ns:GetElementColorMode(self.unitKey, HEALTH_BAR_KEY))
+	ApplyBarColorFlags(power, ns:GetElementColorMode(self.unitKey, POWER_BAR_KEY))
 
 	local costPrediction = CreateBar(power)
 	costPrediction:SetReverseFill(true)

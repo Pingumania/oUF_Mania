@@ -44,6 +44,38 @@ local function PruneUnknownKeys()
 	end
 end
 
+local LEGACY_BAR_COLORS = {
+	{ element = "healthbar", mode = "healthColorMode", color = "healthCustomColor" },
+	{ element = "powerbar", mode = "powerColorMode" },
+}
+
+local function MigrateBarColors()
+	local db = ns.db
+	local units = { ns.ALL_KEY, unpack(ns.UNIT_KEYS) }
+	local mode, color
+
+	for _, legacy in ipairs(LEGACY_BAR_COLORS) do
+		mode = db[legacy.mode]
+		color = legacy.color and db[legacy.color]
+
+		for _, unit in ipairs(units) do
+			if mode then
+				ns:SetElementColorMode(unit, legacy.element, mode)
+			end
+
+			if color then
+				ns:SetElementColor(unit, legacy.element, unpack(color))
+			end
+		end
+
+		db[legacy.mode] = nil
+
+		if legacy.color then
+			db[legacy.color] = nil
+		end
+	end
+end
+
 function ns:OnLoad()
 	oUF_ManiaDB = oUF_ManiaDB or {}
 	oUF_ManiaDB.profiles = oUF_ManiaDB.profiles or {}
@@ -56,6 +88,8 @@ function ns:OnLoad()
 	oUF_ManiaDB.profileKeys[charKey] = profileName
 	oUF_ManiaDB.profiles[profileName] = oUF_ManiaDB.profiles[profileName] or {}
 	ns.db = oUF_ManiaDB.profiles[profileName]
+
+	MigrateBarColors()
 
 	ns:RebuildTextElements()
 	ns:SeedDefaultPriorityGroup()
@@ -97,9 +131,6 @@ ns.Defaults = {
 	fontSize = 12,
 	fontOutline = "OUTLINE",
 	texture = TEXTURE_NAME,
-	barColorMode = "blizzard",
-	powerColorMode = "blizzard",
-	barCustomColor = { 1, 1, 1 },
 	powerHeight = 10,
 	backgroundAlpha = 0.7,
 	shadeSize = 4,
@@ -116,6 +147,8 @@ ns.Defaults = {
 	unitFallback = { width = 160, height = 36 },
 
 	elements = {
+		healthbar = { color = { 1, 1, 1 }, colorMode = { default = "blizzard" } },
+		powerbar = { color = { 1, 1, 1 }, colorMode = { default = "blizzard" } },
 		portrait = {
 			anchor = { default = "LEFT", target = "RIGHT" },
 			size = { default = 40 },

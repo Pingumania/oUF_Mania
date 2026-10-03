@@ -90,6 +90,8 @@ end
 local CUSTOM_TEXT_SECTION = "customtext"
 
 local ELEMENTS = {
+	{ key = "healthbar", label = "Health bar", noShow = true, noOffset = true },
+	{ key = "powerbar", label = "Power bar", noShow = true, noOffset = true },
 	{ key = CUSTOM_TEXT_SECTION, label = "Text", custom = true },
 	{ key = ns.PREDICTION_SECTION, label = "Health prediction", prediction = true,
 		extra = ns.PREDICTION_ELEMENTS },
@@ -512,24 +514,6 @@ local function BuildGeneralPage(body)
 		ns:SetShadeSize(value)
 	end)
 
-	row = AddDropdownRow(body, row, "Health color", ns:GetBarColorModes(), function()
-		return ns:GetHealthColorMode()
-	end, function(value)
-		ns:SetHealthColorMode(value)
-	end)
-
-	row = AddColorRow(body, row, "Health custom color", function()
-		return ns:GetHealthCustomColor()
-	end, function(r, g, b)
-		ns:SetHealthCustomColor(r, g, b)
-	end)
-
-	row = AddDropdownRow(body, row, "Power color", ns:GetPowerColorModes(), function()
-		return ns:GetPowerColorMode()
-	end, function(value)
-		ns:SetPowerColorMode(value)
-	end)
-
 	for _, sync in ipairs(SYNC_OPTIONS) do
 		row = AddToggleRow(body, row, sync.label, function()
 			return ns:IsSyncEnabled(sync.key)
@@ -831,12 +815,14 @@ local function BuildElementPage(body, unit, info)
 
 	local first = #body.controls + 1
 
-	row = AddToggleRow(body, row, "Show", function()
-		return ns:IsElementShown(storageUnit, info.key)
-	end, function(value)
-		ns:SetElementShown(storageUnit, info.key, value)
-		ReflowBody(body)
-	end)
+	if not info.noShow then
+		row = AddToggleRow(body, row, "Show", function()
+			return ns:IsElementShown(storageUnit, info.key)
+		end, function(value)
+			ns:SetElementShown(storageUnit, info.key, value)
+			ReflowBody(body)
+		end)
+	end
 
 	if info.tag then
 		row = AddTagEditRow(body, row, "Tag", info.label, function()
@@ -1905,8 +1891,6 @@ local function ApplyChanges(needsReload)
 	ns:ApplyMedia()
 	ns:ApplyBackgroundAlpha()
 	ns:ApplyShadeSize()
-	ns:ApplyHealthColorMode()
-	ns:ApplyPowerColorMode()
 	ns:ApplyElementColors()
 	ns:UpdatePower()
 	ns:UpdateElements()
@@ -1932,9 +1916,6 @@ local function ResetGeneral()
 	db.questIcon = nil
 	db.roleIcon = nil
 	db.pvpIcon = nil
-	db.healthColorMode = nil
-	db.healthCustomColor = nil
-	db.powerColorMode = nil
 end
 
 local RESYNC_SECTIONS = { CUSTOM_TEXT_SECTION, PRIORITY_SECTION }
