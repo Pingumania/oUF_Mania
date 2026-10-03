@@ -95,6 +95,7 @@ local PREDICTION_ALPHA = 0.55
 ns.Defaults = {
 	iconSize = 12,
 	fontSize = 12,
+	fontOutline = "OUTLINE",
 	texture = TEXTURE_NAME,
 	barColorMode = "blizzard",
 	powerColorMode = "blizzard",

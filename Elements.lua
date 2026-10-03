@@ -1,11 +1,14 @@
 local _, ns = ...
 
+local LSM = LibStub("LibSharedMedia-3.0")
+
 local EMPTY = {}
 
 ns.ALL_KEY = "all"
 ns.ELEMENT_GROUPS = {
 	"elements", "offsets", "anchors", "widths", "sizes", "tags", "linked", "levels", "colors",
-	"alphas", "placements", "modes", "pixels", "positions",
+	"alphas", "placements", "modes", "pixels", "positions", "fonts", "fontSizes", "outlines",
+	"shadows",
 }
 
 ns.PLACEMENT_INSIDE = "inside"
@@ -70,7 +73,8 @@ LINK_SECTIONS.portraitMatch = "portrait"
 
 local CASTBAR_ELEMENTS = {
 	"castbarIcon", "castbarIconGap", "castbarIconMatch", "castbarShield", "castbarShieldGap",
-	"castbarShieldMatch", "castbarLatency", "castbarWidth", "castbarWidthMatch",
+	"castbarShieldMatch", "castbarLatency", "castbarWidth", "castbarWidthMatch", "castbarText",
+	"castbarTime",
 }
 
 for _, element in ipairs(CASTBAR_ELEMENTS) do
@@ -742,6 +746,7 @@ end
 
 function ns:SetElementLinked(unit, element, linked)
 	StoreNested(unit, "linked", LINK_SECTIONS[element] or element, linked or nil)
+	ns:ApplyMedia()
 	ns:UpdateElements()
 	ns:ApplyElementColors()
 	ns:UpdateTags()
@@ -1053,6 +1058,42 @@ function ns:SetElementOffset(unit, element, axis, value)
 
 	offset[axis] = value
 	ns:DeferMethod(ns, "UpdatePixelGeometry", GeometryKey(unit))
+end
+
+function ns:GetTextFont(unit, element)
+	return ReadElement(unit, "fonts", element) or LSM:GetDefault("font")
+end
+
+function ns:SetTextFont(unit, element, font)
+	StoreNested(unit, "fonts", element, font)
+	ns:ApplyMedia()
+end
+
+function ns:GetTextFontSize(unit, element)
+	return ReadElement(unit, "fontSizes", element) or ns.Defaults.fontSize
+end
+
+function ns:SetTextFontSize(unit, element, size)
+	StoreNested(unit, "fontSizes", element, size)
+	ns:ApplyMedia()
+end
+
+function ns:GetTextOutline(unit, element)
+	return ReadElement(unit, "outlines", element) or ns.Defaults.fontOutline
+end
+
+function ns:SetTextOutline(unit, element, outline)
+	StoreNested(unit, "outlines", element, outline)
+	ns:ApplyMedia()
+end
+
+function ns:HasTextShadow(unit, element)
+	return not not ReadElement(unit, "shadows", element)
+end
+
+function ns:SetTextShadow(unit, element, shadow)
+	StoreNested(unit, "shadows", element, shadow)
+	ns:ApplyMedia()
 end
 
 local PORTRAIT_STYLES = {

@@ -33,20 +33,22 @@ local styled = setmetatable({}, { __mode = "k" })
 
 ns.TEXT_PADDING = 4
 
-function ns:GetFontFile()
-	return LSM:Fetch("font", ns.db.font or LSM:GetDefault("font"))
-end
+local FONT_OUTLINES = {
+	{ value = "", label = "None" },
+	{ value = "OUTLINE", label = "Outline" },
+	{ value = "THICKOUTLINE", label = "Thick outline" },
+}
 
 function ns:GetTexture()
 	return LSM:Fetch("statusbar", ns.db.texture or ns.Defaults.texture)
 end
 
-function ns:GetFontSize()
-	return ns.db.fontSize or ns.Defaults.fontSize
-end
-
 function ns:GetFontSizeRange()
 	return FONT_SIZE_MIN, FONT_SIZE_MAX
+end
+
+function ns:GetFontOutlines()
+	return FONT_OUTLINES
 end
 
 local BAR_COLOR_MODES = {
@@ -164,17 +166,33 @@ function ns:SetPowerColorMode(value)
 	ns:ApplyPowerColorMode()
 end
 
-local function SetTextFont(text, font, size)
-	if font and text:SetFont(font, size, "OUTLINE") then
-		return
+local function ApplyTextFont(text, unit)
+	local key = text.fontKey
+	local font = LSM:Fetch("font", ns:GetTextFont(unit, key))
+	local size = ns:GetTextFontSize(unit, key)
+	local outline = ns:GetTextOutline(unit, key)
+	local shadow = ns:HasTextShadow(unit, key) and 1 or 0
+
+	if not (font and text:SetFont(font, size, outline)) then
+		text:SetFont(GameFontNormal:GetFont(), size, outline)
 	end
 
-	text:SetFont(GameFontNormal:GetFont(), size, "OUTLINE")
+	text:SetShadowColor(0, 0, 0, 1)
+	text:SetShadowOffset(shadow, -shadow)
+
+	if text:IsShown() then
+		local value = text:GetText()
+		text:Hide()
+		text:SetText("")
+		text:SetText(value)
+		text:Show()
+	end
 end
 
-local function CreateText(parent, justify)
+local function CreateText(parent, justify, unit, key)
 	local text = parent:CreateFontString(nil, "OVERLAY")
-	SetTextFont(text, ns:GetFontFile(), ns:GetFontSize())
+	text.fontKey = key
+	ApplyTextFont(text, unit)
 	text:SetJustifyH(justify)
 	text:SetWordWrap(false)
 	return text
@@ -238,7 +256,7 @@ local function CreateSwingTimer(frame)
 		bar.box = CreateSwingBox(swingTimer)
 		bar.box:Hide()
 
-		time = CreateText(bar, "RIGHT")
+		time = CreateText(bar, "RIGHT", frame.unitKey, SWING_TIME_KEY)
 		time:SetPoint("RIGHT", bar, "RIGHT", -ns.TEXT_PADDING, 0)
 		time:Hide()
 		time.binding = C_DurationUtil.CreateDurationTextBinding()
@@ -1132,8 +1150,7 @@ local function Style(self, unit)
 	local texts = {}
 
 	for _, element in ipairs(ns.TEXT_ELEMENTS) do
-		self.elements[element] = CreateText(healthOverlay,
-			ns:GetElementAnchor(self.unitKey, element))
+		self.elements[element] = CreateText(healthOverlay, ns:GetElementAnchor(self.unitKey, element), self.unitKey, element)
 		texts[#texts + 1] = self.elements[element]
 	end
 
@@ -1172,11 +1189,11 @@ local function Style(self, unit)
 
 		self.castbarBorder = border
 
-		local castbarText = CreateText(castbar, "LEFT")
+		local castbarText = CreateText(castbar, "LEFT", self.unitKey, "castbarText")
 		castbarText:SetPoint("LEFT", castbar, "LEFT", ns.TEXT_PADDING, 0)
 		castbar.Text = castbarText
 
-		local castbarTime = CreateText(castbar, "RIGHT")
+		local castbarTime = CreateText(castbar, "RIGHT", self.unitKey, "castbarTime")
 		castbarTime:SetPoint("RIGHT", castbar, "RIGHT", -ns.TEXT_PADDING, 0)
 		castbar.Time = castbarTime
 
@@ -1307,7 +1324,7 @@ function ns:CreateLiveTextElement(key)
 	local text
 
 	for frame, texts in next, styled do
-		text = CreateText(frame.healthOverlay, ns:GetElementAnchor(frame.unitKey, key))
+		text = CreateText(frame.healthOverlay, ns:GetElementAnchor(frame.unitKey, key), frame.unitKey, key)
 		frame.elements[key] = text
 		texts[#texts + 1] = text
 	end
@@ -1348,8 +1365,6 @@ function ns:UpdatePower()
 end
 
 function ns:ApplyMedia()
-	local font = ns:GetFontFile()
-	local size = ns:GetFontSize()
 	local texture = ns:GetTexture()
 
 	for frame, texts in next, styled do
@@ -1382,7 +1397,7 @@ function ns:ApplyMedia()
 		ns:ApplyResourceMedia(frame, texture)
 
 		for _, text in ipairs(texts) do
-			SetTextFont(text, font, size)
+			ApplyTextFont(text, frame.unitKey)
 
 			if text.binding then
 				text.binding:UpdateFontString()
