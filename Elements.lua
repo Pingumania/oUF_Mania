@@ -1018,7 +1018,9 @@ function ns:GetElementSize(unit, element)
 end
 
 function ns:SetElementSize(unit, element, size)
-	StoreGeometry(unit, "sizes", element, size)
+	for _, member in ipairs(element == "powerbar" and ns:GetSyncedKeys(unit) or { unit }) do
+		StoreGeometry(member, "sizes", element, size)
+	end
 end
 
 function ns:GetElementPosition(unit, element)

@@ -63,7 +63,7 @@ local DEFAULTS_POPUP = "OUF_MANIA_DEFAULTS"
 local FRAME_SECTION = "frame"
 
 local FRAME_FIELDS = {
-	"enabled", "width", "height", "power", "showPower", "posX", "posY",
+	"enabled", "width", "height", "showPower", "posX", "posY",
 	"spacing", "vertical", "showPlayer", "healerPower", "hideFriendlyNPCPower",
 }
 
@@ -91,7 +91,7 @@ local CUSTOM_TEXT_SECTION = "customtext"
 
 local ELEMENTS = {
 	{ key = "healthbar", label = "Health bar", noShow = true, noOffset = true },
-	{ key = "powerbar", label = "Power bar", noShow = true, noOffset = true },
+	{ key = "powerbar", label = "Power bar", bar = true, noShow = true, noOffset = true },
 	{ key = CUSTOM_TEXT_SECTION, label = "Text", custom = true },
 	{ key = ns.PREDICTION_SECTION, label = "Health prediction", prediction = true,
 		extra = ns.PREDICTION_ELEMENTS },
@@ -189,7 +189,6 @@ local ALPHA_PERCENT_MAX = 100
 local SIZE_ROWS = {
 	{ label = "Frame width", field = "width", min = 40, max = 400 },
 	{ label = "Frame height", field = "height", min = 16, max = 100 },
-	{ label = "Power bar height", field = "power", min = 2, max = 40 },
 }
 
 local SYNC_OPTIONS = {

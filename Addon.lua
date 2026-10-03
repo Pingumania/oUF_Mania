@@ -76,6 +76,16 @@ local function MigrateBarColors()
 	end
 end
 
+local function MigratePowerHeight()
+	for _, stored in next, ns.db.units or {} do
+		if stored.power then
+			stored.sizes = stored.sizes or {}
+			stored.sizes.powerbar = stored.power
+			stored.power = nil
+		end
+	end
+end
+
 function ns:OnLoad()
 	oUF_ManiaDB = oUF_ManiaDB or {}
 	oUF_ManiaDB.profiles = oUF_ManiaDB.profiles or {}
@@ -90,6 +100,7 @@ function ns:OnLoad()
 	ns.db = oUF_ManiaDB.profiles[profileName]
 
 	MigrateBarColors()
+	MigratePowerHeight()
 
 	ns:RebuildTextElements()
 	ns:SeedDefaultPriorityGroup()
@@ -131,7 +142,6 @@ ns.Defaults = {
 	fontSize = 12,
 	fontOutline = "OUTLINE",
 	texture = TEXTURE_NAME,
-	powerHeight = 10,
 	backgroundAlpha = 0.7,
 	shadeSize = 4,
 
@@ -148,7 +158,11 @@ ns.Defaults = {
 
 	elements = {
 		healthbar = { color = { 1, 1, 1 }, colorMode = { default = "blizzard" } },
-		powerbar = { color = { 1, 1, 1 }, colorMode = { default = "blizzard" } },
+		powerbar = {
+			size = { default = 10, min = 2 },
+			color = { 1, 1, 1 },
+			colorMode = { default = "blizzard" },
+		},
 		portrait = {
 			anchor = { default = "LEFT", target = "RIGHT" },
 			size = { default = 40 },
@@ -377,21 +391,20 @@ end
 
 function ns:GetUnitSizeDefaults(key)
 	local defaults = ns.Defaults.units[key] or ns.Defaults.unitFallback
-	return defaults.width, defaults.height, ns.Defaults.powerHeight
+	return defaults.width, defaults.height
 end
 
 function ns:GetUnitSizes(key)
-	local width, height, power = ns:GetUnitSizeDefaults(key)
+	local width, height = ns:GetUnitSizeDefaults(key)
 	local db = ns.db
 	local stored = db.units and db.units[key]
 
 	if stored then
 		width = stored.width or width
 		height = stored.height or height
-		power = stored.power or power
 	end
 
-	return width, height, power
+	return width, height
 end
 
 local function Store(key, field, value)
@@ -463,12 +476,13 @@ function ns:SetSyncEnabled(name, enabled)
 
 	if enabled then
 		local units = SYNC_GROUPS[name]
-		local width, height, power = ns:GetUnitSizes(units[1])
+		local width, height = ns:GetUnitSizes(units[1])
+		local power = ns:GetElementSize(units[1], "powerbar")
 
 		for index = 2, #units do
 			Store(units[index], "width", width)
 			Store(units[index], "height", height)
-			Store(units[index], "power", power)
+			ns:SetElementSize(units[index], "powerbar", power)
 		end
 	end
 

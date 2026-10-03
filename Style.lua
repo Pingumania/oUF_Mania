@@ -883,7 +883,7 @@ local function ApplyBarStack(frame)
 	if frame.powerShown then
 		count = count + 1
 		stackRegions[count] = frame.Power
-		stackHeights[count] = select(3, ns:GetUnitSizes(unit))
+		stackHeights[count] = ns:GetElementSize(unit, POWER_BAR_KEY)
 	end
 
 	for _, entry in ipairs(STACK) do
