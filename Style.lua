@@ -465,11 +465,7 @@ local function OnEnter(frame)
 
 	GameTooltip_SetDefaultAnchor(GameTooltip, frame)
 
-	if GameTooltip:SetUnit(frame.__unit) then
-		GameTooltip_AddBlankLineToTooltip(GameTooltip)
-		GameTooltip_AddInstructionLine(GameTooltip, UNIT_POPUP_RIGHT_CLICK)
-		GameTooltip:Show()
-	end
+	GameTooltip:SetUnit(frame.__unit)
 end
 
 local function OnLeave(frame)
