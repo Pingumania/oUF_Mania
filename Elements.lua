@@ -65,6 +65,17 @@ for _, element in ipairs(ns.PREDICTION_ELEMENTS) do
 end
 
 LINK_SECTIONS.threatBorder = "threat"
+LINK_SECTIONS.portraitGap = "portrait"
+LINK_SECTIONS.portraitMatch = "portrait"
+
+local CASTBAR_ELEMENTS = {
+	"castbarIcon", "castbarIconGap", "castbarIconMatch", "castbarShield", "castbarShieldGap",
+	"castbarShieldMatch", "castbarLatency", "castbarWidth", "castbarWidthMatch",
+}
+
+for _, element in ipairs(CASTBAR_ELEMENTS) do
+	LINK_SECTIONS[element] = "castbar"
+end
 
 local INDICATOR_SIZE = ns.INDICATOR_SIZE
 local INDICATOR_SUBLEVEL = 2
