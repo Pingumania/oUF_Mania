@@ -699,18 +699,7 @@ local function AnchorOptions(element)
 	return options
 end
 
-local function AddCastbarIconRows(body, row, storageUnit, key, noun, sides)
-	local title = noun:gsub("^%l", string.upper)
-
-	local function IsShown()
-		return ns:IsElementShown(storageUnit, key)
-	end
-
-	row = AddToggleRow(body, row, "Show " .. noun, IsShown, function(value)
-		ns:SetElementShown(storageUnit, key, value)
-		ReflowBody(body)
-	end)
-
+local function AddSideRows(body, row, storageUnit, key, title, sides, matchLabel, IsShown)
 	local from = #body.controls + 1
 
 	row = AddDropdownRow(body, row, title .. " side", sides, function()
@@ -738,7 +727,7 @@ local function AddCastbarIconRows(body, row, storageUnit, key, noun, sides)
 		return ns:GetElementAnchor(storageUnit, key) ~= "CENTER"
 	end)
 
-	row = AddToggleRow(body, row, "Match " .. noun .. " to cast bar height", function()
+	row = AddToggleRow(body, row, matchLabel, function()
 		return ns:IsElementShown(storageUnit, key .. "Match")
 	end, function(value)
 		ns:SetElementShown(storageUnit, key .. "Match", value)
@@ -761,6 +750,20 @@ local function AddCastbarIconRows(body, row, storageUnit, key, noun, sides)
 	end)
 
 	return row
+end
+
+local function AddCastbarIconRows(body, row, storageUnit, key, noun, sides)
+	local function IsShown()
+		return ns:IsElementShown(storageUnit, key)
+	end
+
+	row = AddToggleRow(body, row, "Show " .. noun, IsShown, function(value)
+		ns:SetElementShown(storageUnit, key, value)
+		ReflowBody(body)
+	end)
+
+	return AddSideRows(body, row, storageUnit, key, noun:gsub("^%l", string.upper), sides,
+		"Match " .. noun .. " to cast bar height", IsShown)
 end
 
 local function BuildElementPage(body, unit, info)
