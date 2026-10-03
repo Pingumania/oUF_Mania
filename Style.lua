@@ -458,26 +458,18 @@ function ns:ApplyElementColors()
 	end
 end
 
-local function UpdateTooltip(frame)
+local function OnEnter(frame)
+	if GameTooltip:IsForbidden() or not frame.__unit then
+		return
+	end
+
 	GameTooltip_SetDefaultAnchor(GameTooltip, frame)
 
 	if GameTooltip:SetUnit(frame.__unit) then
 		GameTooltip_AddBlankLineToTooltip(GameTooltip)
 		GameTooltip_AddInstructionLine(GameTooltip, UNIT_POPUP_RIGHT_CLICK)
 		GameTooltip:Show()
-
-		frame.UpdateTooltip = UpdateTooltip
-	else
-		frame.UpdateTooltip = nil
 	end
-end
-
-local function OnEnter(frame)
-	if GameTooltip:IsForbidden() or not frame.__unit then
-		return
-	end
-
-	UpdateTooltip(frame)
 end
 
 local function OnLeave(frame)
@@ -485,7 +477,6 @@ local function OnLeave(frame)
 		return
 	end
 
-	frame.UpdateTooltip = nil
 	GameTooltip:FadeOut()
 end
 
