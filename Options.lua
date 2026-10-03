@@ -1,7 +1,5 @@
 local _, ns = ...
 
-local LSM = LibStub("LibSharedMedia-3.0")
-
 local WINDOW_NAME = "oUF_ManiaOptionsFrame"
 local WINDOW_WIDTH = 920
 
@@ -103,7 +101,7 @@ local ELEMENTS = {
 		extra = {
 			"castbarIcon", "castbarIconGap", "castbarIconMatch", "castbarShield",
 			"castbarShieldGap", "castbarShieldMatch", "castbarLatency", "castbarWidth",
-			"castbarWidthMatch",
+			"castbarWidthMatch", "castbarText", "castbarTime",
 		},
 	},
 	{ key = ns.CLASS_SLOT, label = "Class resource", bar = true },
@@ -448,28 +446,51 @@ local function AddAxisRows(body, previous, label, minValue, maxValue, getValue, 
 	return row
 end
 
-local function AddMediaRow(body, previous, label, mediaType, field)
+local function AddMediaRow(body, previous, label, mediaType, getValue, setValue)
 	return AddControlRow(body, previous, label, DROPDOWN_OFFSET, function(row)
-		return ns:CreateMediaDropdown(row, mediaType, function()
-			return ns.db[field] or ns.Defaults[field] or LSM:GetDefault(mediaType)
-		end, function(name)
-			ns.db[field] = name
-			ns:ApplyMedia()
-		end)
+		return ns:CreateMediaDropdown(row, mediaType, getValue, setValue)
 	end, function(dropdown)
 		dropdown:GenerateMenu()
 	end)
 end
 
-local function BuildGeneralPage(body)
-	local row = AddMediaRow(body, nil, "Bar texture", "statusbar", "texture")
-	row = AddMediaRow(body, row, "Font", "font", "font")
+local function AddFontRows(body, row, storageUnit, key, prefix)
+	local function Label(noun)
+		return ((prefix .. noun):gsub("^%l", string.upper))
+	end
 
 	local minSize, maxSize = ns:GetFontSizeRange()
-	row = AddSliderRow(body, row, "Font size", minSize, maxSize, function()
-		return ns:GetFontSize()
+
+	row = AddMediaRow(body, row, Label("font"), "font", function()
+		return ns:GetTextFont(storageUnit, key)
+	end, function(name)
+		ns:SetTextFont(storageUnit, key, name)
+	end)
+
+	row = AddSliderRow(body, row, Label("font size"), minSize, maxSize, function()
+		return ns:GetTextFontSize(storageUnit, key)
 	end, function(value)
-		ns.db.fontSize = value
+		ns:SetTextFontSize(storageUnit, key, value)
+	end)
+
+	row = AddDropdownRow(body, row, Label("outline"), ns:GetFontOutlines(), function()
+		return ns:GetTextOutline(storageUnit, key)
+	end, function(value)
+		ns:SetTextOutline(storageUnit, key, value)
+	end)
+
+	return AddToggleRow(body, row, Label("shadow"), function()
+		return ns:HasTextShadow(storageUnit, key)
+	end, function(value)
+		ns:SetTextShadow(storageUnit, key, value)
+	end)
+end
+
+local function BuildGeneralPage(body)
+	local row = AddMediaRow(body, nil, "Bar texture", "statusbar", function()
+		return ns.db.texture or ns.Defaults.texture
+	end, function(name)
+		ns.db.texture = name
 		ns:ApplyMedia()
 	end)
 
@@ -991,6 +1012,9 @@ local function BuildElementPage(body, unit, info)
 				ns:SetElementShown(storageUnit, "castbarLatency", value)
 			end)
 		end
+
+		row = AddFontRows(body, row, storageUnit, "castbarText", "spell name ")
+		row = AddFontRows(body, row, storageUnit, "castbarTime", "cast time ")
 	end
 
 	if info.key == "swingtimer" then
@@ -1005,6 +1029,8 @@ local function BuildElementPage(body, unit, info)
 		end, function(value)
 			ns:SetElementShown(storageUnit, "swingtimerTime", value)
 		end)
+
+		row = AddFontRows(body, row, storageUnit, "swingtimerTime", "timer ")
 
 		row = AddToggleRow(body, row, "Separate bars", function()
 			return ns:IsElementShown(storageUnit, "swingtimerSeparate")
@@ -1109,12 +1135,16 @@ local function BuildElementPage(body, unit, info)
 	end
 
 	if ns:HasElementWidth(info.key) then
-		AddSliderRow(body, row, "Max width (0 = unlimited)", TEXT_WIDTH_MIN, TEXT_WIDTH_MAX,
+		row = AddSliderRow(body, row, "Max width (0 = unlimited)", TEXT_WIDTH_MIN, TEXT_WIDTH_MAX,
 			function()
 				return ns:GetElementWidth(storageUnit, info.key)
 			end, function(value)
 				ns:SetElementWidth(storageUnit, info.key, value)
 			end)
+	end
+
+	if info.tag then
+		AddFontRows(body, row, storageUnit, info.key, "")
 	end
 
 	ReflowBody(body)
@@ -1895,8 +1925,6 @@ local function ResetGeneral()
 	local db = ns.db
 
 	db.texture = nil
-	db.font = nil
-	db.fontSize = nil
 	db.iconSize = nil
 	db.backgroundAlpha = nil
 	db.shadeSize = nil
