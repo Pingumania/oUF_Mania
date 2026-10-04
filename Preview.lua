@@ -155,6 +155,12 @@ local function PlacePreviewSafeZone(castbar)
 	safeZone:SetWidth(castbar:GetWidth() * math.min(ratio, 1))
 end
 
+function ns:ApplyCastPreviewColor(frame)
+	if castPreviews[frame] then
+		ns:ApplyCastbarColor(frame.elements.castbar, "player", frame.unitKey ~= "player")
+	end
+end
+
 function ns:StartCastPreview(frame)
 	if castPreviews[frame] then
 		return
@@ -186,6 +192,7 @@ function ns:StartCastPreview(frame)
 	castPreviews[frame] = C_Timer.NewTicker(CASTBAR_PREVIEW_DURATION, function()
 		RunPreviewCast(castbar)
 	end)
+	ns:ApplyCastPreviewColor(frame)
 end
 
 function ns:StopCastPreview(frame)

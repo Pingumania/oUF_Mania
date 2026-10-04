@@ -293,6 +293,8 @@ ns.Defaults = {
 		additionalpowerWidth = { size = { default = 200 } },
 		castbar = {
 			size = { default = 16 },
+			color = { 1, 1, 1 },
+			colorMode = { default = "blizzard" },
 			placement = { default = "outside" },
 			freePlacement = true,
 			noInside = true,

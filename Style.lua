@@ -1,4 +1,5 @@
 local _, ns = ...
+local oUF = ns.oUF
 
 local LSM = LibStub("LibSharedMedia-3.0")
 
@@ -19,6 +20,10 @@ local SWING_BAR_KEYS = { "MainHand", "OffHand", "Ranged" }
 
 local HEALTH_BAR_KEY = "healthbar"
 local POWER_BAR_KEY = "powerbar"
+
+local CAST_COLOR = CreateColor(1, 0.7, 0)
+local CHANNEL_COLOR = CreateColor(0, 1, 0)
+local UNINTERRUPTIBLE_COLOR = CreateColor(0.7, 0.7, 0.7)
 
 ns.SWING_BAR_KEYS = SWING_BAR_KEYS
 
@@ -70,6 +75,40 @@ local function BarPostUpdateColor(element, _, color)
 	if not color and ns:GetElementColorMode(unit, element.colorKey) == "custom" then
 		element:SetStatusBarColor(ns:GetElementColor(unit, element.colorKey))
 	end
+end
+
+local function UnitColor(unit)
+	if UnitIsPlayer(unit) then
+		local _, class = UnitClass(unit)
+		return issecretvalue(class) and C_ClassColor.GetClassColor(class) or oUF.colors.class[class]
+	end
+
+	return oUF.colors.reaction[UnitReaction(unit, "player")]
+end
+
+local function CastbarColor(element, unit)
+	local key = element.__owner.unitKey
+	local mode = ns:GetElementColorMode(key, "castbar")
+
+	if mode == "custom" then
+		element.customColor:SetRGB(ns:GetElementColor(key, "castbar"))
+		return element.customColor
+	elseif mode == "class" then
+		return UnitColor(unit) or CAST_COLOR
+	end
+
+	local name, _, _, _, _, _, _, _, isEmpowered = UnitChannelInfo(unit)
+
+	return (name and not isEmpowered) and CHANNEL_COLOR or CAST_COLOR
+end
+
+function ns:ApplyCastbarColor(element, unit, notInterruptible)
+	element:GetStatusBarTexture():SetVertexColorFromBoolean(notInterruptible, UNINTERRUPTIBLE_COLOR,
+		CastbarColor(element, unit))
+end
+
+local function CastbarPostCastStart(element, unit, _, notInterruptible)
+	ns:ApplyCastbarColor(element, unit, notInterruptible)
 end
 
 function ns:ApplyHealthWidth(frame, boxWidth)
@@ -415,6 +454,7 @@ function ns:ApplyElementColors()
 		ApplyBarColors(frame)
 		ns:ApplyResourceColors(frame)
 		ns:ApplyThreatColor(frame)
+		ns:ApplyCastPreviewColor(frame)
 
 		if frame.SwingTimer then
 			ApplySwingTimerColors(frame)
@@ -1122,6 +1162,9 @@ local function Style(self, unit)
 
 	if ns:HasElement(self.unitKey, "castbar") then
 		local castbar = CreateBar(self)
+		castbar.customColor = CreateColor(1, 1, 1)
+		castbar.PostCastStart = CastbarPostCastStart
+		castbar.PostCastInterruptible = CastbarPostCastStart
 
 		local border = CreateFrame("Frame", nil, self)
 		border:SetFrameLevel(self:GetFrameLevel())
