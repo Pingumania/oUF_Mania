@@ -71,9 +71,9 @@ function ns:GetBarColorModes()
 	return BAR_COLOR_MODES
 end
 
-local function FollowBarColor(bar)
+function ns:FollowBarColor(bar)
 	if bar.darkBackground and bar.backgroundPanel then
-		local r, g, b = bar:GetStatusBarColor()
+		local r, g, b = (bar.colorSource or bar):GetStatusBarColor()
 		bar.backgroundPanel:SetVertexColor(r, g, b)
 	end
 end
@@ -90,7 +90,7 @@ local function PaintBackground(frame, bar)
 
 	if bar.darkBackground then
 		panel:SetColorTexture(DARK_BACKGROUND, DARK_BACKGROUND, DARK_BACKGROUND, alpha)
-		FollowBarColor(bar)
+		ns:FollowBarColor(bar)
 		return
 	elseif mode == "custom" then
 		r, g, b = ns:GetElementBackgroundColor(unit, key)
@@ -121,7 +121,7 @@ local function BarPostUpdateColor(element, _, color)
 		element:SetStatusBarColor(ns:GetElementColor(unit, element.colorKey))
 	end
 
-	FollowBarColor(element)
+	ns:FollowBarColor(element)
 end
 
 local function UnitColor(unit)
@@ -152,7 +152,7 @@ end
 function ns:ApplyCastbarColor(element, unit, notInterruptible)
 	element:GetStatusBarTexture():SetVertexColorFromBoolean(notInterruptible, UNINTERRUPTIBLE_COLOR,
 		CastbarColor(element, unit))
-	FollowBarColor(element)
+	ns:FollowBarColor(element)
 end
 
 local function CastbarPostCastStart(element, unit, _, notInterruptible)
@@ -287,6 +287,7 @@ local function CreateSwingTimer(frame)
 		bar:SetMinMaxValues(0, 1)
 		bar.box = CreateSwingBox(swingTimer)
 		bar.box:Hide()
+		bar.backgroundKey = SWING_TIMER_KEY
 
 		time = CreateText(bar, "RIGHT", frame.unitKey, SWING_TIME_KEY)
 		time:SetPoint("RIGHT", bar, "RIGHT", -ns.TEXT_PADDING, 0)
@@ -503,11 +504,12 @@ function ns:ApplyElementColors()
 		ns:ApplyResourceColors(frame)
 		ns:ApplyThreatColor(frame)
 		ns:ApplyCastPreviewColor(frame)
-		ApplyBackgrounds(frame)
 
 		if frame.SwingTimer then
 			ApplySwingTimerColors(frame)
 		end
+
+		ApplyBackgrounds(frame)
 	end
 end
 
@@ -870,6 +872,7 @@ local function PlaceSwingTimer(frame, placement, stackY)
 		bar = swingTimer[key]
 		box = bar.box
 		box:SetShown(separate and bar:IsShown())
+		bar.backgroundPanel = nil
 
 		if bar:IsShown() and separate then
 			bar:ClearAllPoints()
@@ -888,6 +891,7 @@ local function PlaceSwingTimer(frame, placement, stackY)
 			ns:SetPoint(bar, "TOPRIGHT", box, "TOPRIGHT", -ns.BAR_INSET, -ns.BAR_INSET)
 			ns:SetHeight(bar, height)
 			ns:SetBorderDividers(box)
+			bar.backgroundPanel = box.borderPanels[1]
 			previous = box
 		elseif bar:IsShown() then
 			bar:ClearAllPoints()
@@ -903,6 +907,7 @@ local function PlaceSwingTimer(frame, placement, stackY)
 			ns:SetHeight(bar, height)
 			count = count + 1
 			swingAnchors[count] = bar
+			bar.backgroundPanel = swingTimer.box.borderPanels[count]
 			previous = bar
 		end
 	end
@@ -1216,6 +1221,10 @@ local function Style(self, unit)
 
 		if C_SwingTimer then
 			self.SwingTimer = CreateSwingTimer(self)
+
+			for _, key in ipairs(SWING_BAR_KEYS) do
+				self.backgroundBars[#self.backgroundBars + 1] = self.SwingTimer[key]
+			end
 			ApplySwingTimerColors(self)
 
 			for _, key in ipairs(SWING_BAR_KEYS) do

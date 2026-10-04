@@ -51,24 +51,33 @@ local function SlotColor(frame, key)
 	end
 end
 
+local function FollowSlotColor(source)
+	local holder = source:GetParent()
+
+	holder.colorSource = source
+	ns:FollowBarColor(holder)
+end
+
 local function BarPostUpdateColor(element)
 	local r, g, b = SlotColor(element.__owner, element.slotKey)
 
 	if r then
 		element:SetStatusBarColor(r, g, b)
 	end
+
+	FollowSlotColor(element)
 end
 
 local function PipsPostUpdateColor(element)
 	local r, g, b = SlotColor(element.__owner, element.slotKey)
 
-	if not r then
-		return
+	if r then
+		for index = 1, #element do
+			element[index]:SetStatusBarColor(r, g, b)
+		end
 	end
 
-	for index = 1, #element do
-		element[index]:SetStatusBarColor(r, g, b)
-	end
+	FollowSlotColor(element[1])
 end
 
 local function Relayout(frame)
@@ -183,6 +192,10 @@ local function EnsureSlot(frame, key)
 	slotFrames[frame.unitKey] = frame
 
 	BUILDERS[key](frame, holder)
+
+	holder.backgroundKey = key
+	holder.colorSource = key == POWER_SLOT and frame.AdditionalPower or frame.ClassPower[1]
+	frame.backgroundBars[#frame.backgroundBars + 1] = holder
 
 	return slot
 end
@@ -345,6 +358,8 @@ function ns:PlaceResourceSlot(frame, key, placement, stackY)
 	end
 
 	local boxed = placement == ns.PLACEMENT_OUTSIDE or placement == ns.PLACEMENT_FREE
+
+	slot.holder.backgroundPanel = boxed and slot.box.borderPanels[1] or nil
 
 	if not boxed then
 		slot.box:Hide()

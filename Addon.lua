@@ -86,7 +86,9 @@ local function MigratePowerHeight()
 	end
 end
 
-local BACKGROUND_ELEMENTS = { "healthbar", "powerbar", "castbar" }
+local BACKGROUND_ELEMENTS = {
+	"healthbar", "powerbar", "castbar", "classresource", "additionalpower", "swingtimer",
+}
 
 local function MigrateBackgroundAlpha()
 	local db = ns.db
@@ -297,6 +299,7 @@ ns.Defaults = {
 			size = { default = 10 },
 			color = { 1, 1, 1 },
 			colorMode = { default = "blizzard" },
+			background = "black",
 			placement = { default = "outside" },
 			pixelSnap = { default = false },
 			freePlacement = true,
@@ -307,6 +310,7 @@ ns.Defaults = {
 			size = { default = 8 },
 			color = { 1, 1, 1 },
 			colorMode = { default = "blizzard" },
+			background = "black",
 			placement = { default = "outside" },
 			freePlacement = true,
 			position = { 0, 224 },
@@ -325,6 +329,7 @@ ns.Defaults = {
 		castbarWidth = { size = { default = 200 } },
 		swingtimer = {
 			size = { default = 6 },
+			background = "black",
 			placement = { default = "outside" },
 			freePlacement = true,
 			noInside = true,
