@@ -501,12 +501,6 @@ local function BuildGeneralPage(body)
 		ns:SetIconTagSize(value)
 	end)
 
-	row = AddSliderRow(body, row, "Background opacity", 0, ALPHA_PERCENT_MAX, function()
-		return Round(ns:GetBackgroundAlpha() * ALPHA_PERCENT_MAX)
-	end, function(value)
-		ns:SetBackgroundAlpha(value / ALPHA_PERCENT_MAX)
-	end)
-
 	row = AddSliderRow(body, row, "Inner shade size", ns.SHADE_SIZE_MIN, ns.SHADE_SIZE_MAX, function()
 		return ns:GetShadeSize()
 	end, function(value)
@@ -1116,6 +1110,26 @@ local function BuildElementPage(body, unit, info)
 			return ns:GetElementColor(storageUnit, info.key)
 		end, function(r, g, b)
 			ns:SetElementColor(storageUnit, info.key, r, g, b)
+		end)
+	end
+
+	if ns:HasElementBackground(info.key) then
+		row = AddDropdownRow(body, row, "Background", ns:GetBackgroundModes(), function()
+			return ns:GetElementBackgroundMode(storageUnit, info.key)
+		end, function(value)
+			ns:SetElementBackgroundMode(storageUnit, info.key, value)
+		end)
+
+		row = AddColorRow(body, row, "Background color", function()
+			return ns:GetElementBackgroundColor(storageUnit, info.key)
+		end, function(r, g, b)
+			ns:SetElementBackgroundColor(storageUnit, info.key, r, g, b)
+		end)
+
+		row = AddSliderRow(body, row, "Background opacity", 0, ALPHA_PERCENT_MAX, function()
+			return Round(ns:GetElementBackgroundAlpha(storageUnit, info.key) * ALPHA_PERCENT_MAX)
+		end, function(value)
+			ns:SetElementBackgroundAlpha(storageUnit, info.key, value / ALPHA_PERCENT_MAX)
 		end)
 	end
 
@@ -1888,7 +1902,6 @@ end
 
 local function ApplyChanges(needsReload)
 	ns:ApplyMedia()
-	ns:ApplyBackgroundAlpha()
 	ns:ApplyShadeSize()
 	ns:ApplyElementColors()
 	ns:UpdatePower()
@@ -1909,7 +1922,6 @@ local function ResetGeneral()
 
 	db.texture = nil
 	db.iconSize = nil
-	db.backgroundAlpha = nil
 	db.shadeSize = nil
 	db.sync = nil
 	db.questIcon = nil

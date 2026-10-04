@@ -86,6 +86,25 @@ local function MigratePowerHeight()
 	end
 end
 
+local BACKGROUND_ELEMENTS = { "healthbar", "powerbar", "castbar" }
+
+local function MigrateBackgroundAlpha()
+	local db = ns.db
+	local alpha = db.backgroundAlpha
+
+	if not alpha then
+		return
+	end
+
+	for _, unit in ipairs({ ns.ALL_KEY, unpack(ns.UNIT_KEYS) }) do
+		for _, element in ipairs(BACKGROUND_ELEMENTS) do
+			ns:SetElementBackgroundAlpha(unit, element, alpha)
+		end
+	end
+
+	db.backgroundAlpha = nil
+end
+
 function ns:OnLoad()
 	oUF_ManiaDB = oUF_ManiaDB or {}
 	oUF_ManiaDB.profiles = oUF_ManiaDB.profiles or {}
@@ -101,6 +120,7 @@ function ns:OnLoad()
 
 	MigrateBarColors()
 	MigratePowerHeight()
+	MigrateBackgroundAlpha()
 
 	ns:RebuildTextElements()
 	ns:SeedDefaultPriorityGroup()
@@ -157,11 +177,12 @@ ns.Defaults = {
 	unitFallback = { width = 160, height = 36 },
 
 	elements = {
-		healthbar = { color = { 1, 1, 1 }, colorMode = { default = "blizzard" } },
+		healthbar = { color = { 1, 1, 1 }, colorMode = { default = "blizzard" }, background = "black" },
 		powerbar = {
 			size = { default = 10, min = 2 },
 			color = { 1, 1, 1 },
 			colorMode = { default = "blizzard" },
+			background = "black",
 		},
 		portrait = {
 			anchor = { default = "LEFT", target = "RIGHT" },
@@ -295,6 +316,7 @@ ns.Defaults = {
 			size = { default = 16 },
 			color = { 1, 1, 1 },
 			colorMode = { default = "blizzard" },
+			background = "black",
 			placement = { default = "outside" },
 			freePlacement = true,
 			noInside = true,

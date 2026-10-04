@@ -19,7 +19,6 @@ local DIVIDER_TEXELS = TEXTURE_TEXELS * (DIVIDER_BOTTOM - DIVIDER_TOP)
 ns.BORDER_GAP = 6
 ns.BORDER_SHADOW = BORDER_SIZE * (1 - SHADOW_START)
 
-local BACKGROUND_COLOR = { 0, 0, 0 }
 
 local MAX_DIVIDERS = 4
 local MAX_PANELS = MAX_DIVIDERS + 1
@@ -214,29 +213,9 @@ function ns:SetShadeSize(size)
 	ns:ApplyShadeSize()
 end
 
-function ns:GetBackgroundAlpha()
-	return ns.db.backgroundAlpha or ns.Defaults.backgroundAlpha
-end
-
-local function ApplyFrameBackground(frame, alpha)
-	local r, g, b = unpack(BACKGROUND_COLOR)
-
-	for _, panel in ipairs(frame.borderPanels) do
-		panel:SetColorTexture(r, g, b, alpha)
-	end
-end
-
-function ns:ApplyBackgroundAlpha()
-	local alpha = ns:GetBackgroundAlpha()
-
-	for frame in next, bordered do
-		ApplyFrameBackground(frame, alpha)
-	end
-end
-
-function ns:SetBackgroundAlpha(alpha)
-	ns.db.backgroundAlpha = alpha
-	ns:ApplyBackgroundAlpha()
+function ns:PaintDefaultBackground(panel)
+	panel:SetColorTexture(0, 0, 0, ns.Defaults.backgroundAlpha)
+	panel:SetVertexColor(1, 1, 1)
 end
 
 local function CreateDivider(frame, overlay)
@@ -328,7 +307,9 @@ function ns:CreateBorder(frame)
 
 	frame:HookScript("OnSizeChanged", LayoutShade)
 
-	ApplyFrameBackground(frame, ns:GetBackgroundAlpha())
+	for _, panel in ipairs(panels) do
+		ns:PaintDefaultBackground(panel)
+	end
 
 	ns:SetBorderDividers(frame)
 end

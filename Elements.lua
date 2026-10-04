@@ -8,7 +8,7 @@ ns.ALL_KEY = "all"
 ns.ELEMENT_GROUPS = {
 	"elements", "offsets", "anchors", "widths", "sizes", "tags", "linked", "levels", "colors",
 	"alphas", "placements", "modes", "pixels", "positions", "fonts", "fontSizes", "outlines",
-	"shadows",
+	"shadows", "bgModes", "bgColors", "bgAlphas",
 }
 
 ns.PLACEMENT_INSIDE = "inside"
@@ -997,6 +997,50 @@ end
 
 function ns:SetElementAlpha(unit, element, alpha)
 	StoreNested(unit, "alphas", element, alpha)
+	ns:ApplyElementColors()
+end
+
+local BACKGROUND_MODES = {
+	{ value = "black", label = "Black" },
+	{ value = "dark", label = "Darkened bar color" },
+	{ value = "custom", label = "Custom color" },
+}
+
+function ns:GetBackgroundModes()
+	return BACKGROUND_MODES
+end
+
+function ns:HasElementBackground(element)
+	local info = ns.Defaults.elements[element]
+	return info and info.background ~= nil
+end
+
+function ns:GetElementBackgroundMode(unit, element)
+	return ReadElement(unit, "bgModes", element) or ns.Defaults.elements[element].background
+end
+
+function ns:SetElementBackgroundMode(unit, element, mode)
+	StoreNested(unit, "bgModes", element, mode)
+	ns:ApplyElementColors()
+end
+
+function ns:GetElementBackgroundColor(unit, element)
+	local stored = ReadElement(unit, "bgColors", element) or EMPTY
+
+	return stored[1] or 0, stored[2] or 0, stored[3] or 0
+end
+
+function ns:SetElementBackgroundColor(unit, element, r, g, b)
+	StoreNested(unit, "bgColors", element, { r, g, b })
+	ns:ApplyElementColors()
+end
+
+function ns:GetElementBackgroundAlpha(unit, element)
+	return ReadElement(unit, "bgAlphas", element) or ns.Defaults.backgroundAlpha
+end
+
+function ns:SetElementBackgroundAlpha(unit, element, alpha)
+	StoreNested(unit, "bgAlphas", element, alpha)
 	ns:ApplyElementColors()
 end
 

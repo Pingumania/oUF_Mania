@@ -25,6 +25,8 @@ local CAST_COLOR = CreateColor(1, 0.7, 0)
 local CHANNEL_COLOR = CreateColor(0, 1, 0)
 local UNINTERRUPTIBLE_COLOR = CreateColor(0.7, 0.7, 0.7)
 
+local DARK_BACKGROUND = 0.3
+
 ns.SWING_BAR_KEYS = SWING_BAR_KEYS
 
 local PREDICTION_LEVEL = 1
@@ -69,12 +71,57 @@ function ns:GetBarColorModes()
 	return BAR_COLOR_MODES
 end
 
+local function FollowBarColor(bar)
+	if bar.darkBackground and bar.backgroundPanel then
+		local r, g, b = bar:GetStatusBarColor()
+		bar.backgroundPanel:SetVertexColor(r, g, b)
+	end
+end
+
+local function PaintBackground(frame, bar)
+	local panel = bar.backgroundPanel
+	local key = bar.backgroundKey
+	local unit = frame.unitKey
+	local mode = ns:GetElementBackgroundMode(unit, key)
+	local alpha = ns:GetElementBackgroundAlpha(unit, key)
+	local r, g, b = 0, 0, 0
+
+	bar.darkBackground = mode == "dark"
+
+	if bar.darkBackground then
+		panel:SetColorTexture(DARK_BACKGROUND, DARK_BACKGROUND, DARK_BACKGROUND, alpha)
+		FollowBarColor(bar)
+		return
+	elseif mode == "custom" then
+		r, g, b = ns:GetElementBackgroundColor(unit, key)
+	end
+
+	panel:SetColorTexture(r, g, b, alpha)
+	panel:SetVertexColor(1, 1, 1)
+end
+
+local function ApplyBackgrounds(frame)
+	local panels = frame.borderPanels
+
+	for index = 1, frame.borderPanelCount do
+		ns:PaintDefaultBackground(panels[index])
+	end
+
+	for _, bar in ipairs(frame.backgroundBars) do
+		if bar.backgroundPanel then
+			PaintBackground(frame, bar)
+		end
+	end
+end
+
 local function BarPostUpdateColor(element, _, color)
 	local unit = element.__owner.unitKey
 
 	if not color and ns:GetElementColorMode(unit, element.colorKey) == "custom" then
 		element:SetStatusBarColor(ns:GetElementColor(unit, element.colorKey))
 	end
+
+	FollowBarColor(element)
 end
 
 local function UnitColor(unit)
@@ -105,6 +152,7 @@ end
 function ns:ApplyCastbarColor(element, unit, notInterruptible)
 	element:GetStatusBarTexture():SetVertexColorFromBoolean(notInterruptible, UNINTERRUPTIBLE_COLOR,
 		CastbarColor(element, unit))
+	FollowBarColor(element)
 end
 
 local function CastbarPostCastStart(element, unit, _, notInterruptible)
@@ -455,6 +503,7 @@ function ns:ApplyElementColors()
 		ns:ApplyResourceColors(frame)
 		ns:ApplyThreatColor(frame)
 		ns:ApplyCastPreviewColor(frame)
+		ApplyBackgrounds(frame)
 
 		if frame.SwingTimer then
 			ApplySwingTimerColors(frame)
@@ -665,6 +714,7 @@ local function PlaceCastbar(frame, placement, stackY)
 	local boxed = detached or placement == ns.PLACEMENT_OUTSIDE
 
 	frame.castbarOutside = boxed
+	castbar.backgroundPanel = boxed and border.borderPanels[1] or nil
 
 	if not boxed then
 		border:Hide()
@@ -904,6 +954,15 @@ local function ChainInside(frame, count)
 	end
 
 	stackAnchors[1] = healthBox
+	frame.Health.backgroundPanel = frame.borderPanels[1]
+
+	for index = 1, count do
+		region = stackRegions[index]
+
+		if region.backgroundKey then
+			region.backgroundPanel = frame.borderPanels[index + 1]
+		end
+	end
 
 	for index = 2, count do
 		stackAnchors[index] = stackRegions[index - 1]
@@ -919,6 +978,7 @@ local function ApplyBarStack(frame)
 	local region, height, placement
 
 	frame.Power:SetShown(not not frame.powerShown)
+	frame.Power.backgroundPanel = nil
 
 	if frame.powerShown then
 		count = count + 1
@@ -947,6 +1007,7 @@ local function ApplyBarStack(frame)
 
 	ChainInside(frame, count)
 	ns:LayoutResourceBars(frame)
+	ApplyBackgrounds(frame)
 end
 
 function ns:SetPowerShown(frame, shown)
@@ -1066,6 +1127,7 @@ local function Style(self, unit)
 	power.PostUpdate = PowerPostUpdate
 	power.PostUpdateColor = BarPostUpdateColor
 	power.colorKey = POWER_BAR_KEY
+	power.backgroundKey = POWER_BAR_KEY
 	self.Power = power
 
 	local healthBox = CreateBar(self)
@@ -1081,10 +1143,12 @@ local function Style(self, unit)
 	health.PostUpdate = HealthPostUpdate
 	health.PostUpdateColor = BarPostUpdateColor
 	health.colorKey = HEALTH_BAR_KEY
+	health.backgroundKey = HEALTH_BAR_KEY
 	health:SetClipsChildren(true)
 	health:SetPoint("TOPLEFT", healthBox, "TOPLEFT", 0, 0)
 	health:SetPoint("BOTTOMLEFT", healthBox, "BOTTOMLEFT", 0, 0)
 	self.Health = health
+	self.backgroundBars = { health, power }
 
 	local healingPlayer = CreatePredictionBar(health, PREDICTION_LEVEL)
 	healingPlayer:SetPoint("LEFT", health:GetStatusBarTexture(), "RIGHT", 0, 0)
@@ -1163,6 +1227,7 @@ local function Style(self, unit)
 	if ns:HasElement(self.unitKey, "castbar") then
 		local castbar = CreateBar(self)
 		castbar.customColor = CreateColor(1, 1, 1)
+		castbar.backgroundKey = "castbar"
 		castbar.PostCastStart = CastbarPostCastStart
 		castbar.PostCastInterruptible = CastbarPostCastStart
 
@@ -1215,6 +1280,7 @@ local function Style(self, unit)
 		castbar.SafeZone = castbar:CreateTexture(nil, "BACKGROUND")
 
 		self.Castbar = castbar
+		self.backgroundBars[#self.backgroundBars + 1] = castbar
 
 		texts[#texts + 1] = castbarText
 		texts[#texts + 1] = castbarTime
