@@ -8,7 +8,7 @@ ns.ALL_KEY = "all"
 ns.ELEMENT_GROUPS = {
 	"elements", "offsets", "anchors", "widths", "sizes", "tags", "linked", "levels", "colors",
 	"alphas", "placements", "modes", "pixels", "positions", "fonts", "fontSizes", "outlines",
-	"shadows", "bgModes", "bgColors", "bgAlphas",
+	"shadows", "smoothTexts", "bgModes", "bgColors", "bgAlphas",
 }
 
 ns.PLACEMENT_INSIDE = "inside"
@@ -1139,6 +1139,20 @@ end
 
 function ns:SetTextShadow(unit, element, shadow)
 	StoreNested(unit, "shadows", element, shadow)
+	ns:ApplyMedia()
+end
+
+function ns:IsTextSmooth(unit, element)
+	local smooth = ReadElement(unit, "smoothTexts", element)
+	if smooth == nil then
+		return ns.Defaults.fontSmooth
+	end
+
+	return smooth
+end
+
+function ns:SetTextSmooth(unit, element, smooth)
+	StoreNested(unit, "smoothTexts", element, smooth)
 	ns:ApplyMedia()
 end
 

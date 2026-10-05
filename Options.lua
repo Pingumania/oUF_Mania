@@ -480,10 +480,16 @@ local function AddFontRows(body, row, storageUnit, key, prefix)
 		ns:SetTextOutline(storageUnit, key, value)
 	end)
 
-	return AddToggleRow(body, row, Label("shadow"), function()
+	row = AddToggleRow(body, row, Label("shadow"), function()
 		return ns:HasTextShadow(storageUnit, key)
 	end, function(value)
 		ns:SetTextShadow(storageUnit, key, value)
+	end)
+
+	return AddToggleRow(body, row, Label("smooth text"), function()
+		return ns:IsTextSmooth(storageUnit, key)
+	end, function(value)
+		ns:SetTextSmooth(storageUnit, key, value)
 	end)
 end
 

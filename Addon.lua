@@ -163,6 +163,7 @@ ns.Defaults = {
 	iconSize = 12,
 	fontSize = 12,
 	fontOutline = "OUTLINE",
+	fontSmooth = true,
 	texture = TEXTURE_NAME,
 	backgroundAlpha = 0.7,
 	shadeSize = 4,

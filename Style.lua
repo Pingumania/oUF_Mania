@@ -198,11 +198,25 @@ local function ApplyBarColors(frame)
 	frame.Power:ForceUpdate()
 end
 
+local function RedrawText(text)
+	if text:IsShown() then
+		local value = text:GetText()
+		text:Hide()
+		text:SetText("")
+		text:SetText(value)
+		text:Show()
+	end
+end
+
 local function ApplyTextFont(text, unit)
 	local key = text.fontKey
 	local font = LSM:Fetch("font", ns:GetTextFont(unit, key))
 	local size = ns:GetTextFontSize(unit, key)
 	local outline = ns:GetTextOutline(unit, key)
+	local smooth = ns:IsTextSmooth(unit, key)
+	if smooth then
+		outline = outline == "" and "SLUG" or outline..", SLUG"
+	end
 	local shadow = ns:HasTextShadow(unit, key) and 1 or 0
 
 	if not (font and text:SetFont(font, size, outline)) then
@@ -212,12 +226,12 @@ local function ApplyTextFont(text, unit)
 	text:SetShadowColor(0, 0, 0, 1)
 	text:SetShadowOffset(shadow, -shadow)
 
-	if text:IsShown() then
-		local value = text:GetText()
-		text:Hide()
-		text:SetText("")
-		text:SetText(value)
-		text:Show()
+	RedrawText(text)
+
+	if smooth then
+		RunNextFrame(function()
+			RedrawText(text)
+		end)
 	end
 end
 
