@@ -328,6 +328,7 @@ ns.Defaults = {
 			position = { 0, 200 },
 		},
 		castbarWidth = { size = { default = 200 } },
+		castbarUninterruptible = { color = { 0.7, 0.7, 0.7 } },
 		swingtimer = {
 			size = { default = 6 },
 			background = "black",

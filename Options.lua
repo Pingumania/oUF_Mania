@@ -103,7 +103,7 @@ local ELEMENTS = {
 		extra = {
 			"castbarIcon", "castbarIconGap", "castbarIconMatch", "castbarShield",
 			"castbarShieldGap", "castbarShieldMatch", "castbarLatency", "castbarWidth",
-			"castbarWidthMatch", "castbarText", "castbarTime",
+			"castbarWidthMatch", "castbarText", "castbarTime", "castbarUninterruptible",
 		},
 	},
 	{ key = ns.CLASS_SLOT, label = "Class resource", bar = true },
@@ -1117,6 +1117,14 @@ local function BuildElementPage(body, unit, info)
 		end, function(r, g, b)
 			ns:SetElementColor(storageUnit, info.key, r, g, b)
 		end)
+
+		if info.key == "castbar" then
+			row = AddColorRow(body, row, "Not interruptible color", function()
+				return ns:GetElementColor(storageUnit, "castbarUninterruptible")
+			end, function(r, g, b)
+				ns:SetElementColor(storageUnit, "castbarUninterruptible", r, g, b)
+			end)
+		end
 	end
 
 	if ns:HasElementBackground(info.key) then

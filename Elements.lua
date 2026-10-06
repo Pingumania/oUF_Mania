@@ -74,7 +74,7 @@ LINK_SECTIONS.portraitMatch = "portrait"
 local CASTBAR_ELEMENTS = {
 	"castbarIcon", "castbarIconGap", "castbarIconMatch", "castbarShield", "castbarShieldGap",
 	"castbarShieldMatch", "castbarLatency", "castbarWidth", "castbarWidthMatch", "castbarText",
-	"castbarTime",
+	"castbarTime", "castbarUninterruptible",
 }
 
 for _, element in ipairs(CASTBAR_ELEMENTS) do

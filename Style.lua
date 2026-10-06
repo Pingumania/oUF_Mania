@@ -23,7 +23,6 @@ local POWER_BAR_KEY = "powerbar"
 
 local CAST_COLOR = CreateColor(1, 0.7, 0)
 local CHANNEL_COLOR = CreateColor(0, 1, 0)
-local UNINTERRUPTIBLE_COLOR = CreateColor(0.7, 0.7, 0.7)
 
 local DARK_BACKGROUND = 0.3
 
@@ -150,7 +149,8 @@ local function CastbarColor(element, unit)
 end
 
 function ns:ApplyCastbarColor(element, unit, notInterruptible)
-	element:GetStatusBarTexture():SetVertexColorFromBoolean(notInterruptible, UNINTERRUPTIBLE_COLOR,
+	element.uninterruptibleColor:SetRGB(ns:GetElementColor(element.__owner.unitKey, "castbarUninterruptible"))
+	element:GetStatusBarTexture():SetVertexColorFromBoolean(notInterruptible, element.uninterruptibleColor,
 		CastbarColor(element, unit))
 	ns:FollowBarColor(element)
 end
@@ -1250,6 +1250,7 @@ local function Style(self, unit)
 	if ns:HasElement(self.unitKey, "castbar") then
 		local castbar = CreateBar(self)
 		castbar.customColor = CreateColor(1, 1, 1)
+		castbar.uninterruptibleColor = CreateColor(1, 1, 1)
 		castbar.backgroundKey = "castbar"
 		castbar.PostCastStart = CastbarPostCastStart
 		castbar.PostCastInterruptible = CastbarPostCastStart
