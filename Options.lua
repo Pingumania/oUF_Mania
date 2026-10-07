@@ -96,7 +96,7 @@ local ELEMENTS = {
 	{ key = ns.PREDICTION_SECTION, label = "Health prediction", prediction = true,
 		extra = ns.PREDICTION_ELEMENTS },
 	{ key = "portrait", label = "Portrait", noOffset = true,
-		extra = { "portraitGap", "portraitMatch" } },
+		extra = { "portraitGap", "portraitMatch", "portraitMirror" } },
 	{
 		key = "castbar",
 		label = "Cast bar",
@@ -917,9 +917,22 @@ local function BuildElementPage(body, unit, info)
 			return ns:GetPortraitStyle(storageUnit)
 		end, function(value)
 			ns:SetPortraitStyle(storageUnit, value)
+			ReflowBody(body)
 		end)
 
 		TagRows(body, from, IsShown)
+
+		from = #body.controls + 1
+
+		row = AddToggleRow(body, row, "Mirror portrait", function()
+			return ns:IsElementShown(storageUnit, "portraitMirror")
+		end, function(value)
+			ns:SetElementShown(storageUnit, "portraitMirror", value)
+		end)
+
+		TagRows(body, from, function()
+			return IsShown() and ns:GetPortraitStyle(storageUnit) == "portrait"
+		end)
 
 		row = AddSideRows(body, row, storageUnit, info.key, "Portrait", ICON_SIDES,
 			"Match portrait to frame height", IsShown)

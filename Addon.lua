@@ -193,6 +193,7 @@ ns.Defaults = {
 			hidden = { default = true },
 		},
 		portraitGap = { size = { default = 0 } },
+		portraitMirror = { hidden = { default = true } },
 		castbarIcon ={ anchor = { default = "LEFT", target = "RIGHT" }, size = { default = 16 } },
 		castbarIconGap = { size = { default = 0 } },
 		castbarShield = { anchor = { default = "LEFT", target = "RIGHT" }, size = { default = 16 } },

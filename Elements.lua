@@ -70,6 +70,7 @@ end
 LINK_SECTIONS.threatBorder = "threat"
 LINK_SECTIONS.portraitGap = "portrait"
 LINK_SECTIONS.portraitMatch = "portrait"
+LINK_SECTIONS.portraitMirror = "portrait"
 
 local CASTBAR_ELEMENTS = {
 	"castbarIcon", "castbarIconGap", "castbarIconMatch", "castbarShield", "castbarShieldGap",
@@ -1644,9 +1645,20 @@ function ns:ApplyPriorityGroups(frame)
 	end
 end
 
+local function ApplyPortraitMirror(element)
+	local left, right = 0, 1
+
+	if ns:IsElementShown(element.__owner.unitKey, "portraitMirror") then
+		left, right = 1, 0
+	end
+
+	element:SetTexCoord(left, right, 0, 1)
+end
+
 local function PortraitPostUpdate(element, unit, hasStateChanged)
 	if hasStateChanged then
 		SetPortraitTexture(element, unit, true)
+		ApplyPortraitMirror(element)
 	end
 end
 
@@ -1690,6 +1702,10 @@ local function ApplyPortrait(frame)
 
 	if frame.Portrait then
 		ns:SetOUFElement(frame, "Portrait", shown)
+	end
+
+	if shown and style == "portrait" then
+		ApplyPortraitMirror(frame.Portrait)
 	end
 end
 
