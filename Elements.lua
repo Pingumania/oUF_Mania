@@ -1644,6 +1644,12 @@ function ns:ApplyPriorityGroups(frame)
 	end
 end
 
+local function PortraitPostUpdate(element, unit, hasStateChanged)
+	if hasStateChanged then
+		SetPortraitTexture(element, unit, true)
+	end
+end
+
 local function CreatePortrait(holder, style)
 	local portrait
 
@@ -1652,6 +1658,10 @@ local function CreatePortrait(holder, style)
 	else
 		portrait = holder:CreateTexture(nil, "ARTWORK")
 		portrait.showClass = style == "class"
+	end
+
+	if style == "portrait" then
+		portrait.PostUpdate = PortraitPostUpdate
 	end
 
 	ns:SetPoint(portrait, "TOPLEFT", holder, "TOPLEFT", ns.BAR_INSET, -ns.BAR_INSET)
