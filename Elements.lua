@@ -71,6 +71,9 @@ LINK_SECTIONS.threatBorder = "threat"
 LINK_SECTIONS.portraitGap = "portrait"
 LINK_SECTIONS.portraitMatch = "portrait"
 LINK_SECTIONS.portraitMirror = "portrait"
+LINK_SECTIONS.aurasSwap = "auras"
+LINK_SECTIONS.auraCount = "auras"
+LINK_SECTIONS.auraDuration = "auras"
 
 local CASTBAR_ELEMENTS = {
 	"castbarIcon", "castbarIconGap", "castbarIconMatch", "castbarShield", "castbarShieldGap",
@@ -1794,6 +1797,7 @@ function ns:ApplyElements(frame)
 	end
 
 	ns:ApplyPriorityGroups(frame)
+	ns:ApplyAuras(frame)
 end
 
 function ns:ApplyTags(frame)

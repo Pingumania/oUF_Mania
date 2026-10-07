@@ -208,7 +208,7 @@ local function RedrawText(text)
 	end
 end
 
-local function ApplyTextFont(text, unit)
+local function SetTextFont(text, unit)
 	local key = text.fontKey
 	local font = LSM:Fetch("font", ns:GetTextFont(unit, key))
 	local size = ns:GetTextFontSize(unit, key)
@@ -225,6 +225,12 @@ local function ApplyTextFont(text, unit)
 
 	text:SetShadowColor(0, 0, 0, 1)
 	text:SetShadowOffset(shadow, -shadow)
+
+	return smooth
+end
+
+local function ApplyTextFont(text, unit)
+	local smooth = SetTextFont(text, unit)
 
 	RedrawText(text)
 
@@ -1126,6 +1132,8 @@ local function FramePostUpdate(frame)
 		frame.barsSnapped = nil
 		SetBarSmoothing(frame, SMOOTHING)
 	end
+
+	ns.RefreshAuraState(frame)
 end
 
 local function Style(self, unit)
@@ -1396,6 +1404,16 @@ function ns:OnFrameInitialized(frame)
 	end
 end
 
+function ns:UpdateAuras()
+	for frame in next, styled do
+		ns:ApplyAuras(frame)
+	end
+end
+
+function ns:SetAuraTextFont(text, unit)
+	SetTextFont(text, unit)
+end
+
 function ns:UpdateTags()
 	for frame in next, styled do
 		ns:ApplyTags(frame)
@@ -1490,6 +1508,8 @@ function ns:ApplyMedia()
 			frame:UpdateTags()
 		end
 	end
+
+	ns:DeferMethod(ns, "UpdateAuras")
 end
 
 ns.Style = Style

@@ -19,6 +19,7 @@ Tags.lua
 Addon.lua
 Border.lua
 Elements.lua
+Auras.lua
 Resources.lua
 Preview.lua
 Style.lua

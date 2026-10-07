@@ -147,6 +147,7 @@ function ns:OnLogin()
 	ns:RegisterEvent("PLAYER_ROLES_ASSIGNED", ns.UpdatePower)
 	ns:RegisterEvent("GROUP_ROSTER_UPDATE", ns.UpdatePower)
 	ns:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED", ns.UpdatePower)
+	ns:RegisterEvent("ADDON_RESTRICTION_STATE_CHANGED", ns.ApplyAuraRestriction)
 end
 
 local INDICATOR_SIZE = 14
@@ -353,6 +354,7 @@ ns.Defaults = {
 }
 
 ns.ELEMENT_UNITS = {
+	auras = { player = true, target = true, focus = true, pet = true, party = true, boss = true },
 	castbar = { player = true, target = true, focus = true, boss = true },
 	swingtimer = C_SwingTimer and { player = true } or {},
 	classresource = { player = true },

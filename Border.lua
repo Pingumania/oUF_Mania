@@ -137,8 +137,17 @@ local function SetShadeShown(shade, shown)
 	end
 end
 
-local function LayoutPanelShade(shade, panel, size, unit, roundedTop, roundedBottom)
+local function LayoutPanelShade(shade, panel, size, unit, roundedTop, roundedBottom, panelSize)
 	local width, height = panel:GetSize()
+
+	if panelSize then
+		width, height = panelSize, panelSize
+	end
+
+	if issecretvalue(width) or issecretvalue(height) then
+		return
+	end
+
 	local total = math.max(Round(size / unit), 1)
 	local panelPixels = Round(math.min(width, height) / unit)
 	local pixels = math.min(total, math.floor(panelPixels / 2))
@@ -188,6 +197,10 @@ function ns:GetShadeSize()
 end
 
 local function LayoutShade(frame)
+	if frame.shadeFixed then
+		return
+	end
+
 	local count = frame.borderPanelCount
 	local panels = frame.borderPanels
 	local size = ns:GetShadeSize()
@@ -195,7 +208,8 @@ local function LayoutShade(frame)
 
 	for index, shade in ipairs(frame.borderShades) do
 		if index <= count then
-			LayoutPanelShade(shade, panels[index], size, unit, index == 1, index == count)
+			LayoutPanelShade(shade, panels[index], size, unit, index == 1, index == count,
+				frame.borderPanelSize)
 		else
 			SetShadeShown(shade, false)
 		end
@@ -211,6 +225,14 @@ end
 function ns:SetShadeSize(size)
 	ns.db.shadeSize = size
 	ns:ApplyShadeSize()
+	ns:DeferMethod(ns, "UpdateAuras")
+end
+
+function ns:SetBorderPanelSize(frame, size)
+	bordered[frame] = nil
+	frame.borderPanelSize = size
+	LayoutShade(frame)
+	frame.shadeFixed = true
 end
 
 function ns:PaintDefaultBackground(panel)
