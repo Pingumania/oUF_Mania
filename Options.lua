@@ -1760,9 +1760,6 @@ local AURA_SPACING_MAX = 20
 local AURA_BAR_HEIGHT_MAX = 10
 local DELETE_AURA_GROUP_POPUP = "OUF_MANIA_DELETE_AURA_GROUP"
 local AURA_FRAME = ""
-local PLUS_ATLAS = "128-RedButton-Plus"
-local MINUS_ATLAS = "128-RedButton-Minus"
-local ATLAS_BUTTON_SIZE = 26
 local AURA_LOCKED_NOTICE = "Some settings are locked while aura information is restricted, "
 	.. "such as in combat or encounters."
 
@@ -1910,13 +1907,10 @@ local function BuildAuraFields(fields, unit, key, Reflow, Rebuild)
 				ns:SetAuraFilter(unit, key, info.token, mode)
 				UpdateFilterText()
 			end, function(controlRow)
-				local button = ns:CreateAtlasButton(controlRow, MINUS_ATLAS, function()
+				return ns:CreateMinusButton(controlRow, function()
 					ns:SetAuraFilter(unit, key, info.token, nil)
 					Rebuild()
 				end)
-
-				button:SetSize(ATLAS_BUTTON_SIZE, ATLAS_BUTTON_SIZE)
-				return button
 			end)
 		end
 	end
@@ -1929,15 +1923,12 @@ local function BuildAuraFields(fields, unit, key, Reflow, Rebuild)
 		end, function(token)
 			fields.pendingFilter = token
 		end, function(controlRow)
-			local button = ns:CreateAtlasButton(controlRow, PLUS_ATLAS, function()
+			return ns:CreatePlusButton(controlRow, function()
 				if fields.pendingFilter then
 					ns:SetAuraFilter(unit, key, fields.pendingFilter, "only")
 					Rebuild()
 				end
 			end)
-
-			button:SetSize(ATLAS_BUTTON_SIZE, ATLAS_BUTTON_SIZE)
-			return button
 		end)
 	end
 
