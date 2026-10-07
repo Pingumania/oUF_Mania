@@ -106,6 +106,8 @@ local ELEMENTS = {
 			"castbarWidthMatch", "castbarText", "castbarTime", "castbarUninterruptible",
 		},
 	},
+	{ key = ns.AURA_SECTION, label = "Auras", auras = true,
+		extra = { ns.AURA_SWAP_KEY, ns.AURA_COUNT_KEY, ns.AURA_DURATION_KEY } },
 	{ key = ns.CLASS_SLOT, label = "Class resource", bar = true },
 	{ key = ns.POWER_SLOT, label = "Additional power", bar = true },
 	{ key = "resting", label = "Resting icon" },
@@ -330,6 +332,12 @@ local function TagShownRows(body, from, IsShown)
 	end
 end
 
+local function TagRestrictedRows(body, from)
+	for index = from, #body.controls do
+		body.controls[index].restricted = true
+	end
+end
+
 local function PlaceRow(body, row, previous, height)
 	height = height or row:GetHeight()
 
@@ -408,9 +416,9 @@ local function AddDropdownRow(body, previous, label, options, getValue, setValue
 	end)
 end
 
-local function AddColorRow(body, previous, label, getValue, setValue)
+local function AddColorRow(body, previous, label, getValue, setValue, commitOnOkay)
 	return AddControlRow(body, previous, label, 0, function(row)
-		return ns:CreateColorSwatch(row, getValue, setValue)
+		return ns:CreateColorSwatch(row, getValue, setValue, nil, commitOnOkay)
 	end, function(swatch)
 		swatch:Refresh()
 	end)
@@ -1745,6 +1753,532 @@ local function BuildPriorityPage(body, unit)
 	Layout()
 end
 
+local AURA_SECTION = ns.AURA_SECTION
+local AURA_TAB_WIDTH = 640
+local AURA_COUNT_MAX = 40
+local AURA_SPACING_MAX = 20
+local AURA_BAR_HEIGHT_MAX = 10
+local DELETE_AURA_GROUP_POPUP = "OUF_MANIA_DELETE_AURA_GROUP"
+local AURA_FRAME = ""
+local PLUS_ATLAS = "128-RedButton-Plus"
+local MINUS_ATLAS = "128-RedButton-Minus"
+local ATLAS_BUTTON_SIZE = 26
+local AURA_LOCKED_NOTICE = "Some settings are locked while aura information is restricted, "
+	.. "such as in combat or encounters."
+
+local AURA_TYPES = {
+	{ value = "HELPFUL", label = "Buffs" },
+	{ value = "HARMFUL", label = "Debuffs" },
+}
+
+local AURA_FILTER_MODES = {
+	{ value = "only", label = "Show" },
+	{ value = "exclude", label = "Hide" },
+}
+
+local AURA_AXES = {
+	{ value = false, label = "Horizontal" },
+	{ value = true, label = "Vertical" },
+}
+
+local AURA_SORTS = {
+	{ value = AuraContainerSortMethod.Default, label = "Default" },
+	{ value = AuraContainerSortMethod.Expiration, label = "Time left" },
+	{ value = AuraContainerSortMethod.Name, label = "Name" },
+	{ value = AuraContainerSortMethod.UnitFrameDebuff, label = "Debuff priority" },
+	{ value = AuraContainerSortMethod.BigDefensive, label = "Big defensives first" },
+	{ value = AuraContainerSortMethod.AuraInstanceIDOnly, label = "Application order" },
+}
+
+local AURA_BARS = {
+	{ value = "off", label = "Off" },
+	{ value = "bottom", label = "Bottom" },
+	{ value = "top", label = "Top" },
+}
+
+local AURA_BAR_COLORS = {
+	{ value = "custom", label = "Custom color" },
+	{ value = "dispel", label = "Spell type" },
+}
+
+local AURA_DIRECTIONS = {
+	{ value = false, label = "Normal" },
+	{ value = true, label = "Reverse" },
+}
+
+local function ResyncAuraPages()
+	local page
+
+	for _, info in ipairs(UNITS) do
+		page = pages[info.key .. "/" .. AURA_SECTION]
+
+		if page and page.built then
+			page.content:Resync()
+		end
+	end
+end
+
+local function AddButtonRow(body, previous, label, options, getValue, setValue, CreateButton)
+	local button
+
+	local row = AddControlRow(body, previous, label, DROPDOWN_OFFSET, function(controlRow)
+		local dropdown = ns:CreateDropdown(controlRow, options, getValue, setValue)
+
+		button = CreateButton(controlRow)
+		button:SetPoint("LEFT", dropdown.IncrementButton, "RIGHT", TAG_BUTTON_OFFSET, 0)
+
+		return dropdown
+	end, function(dropdown)
+		dropdown:GenerateMenu()
+	end)
+
+	return row
+end
+
+local function BuildAuraFields(fields, unit, key, Reflow, Rebuild)
+	local function Get(field)
+		return function()
+			return ns:GetAuraValue(unit, key, field)
+		end
+	end
+
+	local function Set(field, reflow)
+		return function(value)
+			ns:SetAuraValue(unit, key, field, value)
+
+			if reflow then
+				Reflow()
+			end
+		end
+	end
+
+	local function IsHarmful()
+		return ns:GetAuraValue(unit, key, "type") == "HARMFUL"
+	end
+
+	local function IsHelpful()
+		return not IsHarmful()
+	end
+
+	local function Candidates()
+		local options = {}
+
+		for _, info in ipairs(ns.AURA_FILTERS) do
+			if not ns:GetAuraFilter(unit, key, info.token) then
+				options[#options + 1] = { value = info.token, label = info.label }
+			end
+		end
+
+		return options
+	end
+
+	local function AttachOptions()
+		local options = { { value = AURA_FRAME, label = "Frame" } }
+
+		for _, entry in ipairs(ns:GetAuraAttachCandidates(unit, key)) do
+			options[#options + 1] = { value = entry.key, label = entry.label }
+		end
+
+		return options
+	end
+
+	local row = AddToggleRow(fields, nil, "Show", Get("shown"), Set("shown"))
+	local from
+
+	TagRestrictedRows(fields, 1)
+
+	row = RegisterControl(fields, AddHeaderRow(fields, row, "Filter"))
+	local filterText
+
+	local function UpdateFilterText()
+		filterText:SetText(ns:GetAuraFilterString(unit, key))
+	end
+
+	from = #fields.controls + 1
+	row = AddDropdownRow(fields, row, "Type", AURA_TYPES, Get("type"), function(value)
+		ns:SetAuraValue(unit, key, "type", value)
+		UpdateFilterText()
+		Reflow()
+	end)
+	TagRestrictedRows(fields, from)
+
+	for _, info in ipairs(ns.AURA_FILTERS) do
+		if ns:GetAuraFilter(unit, key, info.token) then
+			row = AddButtonRow(fields, row, info.label, AURA_FILTER_MODES, function()
+				return ns:GetAuraFilter(unit, key, info.token)
+			end, function(mode)
+				ns:SetAuraFilter(unit, key, info.token, mode)
+				UpdateFilterText()
+			end, function(controlRow)
+				local button = ns:CreateAtlasButton(controlRow, MINUS_ATLAS, function()
+					ns:SetAuraFilter(unit, key, info.token, nil)
+					Rebuild()
+				end)
+
+				button:SetSize(ATLAS_BUTTON_SIZE, ATLAS_BUTTON_SIZE)
+				return button
+			end)
+		end
+	end
+
+	fields.pendingFilter = (Candidates()[1] or EMPTY).value
+
+	if fields.pendingFilter then
+		row = AddButtonRow(fields, row, "Add filter", Candidates, function()
+			return fields.pendingFilter
+		end, function(token)
+			fields.pendingFilter = token
+		end, function(controlRow)
+			local button = ns:CreateAtlasButton(controlRow, PLUS_ATLAS, function()
+				if fields.pendingFilter then
+					ns:SetAuraFilter(unit, key, fields.pendingFilter, "only")
+					Rebuild()
+				end
+			end)
+
+			button:SetSize(ATLAS_BUTTON_SIZE, ATLAS_BUTTON_SIZE)
+			return button
+		end)
+	end
+
+	row = CreateRow(fields, row, "Resulting filter")
+	filterText = row:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+	filterText:SetPoint("LEFT", row, "LEFT", CONTROL_COLUMN, 0)
+	UpdateFilterText()
+	RegisterControl(fields, row, filterText)
+
+	from = #fields.controls + 1
+
+	row = AddToggleRow(fields, row, "Only show my debuffs on enemy NPCs",
+		Get("hideOthers"), Set("hideOthers"))
+	row = AddToggleRow(fields, row, "Only show dispellable by me", Get("onlyDispellable"),
+		Set("onlyDispellable"))
+
+	TagShownRows(fields, from, IsHarmful)
+
+	row = RegisterControl(fields, AddHeaderRow(fields, row, "Layout"))
+
+	row = AddDropdownRow(fields, row, "Attach to", AttachOptions, function()
+		return ns:GetAuraAttach(unit, key) or AURA_FRAME
+	end, function(parentKey)
+		ns:SetAuraAttach(unit, key, parentKey ~= AURA_FRAME and parentKey or nil)
+	end)
+
+	row = AddDropdownRow(fields, row, "Anchor point", AnchorOptions(AURA_SECTION), Get("point"),
+		Set("point"))
+
+	row = AddAxisRows(fields, row, "Offset", OFFSET_MIN, OFFSET_MAX, function()
+		return ns:GetAuraValue(unit, key, "x"), ns:GetAuraValue(unit, key, "y")
+	end, function(axis, value)
+		ns:SetAuraValue(unit, key, axis, value)
+	end)
+
+	row = AddDropdownRow(fields, row, "Direction", AURA_AXES, Get("vertical"), Set("vertical"))
+	from = #fields.controls + 1
+	row = AddSliderRow(fields, row, "Icon size", ICON_SIZE_MIN, SIZE_MAX, Get("size"), Set("size"))
+	TagRestrictedRows(fields, from)
+	row = AddSliderRow(fields, row, "Max icons", 1, AURA_COUNT_MAX, Get("max"), Set("max"))
+	row = AddSliderRow(fields, row, "Icons per row", 1, AURA_COUNT_MAX, Get("perRow"), Set("perRow"))
+	row = AddSliderRow(fields, row, "Spacing", 0, AURA_SPACING_MAX, Get("spacing"), Set("spacing"))
+	row = AddSliderRow(fields, row, "Row spacing", 0, AURA_SPACING_MAX, Get("rowSpacing"),
+		Set("rowSpacing"))
+	row = AddDropdownRow(fields, row, "Sort by", AURA_SORTS, Get("sort"), Set("sort"))
+	row = AddDropdownRow(fields, row, "Sort direction", AURA_DIRECTIONS, Get("reverse"), Set("reverse"))
+
+	row = RegisterControl(fields, AddHeaderRow(fields, row, "Icon"))
+	local iconFrom = #fields.controls + 1
+	row = AddToggleRow(fields, row, "Cooldown spiral", Get("cooldown"), Set("cooldown", true))
+
+	from = #fields.controls + 1
+	row = AddDropdownRow(fields, row, "Cooldown edge", ns.AURA_EDGES, Get("edge"), Set("edge", true))
+	TagShownRows(fields, from, Get("cooldown"))
+
+	from = #fields.controls + 1
+	row = AddColorRow(fields, row, "Cooldown edge color", function()
+		return unpack(ns:GetAuraValue(unit, key, "edgeColor"))
+	end, function(r, g, b)
+		ns:SetAuraValue(unit, key, "edgeColor", { r, g, b })
+	end, true)
+	TagShownRows(fields, from, function()
+		local edge = ns:GetAuraValue(unit, key, "edge")
+		return ns:GetAuraValue(unit, key, "cooldown") and edge ~= "off" and edge ~= "default"
+	end)
+	row = AddDropdownRow(fields, row, "Duration bar", AURA_BARS, Get("bar"), Set("bar", true))
+
+	local function HasBar()
+		return ns:GetAuraValue(unit, key, "bar") ~= "off"
+	end
+
+	from = #fields.controls + 1
+	row = AddSliderRow(fields, row, "Duration bar height", 1, AURA_BAR_HEIGHT_MAX, Get("barHeight"),
+		Set("barHeight"))
+	row = AddDropdownRow(fields, row, "Duration bar color", AURA_BAR_COLORS, Get("barColorMode"),
+		Set("barColorMode", true))
+	TagShownRows(fields, from, HasBar)
+
+	from = #fields.controls + 1
+	row = AddColorRow(fields, row, "Duration bar custom color", function()
+		return unpack(ns:GetAuraValue(unit, key, "barColor"))
+	end, function(r, g, b)
+		ns:SetAuraValue(unit, key, "barColor", { r, g, b })
+	end, true)
+	TagShownRows(fields, from, function()
+		return HasBar() and ns:GetAuraValue(unit, key, "barColorMode") == "custom"
+	end)
+	row = AddToggleRow(fields, row, "Pandemic highlight", Get("pandemic"), Set("pandemic"))
+
+	from = #fields.controls + 1
+	row = AddToggleRow(fields, row, "Debuff type border", Get("border"), Set("border"))
+	TagShownRows(fields, from, IsHarmful)
+
+	from = #fields.controls + 1
+	row = AddToggleRow(fields, row, "Stealable border", Get("stealable"), Set("stealable"))
+	TagShownRows(fields, from, IsHelpful)
+
+	row = AddToggleRow(fields, row, "Show tooltip", Get("tooltip"), Set("tooltip"))
+
+	if unit == "player" then
+		row = AddToggleRow(fields, row, "Cancel on right-click", Get("cancel"), Set("cancel"))
+	end
+
+	row = AddToggleRow(fields, row, "Show stacks", Get("count"), Set("count"))
+	AddToggleRow(fields, row, "Show duration", Get("duration"), Set("duration"))
+	TagRestrictedRows(fields, iconFrom)
+end
+
+local function BuildAurasPage(body, unit)
+	local units = ns:GetElementUnits(AURA_SECTION)
+	local multiUnit = #units > 1
+	local storageUnit = StorageUnit(unit, AURA_SECTION)
+	local Layout, ShowFields
+
+	body.fieldsByKey = {}
+
+	local function IsLinked()
+		return unit ~= ALL_KEY and ns:IsElementLinked(unit, AURA_SECTION)
+	end
+
+	local function Entries()
+		local entries = ns:GetAuraGroups(unit)
+
+		for _, entry in ipairs(entries) do
+			entry.locked = IsLinked() or nil
+		end
+
+		return entries
+	end
+
+	local function LockRows(section, from)
+		local linked = IsLinked()
+		local secret = ns:AreAurasSecret()
+		local entry
+
+		for index = 1, #section.controls do
+			entry = section.controls[index]
+
+			if entry.control then
+				entry.locked = linked and index >= (from or 1) or secret and entry.restricted
+				ApplyRowState(entry)
+			end
+		end
+	end
+
+	local function ForgetFields()
+		for key, fields in next, body.fieldsByKey do
+			fields:Hide()
+			body.fieldsByKey[key] = nil
+		end
+
+		body.fields = nil
+	end
+
+	local function Reflow()
+		if body.fields then
+			ReflowBody(body.fields)
+			LockRows(body.fields)
+		end
+
+		Layout()
+	end
+
+	local function Rebuild()
+		ForgetFields()
+		ShowFields()
+	end
+
+	function Layout()
+		local fieldsHeight = body.fields and (body.fields.contentHeight + PAGE_GAP) or 0
+		local secret = ns:AreAurasSecret()
+		local noticeHeight = secret and (body.notice:GetStringHeight() + PAGE_GAP) or 0
+
+		body.notice:SetShown(secret)
+		body.links:ClearAllPoints()
+		body.links:SetPoint("TOPLEFT", body, "TOPLEFT", 0, -noticeHeight)
+		body.links:SetPoint("RIGHT", body, "RIGHT", 0, 0)
+
+		body.footer:ClearAllPoints()
+		body.footer:SetPoint("TOPLEFT", body.fields or body.strip, "BOTTOMLEFT", 0, -PAGE_GAP)
+		body.footer:SetPoint("RIGHT", body, "RIGHT", 0, 0)
+
+		body.contentHeight = noticeHeight + body.links:GetHeight() + PAGE_GAP + body.strip:GetHeight()
+			+ PAGE_GAP + fieldsHeight + body.footer:GetHeight()
+		body:SetHeight(body.contentHeight)
+
+		if body.container then
+			UpdateScrollBar(body.container.scroll, body.container.scrollBar, body)
+		end
+	end
+
+	function ShowFields()
+		local key = body.selectedGroupKey
+		local fields = key and body.fieldsByKey[key]
+
+		if key and not fields then
+			fields = CreateFrame("Frame", nil, body)
+			fields.refreshers = {}
+			fields.controls = {}
+			fields.contentHeight = 0
+			fields:SetPoint("TOPLEFT", body.strip, "BOTTOMLEFT", 0, -PAGE_GAP)
+			fields:SetPoint("RIGHT", body, "RIGHT", 0, 0)
+
+			BuildAuraFields(fields, unit, key, Reflow, Rebuild)
+			body.fieldsByKey[key] = fields
+		end
+
+		for otherKey, other in next, body.fieldsByKey do
+			other:SetShown(otherKey == key)
+		end
+
+		body.fields = fields
+
+		if fields then
+			RefreshPage({ content = fields })
+		end
+
+		Reflow()
+	end
+
+	local function SelectGroup(key)
+		body.selectedGroupKey = key
+		body.strip:SetEntries(Entries(), key)
+		ShowFields()
+	end
+
+	local function CreateGroup(label)
+		if not (IsLinked() or ns:AreAurasSecret()) then
+			body.selectedGroupKey = ns:AddAuraGroup(unit, label)
+		end
+
+		ResyncAuraPages()
+	end
+
+	local function RenameGroup(key, label)
+		ns:RenameAuraGroup(unit, key, label)
+		ResyncAuraPages()
+	end
+
+	local function DeleteGroup(key)
+		StaticPopup_Show(DELETE_AURA_GROUP_POPUP, ns:GetAuraGroupLabel(unit, key), nil, function()
+			ns:RemoveAuraGroup(unit, key)
+			ResyncAuraPages()
+		end)
+	end
+
+	local notice = body:CreateFontString(nil, "ARTWORK", "GameFontRed")
+	notice:SetPoint("TOPLEFT", body, "TOPLEFT", 0, 0)
+	notice:SetPoint("RIGHT", body, "RIGHT", 0, 0)
+	notice:SetJustifyH("LEFT")
+	notice:SetText(AURA_LOCKED_NOTICE)
+	body.notice = notice
+
+	local links = CreateFrame("Frame", nil, body)
+	links.refreshers = {}
+	links.controls = {}
+	links.contentHeight = 0
+	body.links = links
+
+	local row
+
+	if unit == ALL_KEY then
+		if multiUnit then
+			row = AddLinkRow(links, nil, AURA_SECTION, units)
+		end
+	elseif multiUnit then
+		row = AddToggleRow(links, nil, "Use All units settings", function()
+			return ns:IsElementLinked(unit, AURA_SECTION)
+		end, function(value)
+			ns:SetElementLinked(unit, AURA_SECTION, value)
+			ns:DeferMethod(ns, "UpdateAuras")
+			ResyncAuraPages()
+			RefreshAll()
+		end)
+	end
+
+	local swapFrom = #links.controls + 1
+
+	TagRestrictedRows(links, 1)
+
+	AddToggleRow(links, row, "Debuffs first on hostile units", function()
+		return ns:IsElementShown(storageUnit, ns.AURA_SWAP_KEY)
+	end, function(value)
+		ns:SetElementShown(storageUnit, ns.AURA_SWAP_KEY, value)
+	end)
+
+	links:SetHeight(links.contentHeight)
+
+	body.strip = ns:CreateEditableTabStrip(body, AURA_TAB_WIDTH, SelectGroup, CreateGroup, RenameGroup,
+		DeleteGroup)
+	body.strip:SetPoint("TOPLEFT", links, "BOTTOMLEFT", 0, -PAGE_GAP)
+
+	local footer = CreateFrame("Frame", nil, body)
+	footer.refreshers = {}
+	footer.controls = {}
+	footer.contentHeight = 0
+	body.footer = footer
+
+	row = AddHeaderRow(footer, nil, "Text")
+	row = AddFontRows(footer, row, storageUnit, ns.AURA_COUNT_KEY, "stack ")
+	AddFontRows(footer, row, storageUnit, ns.AURA_DURATION_KEY, "duration ")
+	TagRestrictedRows(footer, 1)
+	footer:SetHeight(footer.contentHeight)
+
+	function body:Resync()
+		local groups = ns:GetAuraGroups(unit)
+		local selected
+
+		for _, entry in ipairs(groups) do
+			if entry.key == body.selectedGroupKey then
+				selected = entry.key
+			end
+		end
+
+		body.selectedGroupKey = selected or (groups[1] or EMPTY).key
+		body.strip:SetEntries(Entries(), body.selectedGroupKey)
+		Rebuild()
+	end
+
+	body.refreshers[#body.refreshers + 1] = function()
+		for _, section in ipairs({ links, footer, body.fields }) do
+			for _, refresh in ipairs(section.refreshers) do
+				refresh()
+			end
+		end
+
+		LockRows(links, swapFrom)
+		LockRows(footer)
+		body.strip:SetEntries(Entries(), body.selectedGroupKey)
+		Layout()
+
+		if body.fields then
+			LockRows(body.fields)
+		end
+	end
+
+	body.selectedGroupKey = (ns:GetAuraGroups(unit)[1] or EMPTY).key
+	body.strip:SetEntries(Entries(), body.selectedGroupKey)
+	ShowFields()
+end
+
 local function CreatePage(parent)
 	local container = CreateFrame("Frame", nil, parent)
 	container:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -PAGE_GAP)
@@ -1837,6 +2371,10 @@ local function SelectSection(index)
 	elseif element.priority then
 		ShowPage(unit.key, element.key, function(body)
 			BuildPriorityPage(body, unit.key)
+		end)
+	elseif element.auras then
+		ShowPage(unit.key, element.key, function(body)
+			BuildAurasPage(body, unit.key)
 		end)
 	else
 		ShowPage(unit.key, element.key, function(body)
@@ -1956,7 +2494,7 @@ local function ResetGeneral()
 	db.pvpIcon = nil
 end
 
-local RESYNC_SECTIONS = { CUSTOM_TEXT_SECTION, PRIORITY_SECTION }
+local RESYNC_SECTIONS = { CUSTOM_TEXT_SECTION, PRIORITY_SECTION, AURA_SECTION }
 
 local function ResetAll()
 	local needsReload
@@ -2042,6 +2580,12 @@ local function ResetPage()
 			if page and page.built then
 				page.content:Resync()
 			end
+		elseif elementKey == AURA_SECTION then
+			if stored then
+				stored.auras = nil
+			end
+
+			ResyncAuraPages()
 		end
 	elseif unit.key == ALL_KEY then
 		ResetGeneral()
@@ -2079,6 +2623,18 @@ StaticPopupDialogs[DEFAULTS_POPUP] = {
 }
 
 StaticPopupDialogs[DELETE_PRIORITY_GROUP_POPUP] = {
+	text = "Delete %s?",
+	button1 = DELETE or "Delete",
+	button2 = CANCEL,
+	OnAccept = function(self)
+		self.data()
+	end,
+	timeout = 0,
+	whileDead = true,
+	hideOnEscape = true,
+}
+
+StaticPopupDialogs[DELETE_AURA_GROUP_POPUP] = {
 	text = "Delete %s?",
 	button1 = DELETE or "Delete",
 	button2 = CANCEL,
