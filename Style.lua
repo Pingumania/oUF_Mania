@@ -19,6 +19,9 @@ local SWING_GAP_KEY = "swingtimerGap"
 local SWING_BAR_KEYS = { "MainHand", "OffHand", "Ranged" }
 
 local HEALTH_BAR_KEY = "healthbar"
+local HEALTH_DISPEL_KEY = "healthbarDispel"
+local DISPEL_FILTER = "HARMFUL|RAID_PLAYER_DISPELLABLE"
+local DISPEL_TYPES = { Magic = 1, Curse = 2, Disease = 3, Poison = 4, Bleed = 11 }
 local POWER_BAR_KEY = "powerbar"
 
 local CAST_COLOR = CreateColor(1, 0.7, 0)
@@ -123,6 +126,49 @@ local function BarPostUpdateColor(element, _, color)
 	ns:FollowBarColor(element)
 end
 
+local dispelCurve
+
+local function DispelCurve()
+	if not dispelCurve then
+		dispelCurve = C_CurveUtil.CreateColorCurve()
+		dispelCurve:SetType(Enum.LuaCurveType.Step)
+
+		for name, id in pairs(DISPEL_TYPES) do
+			dispelCurve:AddPoint(id, oUF.colors.dispel[name])
+		end
+	end
+
+	return dispelCurve
+end
+
+local function DispelAura(unit)
+	if not UnitCanAssist("player", unit) then
+		return nil
+	end
+
+	local ids = C_UnitAuras.GetUnitAuraInstanceIDs(unit, DISPEL_FILTER, 1)
+	return ids and ids[1]
+end
+
+local function HealthPostUpdateColor(element, unit, color)
+	local auraInstanceID = element.colorDispel and DispelAura(unit)
+
+	element.dispelAura = auraInstanceID
+
+	if auraInstanceID then
+		color = C_UnitAuras.GetAuraDispelTypeColor(unit, auraInstanceID, DispelCurve())
+		element:SetStatusBarColor(color:GetRGB())
+	end
+
+	BarPostUpdateColor(element, unit, color)
+end
+
+local function HealthDispelUpdate(frame, _, unit)
+	if DispelAura(unit) ~= frame.Health.dispelAura then
+		frame.Health:ForceUpdate()
+	end
+end
+
 local function UnitColor(unit)
 	if UnitIsPlayer(unit) then
 		local _, class = UnitClass(unit)
@@ -193,6 +239,14 @@ local function ApplyBarColors(frame)
 	local unit = frame.unitKey
 
 	ApplyBarColorFlags(frame.Health, ns:GetElementColorMode(unit, HEALTH_BAR_KEY))
+	frame.Health.colorDispel = ns:IsElementShown(unit, HEALTH_DISPEL_KEY)
+
+	if frame.Health.colorDispel then
+		frame:RegisterEvent("UNIT_AURA", HealthDispelUpdate)
+	else
+		frame:UnregisterEvent("UNIT_AURA", HealthDispelUpdate)
+	end
+
 	ApplyBarColorFlags(frame.Power, ns:GetElementColorMode(unit, POWER_BAR_KEY))
 	frame.Health:ForceUpdate()
 	frame.Power:ForceUpdate()
@@ -1168,7 +1222,7 @@ local function Style(self, unit)
 	health.colorDisconnected = true
 	health.incomingHealOverflow = 1
 	health.PostUpdate = HealthPostUpdate
-	health.PostUpdateColor = BarPostUpdateColor
+	health.PostUpdateColor = HealthPostUpdateColor
 	health.colorKey = HEALTH_BAR_KEY
 	health.backgroundKey = HEALTH_BAR_KEY
 	health:SetClipsChildren(true)

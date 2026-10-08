@@ -90,7 +90,7 @@ end
 local CUSTOM_TEXT_SECTION = "customtext"
 
 local ELEMENTS = {
-	{ key = "healthbar", label = "Health bar", noShow = true, noOffset = true },
+	{ key = "healthbar", label = "Health bar", noShow = true, noOffset = true, extra = { "healthbarDispel" } },
 	{ key = "powerbar", label = "Power bar", bar = true, noShow = true, noOffset = true },
 	{ key = CUSTOM_TEXT_SECTION, label = "Text", custom = true },
 	{ key = ns.PREDICTION_SECTION, label = "Health prediction", prediction = true,
@@ -1144,6 +1144,14 @@ local function BuildElementPage(body, unit, info)
 				return ns:GetElementColor(storageUnit, "castbarUninterruptible")
 			end, function(r, g, b)
 				ns:SetElementColor(storageUnit, "castbarUninterruptible", r, g, b)
+			end)
+		end
+
+		if info.key == "healthbar" then
+			row = AddToggleRow(body, row, "Color by dispellable debuff", function()
+				return ns:IsElementShown(storageUnit, "healthbarDispel")
+			end, function(value)
+				ns:SetElementShown(storageUnit, "healthbarDispel", value)
 			end)
 		end
 	end

@@ -182,6 +182,7 @@ ns.Defaults = {
 
 	elements = {
 		healthbar = { color = { 1, 1, 1 }, colorMode = { default = "blizzard" }, background = "black" },
+		healthbarDispel = { hidden = { default = true } },
 		powerbar = {
 			size = { default = 10, min = 2 },
 			color = { 1, 1, 1 },
