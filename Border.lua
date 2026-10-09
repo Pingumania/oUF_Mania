@@ -20,9 +20,6 @@ ns.BORDER_GAP = 6
 ns.BORDER_SHADOW = BORDER_SIZE * (1 - SHADOW_START)
 
 
-local MAX_DIVIDERS = 4
-local MAX_PANELS = MAX_DIVIDERS + 1
-
 local CORNER = "border-corner-bottom-right"
 
 local SHADE = "inner-shade"
@@ -263,6 +260,37 @@ local function CreateDivider(frame, overlay)
 	return divider
 end
 
+local function AddBorderTexture(frame, texture)
+	texture:SetVertexColor(frame.borderCorners.TOPLEFT:GetVertexColor())
+	frame.borderTextures[#frame.borderTextures + 1] = texture
+end
+
+local function AddDivider(frame)
+	local divider = CreateDivider(frame, frame.borderOverlay)
+
+	AddBorderTexture(frame, divider.line)
+	AddBorderTexture(frame, divider.LEFT)
+	AddBorderTexture(frame, divider.RIGHT)
+	frame.borderDividers[#frame.borderDividers + 1] = divider
+end
+
+local function AddPanel(frame)
+	local index = #frame.borderPanels + 1
+	local panel = frame:CreateTexture(nil, "BACKGROUND")
+	local side, left, right, edge
+
+	ns:PaintDefaultBackground(panel)
+	frame.borderPanels[index] = panel
+	frame.borderShades[index] = CreateShade(frame.borderOverlay)
+
+	for _, entry in ipairs(SIDES) do
+		side, left, right = unpack(entry)
+		edge = CreateSideEdge(frame.borderOverlay, side, left, right)
+		AddBorderTexture(frame, edge)
+		frame.borderSides[side][index] = edge
+	end
+end
+
 function ns:CreateBorder(frame)
 	local overlay = CreateFrame("Frame", nil, frame)
 	overlay:SetAllPoints()
@@ -271,7 +299,7 @@ function ns:CreateBorder(frame)
 
 	local corners = {}
 	local point, side, left, right, top, bottom
-	local corner, edge, edges
+	local corner, edge
 
 	for _, entry in ipairs(CORNERS) do
 		point, left, right, top, bottom = unpack(entry)
@@ -289,49 +317,15 @@ function ns:CreateBorder(frame)
 		ns:SetHeight(edge, BORDER_THICKNESS)
 	end
 
-	local dividers = {}
-	local panels = {}
-	local sides = {}
-
-	for index = 1, MAX_DIVIDERS do
-		dividers[index] = CreateDivider(frame, overlay)
-	end
-
-	for index = 1, MAX_PANELS do
-		panels[index] = frame:CreateTexture(nil, "BACKGROUND")
-	end
-
-	for _, entry in ipairs(SIDES) do
-		side, left, right = unpack(entry)
-		edges = {}
-
-		for index = 1, MAX_PANELS do
-			edges[index] = CreateSideEdge(overlay, side, left, right)
-		end
-
-		sides[side] = edges
-	end
-
 	frame.borderCorners = corners
-	frame.borderDividers = dividers
-	frame.borderPanels = panels
-	frame.borderSides = sides
+	frame.borderDividers = {}
+	frame.borderPanels = {}
+	frame.borderSides = { LEFT = {}, RIGHT = {} }
+	frame.borderShades = {}
 	frame.borderTextures = { overlay:GetRegions() }
-
-	local shades = {}
-
-	for index = 1, MAX_PANELS do
-		shades[index] = CreateShade(overlay)
-	end
-
-	frame.borderShades = shades
 	bordered[frame] = true
 
 	frame:HookScript("OnSizeChanged", LayoutShade)
-
-	for _, panel in ipairs(panels) do
-		ns:PaintDefaultBackground(panel)
-	end
 
 	ns:SetBorderDividers(frame)
 end
@@ -355,7 +349,15 @@ function ns:SetBorderDividers(frame, anchors, count)
 	local height = math.max(Round(DIVIDER_TEXELS / texelsPerPixel), 1) * unit
 	local rimSize = (Round(BORDER_THICKNESS / unit) - Round(ns.BAR_INSET / unit)) * unit
 
-	for index = 1, MAX_DIVIDERS do
+	while #dividers < count do
+		AddDivider(frame)
+	end
+
+	while #panels <= count do
+		AddPanel(frame)
+	end
+
+	for index = 1, #dividers do
 		divider = dividers[index]
 
 		if index <= count then
@@ -370,7 +372,7 @@ function ns:SetBorderDividers(frame, anchors, count)
 		divider.RIGHT:SetShown(index <= count)
 	end
 
-	for index = 1, MAX_PANELS do
+	for index = 1, #panels do
 		panel = panels[index]
 
 		if index <= count + 1 then
@@ -396,7 +398,7 @@ function ns:SetBorderDividers(frame, anchors, count)
 		side = entry[1]
 		edges = frame.borderSides[side]
 
-		for index = 1, MAX_PANELS do
+		for index = 1, #panels do
 			edge = edges[index]
 
 			if index <= count + 1 then

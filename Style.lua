@@ -981,12 +981,16 @@ local function PlaceSwingTimer(frame, placement, stackY)
 			ns:SetHeight(bar, height)
 			count = count + 1
 			swingAnchors[count] = bar
-			bar.backgroundPanel = swingTimer.box.borderPanels[count]
 			previous = bar
 		end
 	end
 
 	ns:SetBorderDividers(swingTimer.box, swingAnchors, count - 1)
+
+	for index = 1, count do
+		swingAnchors[index].backgroundPanel = swingTimer.box.borderPanels[index]
+	end
+
 	frame.swingPlaced = true
 	UpdateSwingTimerShown(frame)
 end
@@ -1033,6 +1037,12 @@ local function ChainInside(frame, count)
 	end
 
 	stackAnchors[1] = healthBox
+
+	for index = 2, count do
+		stackAnchors[index] = stackRegions[index - 1]
+	end
+
+	ns:SetBorderDividers(frame, stackAnchors, count)
 	frame.Health.backgroundPanel = frame.borderPanels[1]
 
 	for index = 1, count do
@@ -1042,12 +1052,6 @@ local function ChainInside(frame, count)
 			region.backgroundPanel = frame.borderPanels[index + 1]
 		end
 	end
-
-	for index = 2, count do
-		stackAnchors[index] = stackRegions[index - 1]
-	end
-
-	ns:SetBorderDividers(frame, stackAnchors, count)
 end
 
 local function ApplyBarStack(frame)
