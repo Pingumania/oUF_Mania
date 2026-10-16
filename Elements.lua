@@ -817,6 +817,7 @@ end
 function ns:GetElementOffset(unit, element)
 	local info = ns.Defaults.elements[element]
 	local default = info and info.offset
+	default = default and (default[unit] or default)
 	local x = default and default[1] or 0
 	local y = default and default[2] or 0
 	local offset = ReadElement(unit, "offsets", element)

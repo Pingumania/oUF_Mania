@@ -328,6 +328,7 @@ ns.Defaults = {
 			placement = { default = "outside" },
 			freePlacement = true,
 			noInside = true,
+			offset = { target = { 0, -25 } },
 			position = { 0, 200 },
 		},
 		castbarWidth = { size = { default = 200 } },
