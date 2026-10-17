@@ -721,7 +721,6 @@ local function PlaceContainer(frame, container, group, parent)
 		x = x + overlap
 	end
 
-	container:ClearAllPoints()
 	ns:SetPoint(container, FLIPPED[point], parent, point, x, y)
 end
 
@@ -729,6 +728,10 @@ local function PlaceAuras(frame, groups)
 	local containers = frame.auraContainers
 	local root, child = SwappedRoot(frame, groups)
 	local container, parent
+
+	for _, other in next, containers do
+		other:ClearAllPoints()
+	end
 
 	for _, group in ipairs(groups) do
 		container = containers[GroupKey(group.id)]
