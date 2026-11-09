@@ -860,6 +860,14 @@ local function PlaceCastbar(frame, placement, stackY)
 	ApplyShieldStyle(frame.castbarShieldHolder, castbar.Shield, shieldSize)
 
 	ApplySparkStyle(castbar.Spark, height)
+
+	local textWidth = ns:GetElementWidth(unit, "castbarText")
+
+	if textWidth > 0 then
+		ns:SetWidth(castbar.Text, textWidth)
+	else
+		castbar.Text:SetWidth(0)
+	end
 end
 
 local function ResourceSlot(frame, key)

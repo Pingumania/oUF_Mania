@@ -1020,6 +1020,12 @@ local function BuildElementPage(body, unit, info)
 		end
 
 		row = AddFontRows(body, row, storageUnit, "castbarText", "spell name ")
+		row = AddSliderRow(body, row, "Spell name max width (0 = unlimited)", TEXT_WIDTH_MIN, TEXT_WIDTH_MAX,
+			function()
+				return ns:GetElementWidth(storageUnit, "castbarText")
+			end, function(value)
+				ns:SetElementWidth(storageUnit, "castbarText", value)
+			end)
 		row = AddFontRows(body, row, storageUnit, "castbarTime", "cast time ")
 	end
 
