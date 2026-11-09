@@ -13,6 +13,7 @@ local DURATION_KEY = "auraDuration"
 local ICON_ZOOM = 0.08
 local GLOW_TEXTURE = [[Interface\TargetingFrame\UI-TargetingFrame-Stealable]]
 local GLOW_OUTSET = 3
+local DISPEL_ICON_SCALE = 0.5
 local SWIPE_TEXTURE = [[Interface\Buttons\WHITE8X8]]
 local SWIPE_ALPHA = 0.7
 local CORNER_REACH = math.sqrt(2)
@@ -65,6 +66,7 @@ local GROUP_DEFAULTS = {
 	edge = "line",
 	edgeColor = { 1, 0.82, 0 },
 	border = true,
+	dispelIcon = true,
 	stealable = true,
 	tooltip = true,
 	cancel = false,
@@ -338,6 +340,11 @@ local BORDER_DISPEL = {
 	showWithoutDispelType = true,
 }
 
+local ICON_DISPEL = {
+	style = Enum.CustomAuraButtonDispelTypeTextureStyle.Icon,
+	showWhenHarmful = true,
+}
+
 local DURATION_HIDDEN = 60
 local DURATION_WARNING = 10
 local DURATION_URGENT = 5
@@ -469,6 +476,13 @@ local function ConfigureButton(container, button)
 		end
 	end
 
+	if harmful and Value(group, "dispelIcon") then
+		ns:SetSize(button.DispelIcon, size * DISPEL_ICON_SCALE, size * DISPEL_ICON_SCALE)
+		button:AddDispelTypeTexture(button.DispelIcon, ICON_DISPEL)
+	else
+		button.DispelIcon:Hide()
+	end
+
 	if not harmful and Value(group, "stealable") then
 		button:AddDispelTypeTexture(button.Stealable, STEALABLE_DISPEL)
 	else
@@ -547,6 +561,10 @@ local function CreateButton(container, button)
 	local barBackground = bar:CreateTexture(nil, "BACKGROUND")
 	barBackground:SetAllPoints()
 	barBackground:SetColorTexture(0, 0, 0, 1)
+
+	local dispelIcon = overlay:CreateTexture(nil, "OVERLAY")
+	dispelIcon:SetPoint("TOPRIGHT", button, "TOPRIGHT", 0, 0)
+	button.DispelIcon = dispelIcon
 
 	button.Stealable = CreateGlow(overlay, button)
 	button.Pandemic = CreateGlow(overlay, button)
@@ -657,6 +675,7 @@ local function ButtonSignature(frame, group)
 		Value(group, "tooltip"),
 		Value(group, "cancel") and unit == "player",
 		harmful and Value(group, "border"),
+		harmful and Value(group, "dispelIcon"),
 		not harmful and Value(group, "stealable"),
 	}
 

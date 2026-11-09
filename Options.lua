@@ -2036,6 +2036,7 @@ local function BuildAuraFields(fields, unit, key, Reflow, Rebuild)
 
 	from = #fields.controls + 1
 	row = AddToggleRow(fields, row, "Debuff type border", Get("border"), Set("border"))
+	row = AddToggleRow(fields, row, "Debuff type icon", Get("dispelIcon"), Set("dispelIcon"))
 	TagShownRows(fields, from, IsHarmful)
 
 	from = #fields.controls + 1
