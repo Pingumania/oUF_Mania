@@ -490,6 +490,7 @@ end
 
 local function CreateButton(container, button)
 	button:SetTooltipAnchorPoint(TOOLTIP_ANCHOR, 0, 0)
+	button:SetHitRectInsets(ns.BORDER_SHADOW, ns.BORDER_SHADOW, ns.BORDER_SHADOW, ns.BORDER_SHADOW)
 
 	local holder = CreateFrame("Frame", nil, button)
 	holder:SetAllPoints()
