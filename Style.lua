@@ -1202,6 +1202,12 @@ local function FramePostUpdate(frame)
 	ns.RefreshAuraState(frame)
 end
 
+local function RangePostUpdate(_, frame)
+	if frame.__unit == "player" then
+		frame:SetAlpha(1)
+	end
+end
+
 local function Style(self, unit)
 	unit = unit or ""
 
@@ -1211,6 +1217,10 @@ local function Style(self, unit)
 	self.unitKey = ns:GetUnitKey(unit)
 	self.PreUpdate = FramePreUpdate
 	self.PostUpdate = FramePostUpdate
+
+	if self.unitKey == "party" then
+		self.Range = { PostUpdate = RangePostUpdate }
+	end
 
 	local power = CreateBar(self)
 	power.smoothing = SMOOTHING
@@ -1462,6 +1472,10 @@ local function MaskFirstShow(frame)
 	frame:SetAlpha(0)
 	C_Timer.After(0, function()
 		frame:SetAlpha(1)
+
+		if frame.Range then
+			frame:UpdateAllElements("MaskFirstShow")
+		end
 	end)
 end
 
