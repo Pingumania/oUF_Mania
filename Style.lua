@@ -1432,6 +1432,14 @@ function ns:UpdateElements()
 	end
 end
 
+function ns:GROUP_LEFT()
+	for frame in next, styled do
+		if frame.__unit then
+			ns:UpdateGroupIndicators(frame)
+		end
+	end
+end
+
 -- Forever client bug: a frame shown for the first time from inside an OnUpdate
 -- draws its StatusBar fills at full size for one frame. RegisterUnitWatch shows
 -- unit frames from SecureStateDriverManager's OnUpdate, so every unit frame

@@ -355,7 +355,15 @@ function ns:GetRoleIcon(roleString)
 	return roleAtlasExists[atlas] and atlas or nil
 end
 
+local function HideOutsideGroup(element)
+	if not IsInGroup() then
+		element:Hide()
+	end
+end
+
 local function RoleIndicatorPostUpdate(element, role)
+	HideOutsideGroup(element)
+
 	local atlas = ns:GetRoleIcon(LFG_ROLE_STRINGS[role])
 
 	if atlas then
@@ -410,11 +418,11 @@ end
 
 local INDICATORS = {
 	{ key = "leader", element = "LeaderIndicator",
-		atlas = "UI-HUD-UnitFrame-Player-Group-LeaderIcon" },
+		atlas = "UI-HUD-UnitFrame-Player-Group-LeaderIcon", postUpdate = HideOutsideGroup, groupOnly = true },
 	{ key = "assistant", element = "AssistantIndicator",
-		texture = [[Interface\GroupFrame\UI-Group-AssistantIcon]] },
+		texture = [[Interface\GroupFrame\UI-Group-AssistantIcon]], postUpdate = HideOutsideGroup, groupOnly = true },
 	{ key = "raidrole", element = "RaidRoleIndicator",
-		previewVariants = GetRaidRolePreviewVariants },
+		postUpdate = HideOutsideGroup, previewVariants = GetRaidRolePreviewVariants, groupOnly = true },
 	{ key = "raidtarget", element = "RaidTargetIndicator",
 		marker = 1 },
 	{ key = "combat", element = "CombatIndicator",
@@ -422,7 +430,7 @@ local INDICATORS = {
 	{ key = "phase", element = "PhaseIndicator",
 		atlas = "RaidFrame-Icon-Phasing" },
 	{ key = "grouprole", element = "GroupRoleIndicator",
-		postUpdate = RoleIndicatorPostUpdate, previewVariants = GetRolePreviewVariants },
+		postUpdate = RoleIndicatorPostUpdate, previewVariants = GetRolePreviewVariants, groupOnly = true },
 	{ key = "quest", element = "QuestIndicator",
 		postUpdate = QuestPostUpdate },
 	{ key = "pvp", element = "PvPIndicator",
@@ -1519,6 +1527,14 @@ local function ApplyPhaseEvents(frame)
 			frame:RegisterEvent(event, UpdatePhase)
 		else
 			frame:UnregisterEvent(event, UpdatePhase)
+		end
+	end
+end
+
+function ns:UpdateGroupIndicators(frame)
+	for _, info in ipairs(INDICATORS) do
+		if info.groupOnly and frame:IsElementEnabled(info.element) then
+			frame[info.element]:ForceUpdate()
 		end
 	end
 end

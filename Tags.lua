@@ -176,7 +176,7 @@ local function ReadAssistantIcon(unit)
 end
 
 local function ReadRoleIcon(unit)
-	local atlas = ns:GetRoleIcon(UnitGroupRolesAssigned(unit))
+	local atlas = IsInGroup() and ns:GetRoleIcon(UnitGroupRolesAssigned(unit))
 
 	if atlas then
 		return Icon(atlas)
