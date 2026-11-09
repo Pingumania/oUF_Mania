@@ -255,7 +255,16 @@ local function PvPPostUpdate(element, unit, status)
 	end
 
 	ns:SetSize(element, size, size)
-	element:SetShown(atlas ~= nil and (status == "FFA" or UnitIsPVP(unit)))
+
+	local isPvP = status == "FFA" or UnitIsPVP(unit)
+
+	if issecretvalue(isPvP) then
+		element:SetShown(atlas ~= nil)
+		element:SetAlphaFromBoolean(isPvP, 1, 0)
+	else
+		element:SetAlpha(1)
+		element:SetShown(atlas ~= nil and isPvP)
+	end
 end
 
 local PVP_PREVIEW_ORDER = { "Alliance", "Horde", "FFA" }

@@ -197,7 +197,9 @@ local function ReadRestingIcon(unit)
 end
 
 local function ReadPvPIcon(unit)
-	if not UnitIsPVP(unit) then
+	local isPvP = UnitIsPVP(unit)
+
+	if issecretvalue(isPvP) or not isPvP then
 		return
 	end
 
