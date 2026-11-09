@@ -217,7 +217,9 @@ local function ReadQuestIcon(unit)
 end
 
 local function ReadPhaseIcon(unit)
-	if UnitPhaseReason(unit) then
+	local reason = UnitIsPlayer(unit) and UnitIsConnected(unit) and UnitPhaseReason(unit)
+
+	if not issecretvalue(reason) and reason then
 		return Icon("RaidFrame-Icon-Phasing")
 	end
 end
@@ -258,7 +260,7 @@ IconTag("combat", "UNIT_FLAGS", ReadCombatIcon)
 IconTag("resting", "PLAYER_UPDATE_RESTING", ReadRestingIcon)
 IconTag("pvp", "UNIT_FACTION", ReadPvPIcon)
 IconTag("quest", "UNIT_CLASSIFICATION_CHANGED", ReadQuestIcon)
-IconTag("phase", "UNIT_PHASE", ReadPhaseIcon)
+IconTag("phase", "UNIT_PHASE UNIT_FLAGS UNIT_CTR_OPTIONS UNIT_CONNECTION", ReadPhaseIcon)
 IconTag("resurrect", "INCOMING_RESURRECT_CHANGED", ReadResurrectIcon)
 IconTag("summon", "INCOMING_SUMMON_CHANGED", ReadSummonIcon)
 IconTag("raidtarget", "RAID_TARGET_UPDATE", ReadRaidTargetIcon)

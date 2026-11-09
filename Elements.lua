@@ -1505,6 +1505,24 @@ function ns:SetOUFElement(frame, element, shown, gateUnit)
 	end
 end
 
+local PHASE_EVENTS = { "UNIT_FLAGS", "UNIT_CTR_OPTIONS", "UNIT_CONNECTION" }
+
+local function UpdatePhase(frame)
+	frame.PhaseIndicator:ForceUpdate()
+end
+
+local function ApplyPhaseEvents(frame)
+	local enabled = frame:IsElementEnabled("PhaseIndicator")
+
+	for _, event in ipairs(PHASE_EVENTS) do
+		if enabled then
+			frame:RegisterEvent(event, UpdatePhase)
+		else
+			frame:UnregisterEvent(event, UpdatePhase)
+		end
+	end
+end
+
 function ns:ApplyElementText(frame)
 	local unit = frame.unitKey
 	local elements = frame.elements
@@ -1778,6 +1796,8 @@ function ns:ApplyElements(frame)
 				ns:HasElement(unit, info.key) and ns:IsElementShown(unit, info.key), info.gateUnit)
 		end
 	end
+
+	ApplyPhaseEvents(frame)
 
 	if elements.quest and frame:IsElementEnabled("QuestIndicator") then
 		elements.quest:ForceUpdate()
