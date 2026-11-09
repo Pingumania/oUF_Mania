@@ -1445,6 +1445,8 @@ function ns:ApplyFramePreview(key)
 end
 
 function ns:UpdateElements()
+	ns:ApplyAuraPreview()
+
 	for frame in next, styled do
 		ns:ApplyElements(frame)
 	end
@@ -1491,6 +1493,8 @@ function ns:OnFrameInitialized(frame)
 end
 
 function ns:UpdateAuras()
+	ns:ApplyAuraPreview()
+
 	for frame in next, styled do
 		ns:ApplyAuras(frame)
 	end

@@ -382,6 +382,7 @@ ns.ELEMENT_UNITS = {
 }
 
 ns.PREVIEWABLE = {
+	auras = true,
 	prediction = true,
 	threat = true,
 	resting = true,

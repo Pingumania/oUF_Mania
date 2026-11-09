@@ -2,6 +2,7 @@ local _, ns = ...
 
 local EMPTY = {}
 local aurasSecret
+local providerSwitched = false
 
 local AURA_SECTION = "auras"
 local AURA_PREFIX = "aura"
@@ -130,6 +131,32 @@ end
 
 local function Groups(unit)
 	return StoredGroups(unit) or UNIT_GROUPS[StorageUnit(unit)] or EMPTY
+end
+
+local function IsPreviewed(unit)
+	return ns:ShouldPreview(unit, AURA_SECTION) and ns:HasElement(unit, AURA_SECTION) and #Groups(unit) > 0
+end
+
+function ns:ApplyAuraPreview()
+	local wanted = false
+
+	for _, unit in ipairs(ns.UNIT_KEYS) do
+		if IsPreviewed(unit) then
+			wanted = true
+		end
+	end
+
+	if wanted == providerSwitched then
+		return
+	end
+
+	providerSwitched = wanted
+
+	if wanted then
+		C_UnitAuras.SwitchAuraDataProvider()
+	elseif not EditModeManagerFrame:IsEditModeActive() then
+		C_UnitAuras.ResetAuraDataProvider()
+	end
 end
 
 local function WritableGroups(unit)
@@ -326,7 +353,8 @@ local function FilterString(group, frame)
 	if harmful then
 		tokens[#tokens + 1] = "INCLUDE_NAME_PLATE_ONLY"
 
-		if Value(group, "onlyDispellable") and not filters.RAID and frame.auraAssist then
+		if Value(group, "onlyDispellable") and not filters.RAID and frame.auraAssist
+			and not IsPreviewed(frame.unitKey) then
 			tokens[#tokens + 1] = "RAID"
 		end
 	end
@@ -817,6 +845,7 @@ local function ApplyAuraFrame(frame)
 			end
 
 			container.group = group
+			container:SetEditModePreviewEnabled(not providerSwitched or IsPreviewed(frame.unitKey))
 
 			if container.signature ~= signature and not ns:AreAurasSecret() then
 				container.signature = signature
