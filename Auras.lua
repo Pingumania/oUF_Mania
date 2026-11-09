@@ -459,6 +459,8 @@ local function ConfigureButton(container, button)
 	end
 
 	for _, texture in ipairs(button.BorderTextures) do
+		ns:SetBorderTextureBright(texture, harmful and Value(group, "border"))
+
 		if harmful and Value(group, "border") then
 			button:AddDispelTypeTexture(texture, BORDER_DISPEL)
 		else

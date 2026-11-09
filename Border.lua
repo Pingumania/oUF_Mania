@@ -67,6 +67,7 @@ local SIDES = {
 
 local EDGE_H = "border-bottom"
 local EDGE_V = "border-right"
+local BRIGHT_SUFFIX = "-bright"
 local DIVIDER_END = "border-divider-right"
 local DIVIDER_LINE_TEXTURE = "divider-line"
 
@@ -74,6 +75,7 @@ local function CreateTexture(parent, file, left, right, top, bottom)
 	local texture = parent:CreateTexture(nil, "OVERLAY")
 	texture:SetTexture(MEDIA .. file)
 	texture:SetTexCoord(left, right, top, bottom)
+	texture.borderFile = file
 	return texture
 end
 
@@ -329,6 +331,10 @@ function ns:CreateBorder(frame)
 	frame:HookScript("OnShow", LayoutShade)
 
 	ns:SetBorderDividers(frame)
+end
+
+function ns:SetBorderTextureBright(texture, bright)
+	texture:SetTexture(MEDIA .. texture.borderFile .. (bright and BRIGHT_SUFFIX or ""))
 end
 
 function ns:SetBorderColor(frame, r, g, b)
