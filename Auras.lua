@@ -632,7 +632,7 @@ local function ConfigureLayout(container)
 	container:SetFlowLayoutGrowthDirection(
 		horizontal == "RIGHT" and AnchorUtil.FlowDirection.Left or AnchorUtil.FlowDirection.Right,
 		vertical == "BOTTOM" and AnchorUtil.FlowDirection.Up or AnchorUtil.FlowDirection.Down)
-	container:SetFlowLayoutMaximumLineSize(perRow * size + (perRow - 1) * spacing)
+	container:SetFlowLayoutMaximumLineSize((perRow + 0.5) * (size + spacing) - spacing)
 end
 
 local FONT_KEYS = { COUNT_KEY, DURATION_KEY }
