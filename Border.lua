@@ -326,6 +326,7 @@ function ns:CreateBorder(frame)
 	bordered[frame] = true
 
 	frame:HookScript("OnSizeChanged", LayoutShade)
+	frame:HookScript("OnShow", LayoutShade)
 
 	ns:SetBorderDividers(frame)
 end
