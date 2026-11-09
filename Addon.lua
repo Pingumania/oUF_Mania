@@ -107,6 +107,15 @@ local function MigrateBackgroundAlpha()
 	db.backgroundAlpha = nil
 end
 
+local function MigratePartyGrowth()
+	local stored = ns.db.units and ns.db.units.party
+
+	if stored and stored.vertical ~= nil then
+		stored.growth = stored.vertical and "DOWN" or "RIGHT"
+		stored.vertical = nil
+	end
+end
+
 function ns:OnLoad()
 	oUF_ManiaDB = oUF_ManiaDB or {}
 	oUF_ManiaDB.profiles = oUF_ManiaDB.profiles or {}
@@ -123,6 +132,7 @@ function ns:OnLoad()
 	MigrateBarColors()
 	MigratePowerHeight()
 	MigrateBackgroundAlpha()
+	MigratePartyGrowth()
 
 	ns:RebuildTextElements()
 	ns:SeedDefaultPriorityGroup()
@@ -175,7 +185,7 @@ ns.Defaults = {
 		focus = { width = 160, height = 36 },
 		targettarget = { width = 120, height = 28 },
 		pet = { width = 120, height = 28 },
-		party = { width = 150, height = 36, spacing = 6 },
+		party = { width = 150, height = 36, spacing = 6, growth = "DOWN" },
 		boss = { width = 160, height = 36, spacing = 30 },
 	},
 	unitFallback = { width = 160, height = 36 },
@@ -604,14 +614,14 @@ function ns:SetUnitSpacing(key, value)
 	ns:DeferMethod(ns, "ApplyGroupLayout")
 end
 
-function ns:IsPartyVertical()
+function ns:GetPartyGrowth()
 	local db = ns.db
 	local stored = db.units and db.units.party
-	return not stored or stored.vertical ~= false
+	return stored and stored.growth or ns.Defaults.units.party.growth
 end
 
-function ns:SetPartyVertical(vertical)
-	Store("party", "vertical", vertical)
+function ns:SetPartyGrowth(growth)
+	Store("party", "growth", growth)
 	ns:DeferMethod(ns, "ApplyGroupLayout")
 end
 

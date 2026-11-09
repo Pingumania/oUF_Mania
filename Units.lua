@@ -21,6 +21,13 @@ local PREVIEW_MEMBERS = {
 	party = 5,
 }
 
+local PARTY_GROWTH = {
+	DOWN = { point = "TOP", headerPoint = "TOPLEFT", x = 0, y = -1 },
+	UP = { point = "BOTTOM", headerPoint = "BOTTOMLEFT", x = 0, y = 1 },
+	RIGHT = { point = "LEFT", headerPoint = "TOPLEFT", x = 1, y = 0 },
+	LEFT = { point = "RIGHT", headerPoint = "TOPRIGHT", x = -1, y = 0 },
+}
+
 local placed = {}
 local groupPreviews = {}
 local bossFrames = {}
@@ -166,6 +173,10 @@ local function SpawnParty()
 	)
 
 	PlaceFrame("party", partyHeader, PARTY_ANCHOR)
+
+	partyHeader:SetAttribute("startingIndex", -(PREVIEW_MEMBERS.party - 1))
+	partyHeader:Show()
+	partyHeader:SetAttribute("startingIndex", 1)
 	partyHeader:SetVisibility("party")
 end
 
@@ -184,14 +195,18 @@ function ns:ApplyGroupLayout()
 		return
 	end
 
-	local vertical = ns:IsPartyVertical()
+	local growth = PARTY_GROWTH[ns:GetPartyGrowth()]
 	local shown = ns:IsPartyPlayerShown()
 
 	spacing = ns:GetUnitSpacing("party")
 
-	local point = vertical and "TOP" or "LEFT"
-	local xOffset = vertical and 0 or spacing
-	local yOffset = vertical and -spacing or 0
+	local point = growth.point
+	local xOffset = growth.x * spacing
+	local yOffset = growth.y * spacing
+	local width, height = partyHeader:GetAttribute("child1"):GetSize()
+
+	partyHeader:ClearAllPoints()
+	PlaceFrame("party", partyHeader, { growth.headerPoint, UIParent, "TOPLEFT", PARTY_ANCHOR[4] + (growth.x < 0 and width or 0), PARTY_ANCHOR[5] - (growth.y > 0 and height or 0) })
 
 	if partyHeader:GetAttribute("point") == point
 		and partyHeader:GetAttribute("xOffset") == xOffset
@@ -202,6 +217,11 @@ function ns:ApplyGroupLayout()
 
 	partyHeader:SetAttribute("startingIndex", 1)
 	partyHeader:SetAttribute("showPlayer", shown)
+
+	for _, child in ipairs({ partyHeader:GetChildren() }) do
+		child:ClearAllPoints()
+	end
+
 	partyHeader:SetAttribute("point", point)
 	partyHeader:SetAttribute("xOffset", xOffset)
 	partyHeader:SetAttribute("yOffset", yOffset)

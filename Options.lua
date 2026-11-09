@@ -64,7 +64,7 @@ local FRAME_SECTION = "frame"
 
 local FRAME_FIELDS = {
 	"enabled", "width", "height", "showPower", "posX", "posY",
-	"spacing", "vertical", "showPlayer", "healerPower", "hideFriendlyNPCPower",
+	"spacing", "growth", "showPlayer", "healerPower", "hideFriendlyNPCPower",
 }
 
 local ALL_KEY = ns.ALL_KEY
@@ -180,8 +180,10 @@ local SHIELD_SIDES = {
 }
 
 local GROWTH_OPTIONS = {
-	{ value = true, label = "Vertical" },
-	{ value = false, label = "Horizontal" },
+	{ value = "DOWN", label = "Down" },
+	{ value = "UP", label = "Up" },
+	{ value = "RIGHT", label = "Right" },
+	{ value = "LEFT", label = "Left" },
 }
 
 local SPACING_MIN, SPACING_MAX = 0, 60
@@ -573,9 +575,9 @@ local function BuildFramePage(body, unit)
 
 	if unit == "party" then
 		row = AddDropdownRow(body, row, "Growth", GROWTH_OPTIONS, function()
-			return ns:IsPartyVertical()
-		end, function(vertical)
-			ns:SetPartyVertical(vertical)
+			return ns:GetPartyGrowth()
+		end, function(growth)
+			ns:SetPartyGrowth(growth)
 		end)
 
 		row = AddToggleRow(body, row, "Show the player", function()
