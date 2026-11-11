@@ -199,11 +199,11 @@ local function Snap(frame, value)
 end
 
 local function ButtonSize(frame, group)
-	return Snap(frame, Value(group, "size") + 2 * ns.BAR_INSET)
+	return Snap(frame, Value(group, "size") + 2 * ns.BAR_INSET) - 2 * Snap(frame, ns.BORDER_SHADOW)
 end
 
 local function Spacing(frame, group, field)
-	return Snap(frame, Value(group, field) - 2 * ns.BORDER_SHADOW)
+	return Snap(frame, Value(group, field))
 end
 
 function ns:GetAuraGroups(unit)
@@ -413,6 +413,7 @@ local function ConfigureButton(container, button)
 	local group = container.group
 	local frame = container.frame
 	local size = ButtonSize(frame, group)
+	local iconSize = size + 2 * Snap(frame, ns.BORDER_SHADOW) - 2 * ns.BAR_INSET
 	local harmful = Value(group, "type") == "HARMFUL"
 
 	button:ClearDurationCooldown()
@@ -423,7 +424,7 @@ local function ConfigureButton(container, button)
 	button:ClearDispelTypeTextures()
 
 	button:SetSize(size, size)
-	ns:SetBorderPanelSize(button.Frame, size - 2 * ns.BAR_INSET)
+	ns:SetBorderPanelSize(button.Frame, iconSize)
 	ns:SetAuraTextFont(button.Count, frame.unitKey)
 	ns:SetAuraTextFont(button.Time, frame.unitKey)
 	button:EnableMouse(Value(group, "tooltip"))
@@ -431,7 +432,7 @@ local function ConfigureButton(container, button)
 		or nil)
 
 	if Value(group, "cooldown") then
-		local cooldownSize = (size - 2 * ns.BAR_INSET) * CORNER_REACH
+		local cooldownSize = iconSize * CORNER_REACH
 		local edge = Value(group, "edge")
 
 		button.Cooldown:SetSize(cooldownSize, cooldownSize)
@@ -534,11 +535,11 @@ end
 
 local function CreateButton(container, button)
 	button:SetTooltipAnchorPoint(TOOLTIP_ANCHOR, 0, 0)
-	button:SetHitRectInsets(ns.BORDER_SHADOW, ns.BORDER_SHADOW, ns.BORDER_SHADOW, ns.BORDER_SHADOW)
 
 	local holder = CreateFrame("Frame", nil, button)
-	holder:SetAllPoints()
-	ns:CreateBorder(holder)
+	ns:SetPoint(holder, "TOPLEFT", button, "TOPLEFT", -ns.BORDER_SHADOW, ns.BORDER_SHADOW)
+	ns:SetPoint(holder, "BOTTOMRIGHT", button, "BOTTOMRIGHT", ns.BORDER_SHADOW, -ns.BORDER_SHADOW)
+	ns:CreateBorder(holder, true)
 	button.Frame = holder
 	button.BorderTextures = {}
 
@@ -570,11 +571,11 @@ local function CreateButton(container, button)
 	button.Cooldown = cooldown
 
 	local overlay = CreateFrame("Frame", nil, button)
-	overlay:SetAllPoints()
+	overlay:SetAllPoints(holder)
 	overlay:SetFrameLevel(holder.borderOverlay:GetFrameLevel() + 1)
 
 	local count = overlay:CreateFontString(nil, "OVERLAY")
-	count:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 1, 0)
+	count:SetPoint("BOTTOMRIGHT", holder, "BOTTOMRIGHT", 1, 0)
 	count.fontKey = COUNT_KEY
 	button.Count = count
 
@@ -591,11 +592,11 @@ local function CreateButton(container, button)
 	barBackground:SetColorTexture(0, 0, 0, 1)
 
 	local dispelIcon = overlay:CreateTexture(nil, "OVERLAY")
-	dispelIcon:SetPoint("TOPRIGHT", button, "TOPRIGHT", 0, 0)
+	dispelIcon:SetPoint("TOPRIGHT", holder, "TOPRIGHT", 0, 0)
 	button.DispelIcon = dispelIcon
 
-	button.Stealable = CreateGlow(overlay, button)
-	button.Pandemic = CreateGlow(overlay, button)
+	button.Stealable = CreateGlow(overlay, holder)
+	button.Pandemic = CreateGlow(overlay, holder)
 	button.Pandemic:SetVertexColor(ORANGE_FONT_COLOR:GetRGB())
 
 	ConfigureButton(container, button)
@@ -759,7 +760,7 @@ end
 local function PlaceContainer(frame, container, group, parent)
 	local point = Value(group, "point")
 	local x, y = Value(group, "x"), Value(group, "y")
-	local overlap = 2 * ns.BORDER_SHADOW + 1
+	local overlap = parent == frame and ns.BORDER_SHADOW + 1 or 1
 
 	if point:match("BOTTOM") then
 		y = y + overlap
@@ -769,6 +770,14 @@ local function PlaceContainer(frame, container, group, parent)
 		x = x - overlap
 	elseif point == "LEFT" then
 		x = x + overlap
+	end
+
+	if parent == frame and (point:match("BOTTOM") or point:match("TOP")) then
+		if point:match("LEFT") then
+			x = x + ns.BORDER_SHADOW
+		elseif point:match("RIGHT") then
+			x = x - ns.BORDER_SHADOW
+		end
 	end
 
 	ns:SetPoint(container, FLIPPED[point], parent, point, x, y)

@@ -293,7 +293,7 @@ local function AddPanel(frame)
 	end
 end
 
-function ns:CreateBorder(frame)
+function ns:CreateBorder(frame, fixed)
 	local overlay = CreateFrame("Frame", nil, frame)
 	overlay:SetAllPoints()
 	overlay:SetFrameLevel(frame:GetFrameLevel() + BORDER_LEVEL)
@@ -327,8 +327,10 @@ function ns:CreateBorder(frame)
 	frame.borderTextures = { overlay:GetRegions() }
 	bordered[frame] = true
 
-	frame:HookScript("OnSizeChanged", LayoutShade)
-	frame:HookScript("OnShow", LayoutShade)
+	if not fixed then
+		frame:HookScript("OnSizeChanged", LayoutShade)
+		frame:HookScript("OnShow", LayoutShade)
+	end
 
 	ns:SetBorderDividers(frame)
 end
