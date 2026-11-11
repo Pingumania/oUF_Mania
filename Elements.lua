@@ -633,31 +633,38 @@ local function SetThreatVertexColor(threat, r, g, b)
 	PaintThreat(threat)
 end
 
-local function CreateThreatGlow(frame)
-	local threat = CreateFrame("Frame", nil, frame)
+function ns:CreateGlow(parent)
+	local glow = CreateFrame("Frame", nil, parent)
 	local piece, from, to
 
-	threat:SetFrameLevel(frame:GetFrameLevel())
-	threat.pieces = {}
-	threat.corners = {}
+	glow:SetFrameLevel(parent:GetFrameLevel())
+	glow.pieces = {}
+	glow.corners = {}
+
+	for index, info in ipairs(THREAT_CORNERS) do
+		piece = CreateThreatPiece(glow, THREAT_CORNER, info[2], info[3], info[4], info[5])
+		piece:SetPoint(info[1], glow, info[1])
+		glow.corners[index] = piece
+	end
+
+	for _, info in ipairs(THREAT_EDGES) do
+		piece = CreateThreatPiece(glow, info[1], info[2], info[3], info[4], info[5])
+		from = glow.corners[info[6]]
+		to = glow.corners[info[7]]
+		piece:SetPoint("TOPLEFT", from, info[8])
+		piece:SetPoint("BOTTOMRIGHT", to, info[9])
+	end
+
+	return glow
+end
+
+local function CreateThreatGlow(frame)
+	local threat = ns:CreateGlow(frame)
+
 	threat.status = { 1, 1, 1 }
 	threat.color = { 1, 1, 1 }
 	threat.intensity = 1
 	threat.SetVertexColor = SetThreatVertexColor
-
-	for index, info in ipairs(THREAT_CORNERS) do
-		piece = CreateThreatPiece(threat, THREAT_CORNER, info[2], info[3], info[4], info[5])
-		piece:SetPoint(info[1], threat, info[1])
-		threat.corners[index] = piece
-	end
-
-	for _, info in ipairs(THREAT_EDGES) do
-		piece = CreateThreatPiece(threat, info[1], info[2], info[3], info[4], info[5])
-		from = threat.corners[info[6]]
-		to = threat.corners[info[7]]
-		piece:SetPoint("TOPLEFT", from, info[8])
-		piece:SetPoint("BOTTOMRIGHT", to, info[9])
-	end
 
 	threat:SetScript("OnShow", PaintThreat)
 	threat:SetScript("OnHide", PaintThreat)
@@ -685,12 +692,12 @@ function ns:ApplyThreatColor(frame)
 	PaintThreat(threat)
 end
 
-local function PlaceThreatGlow(frame, threat, reach)
-	threat:ClearAllPoints()
-	ns:SetPoint(threat, "TOPLEFT", frame, "TOPLEFT", -reach, reach)
-	ns:SetPoint(threat, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", reach, -reach)
+function ns:PlaceGlow(frame, glow, reach)
+	glow:ClearAllPoints()
+	ns:SetPoint(glow, "TOPLEFT", frame, "TOPLEFT", -reach, reach)
+	ns:SetPoint(glow, "BOTTOMRIGHT", frame, "BOTTOMRIGHT", reach, -reach)
 
-	for _, corner in ipairs(threat.corners) do
+	for _, corner in ipairs(glow.corners) do
 		ns:SetSize(corner, reach + ns.BAR_INSET, reach + ns.BAR_INSET)
 	end
 end
@@ -1952,5 +1959,5 @@ function ns:PlaceElements(frame)
 		PlaceIcon(frame, elements[info.key], unit, info.key)
 	end
 
-	PlaceThreatGlow(frame, elements.threat, ns:GetElementSize(unit, "threat"))
+	ns:PlaceGlow(frame, elements.threat, ns:GetElementSize(unit, "threat"))
 end
