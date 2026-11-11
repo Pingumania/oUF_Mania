@@ -79,7 +79,7 @@ ns.FormatNumber = FormatNumber
 
 oUF.Tags.Methods["mania:curhp"] = function(unit)
 	if UnitIsDead(unit) then
-		return DEAD
+		return ""
 	end
 
 	if UnitIsGhost(unit) then
