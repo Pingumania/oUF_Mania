@@ -2050,7 +2050,8 @@ local function BuildAuraFields(fields, unit, key, Reflow, Rebuild)
 	end
 
 	row = AddToggleRow(fields, row, "Show stacks", Get("count"), Set("count"))
-	AddToggleRow(fields, row, "Show duration", Get("duration"), Set("duration"))
+	row = AddToggleRow(fields, row, "Show duration", Get("duration"), Set("duration"))
+	AddToggleRow(fields, row, "Use Blizzard countdown text", Get("countdown"), Set("countdown"))
 	TagRestrictedRows(fields, iconFrom)
 end
 

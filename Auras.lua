@@ -72,6 +72,7 @@ local GROUP_DEFAULTS = {
 	tooltip = true,
 	cancel = false,
 	count = true,
+	countdown = false,
 	bar = "off",
 	barHeight = 3,
 	barColorMode = "custom",
@@ -432,11 +433,14 @@ local function ConfigureButton(container, button)
 	button:SetCancelAuraButtons(Value(group, "cancel") and frame.unitKey == "player" and CANCEL_BUTTONS
 		or nil)
 
+	local countdown = Value(group, "cooldown") and Value(group, "duration") and Value(group, "countdown")
+
 	if Value(group, "cooldown") then
 		local cooldownSize = iconSize * CORNER_REACH
 		local edge = Value(group, "edge")
 
 		button.Cooldown:SetSize(cooldownSize, cooldownSize)
+		button.Cooldown:SetHideCountdownNumbers(not countdown)
 		button.Cooldown:SetDrawEdge(edge ~= "off")
 
 		if edge == "default" then
@@ -446,6 +450,10 @@ local function ConfigureButton(container, button)
 			button.Cooldown:SetEdgeTexture(EDGE_MEDIA .. edge)
 			button.Cooldown:SetEdgeColor(unpack(Value(group, "edgeColor")))
 		end
+		if countdown then
+			button.Cooldown:SetCooldown(0, 0)
+		end
+
 		button:SetDurationCooldown(button.Cooldown)
 	else
 		button.Cooldown:Hide()
@@ -457,9 +465,9 @@ local function ConfigureButton(container, button)
 		button.Count:Hide()
 	end
 
-	button.Time:SetShown(Value(group, "duration"))
+	button.Time:SetShown(Value(group, "duration") and not countdown)
 
-	if Value(group, "duration") then
+	if Value(group, "duration") and not countdown then
 		button:SetDurationText(button.Time, DurationOptions())
 	end
 
@@ -699,6 +707,7 @@ local function ButtonSignature(frame, group)
 		table.concat(Value(group, "edgeColor"), ","),
 		Value(group, "count"),
 		Value(group, "duration"),
+		Value(group, "countdown"),
 		Value(group, "bar") ~= "off" and Value(group, "bar") .. Value(group, "barHeight") .. ns:GetTexture(),
 		Value(group, "bar") ~= "off" and Value(group, "barColorMode") .. table.concat(Value(group, "barColor"), ","),
 		Value(group, "pandemic"),
