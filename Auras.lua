@@ -72,7 +72,6 @@ local GROUP_DEFAULTS = {
 	tooltip = true,
 	cancel = false,
 	count = true,
-	duration = false,
 	bar = "off",
 	barHeight = 3,
 	barColorMode = "custom",
@@ -186,7 +185,9 @@ end
 local function Value(group, field)
 	local value = group[field]
 
-	if value == nil then
+	if value == nil and field == "duration" then
+		return Value(group, "type") == "HARMFUL"
+	elseif value == nil then
 		return GROUP_DEFAULTS[field]
 	end
 
