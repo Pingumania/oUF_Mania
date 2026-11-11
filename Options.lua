@@ -107,7 +107,7 @@ local ELEMENTS = {
 		},
 	},
 	{ key = ns.AURA_SECTION, label = "Auras", auras = true,
-		extra = { ns.AURA_SWAP_KEY, ns.AURA_COUNT_KEY, ns.AURA_DURATION_KEY } },
+		extra = { ns.AURA_SWAP_KEY, ns.AURA_COUNT_KEY, ns.AURA_DURATION_KEY, ns.AURA_DURATION_SCALE_KEY } },
 	{ key = ns.CLASS_SLOT, label = "Class resource", bar = true },
 	{ key = ns.POWER_SLOT, label = "Additional power", bar = true },
 	{ key = "resting", label = "Resting icon" },
@@ -2247,7 +2247,12 @@ local function BuildAurasPage(body, unit)
 
 	row = AddHeaderRow(footer, nil, "Text")
 	row = AddFontRows(footer, row, storageUnit, ns.AURA_COUNT_KEY, "stack ")
-	AddFontRows(footer, row, storageUnit, ns.AURA_DURATION_KEY, "duration ")
+	row = AddFontRows(footer, row, storageUnit, ns.AURA_DURATION_KEY, "duration ")
+	AddToggleRow(footer, row, "Scale duration with icon size", function()
+		return ns:IsElementShown(storageUnit, ns.AURA_DURATION_SCALE_KEY)
+	end, function(value)
+		ns:SetElementShown(storageUnit, ns.AURA_DURATION_SCALE_KEY, value)
+	end)
 	TagRestrictedRows(footer, 1)
 	footer:SetHeight(footer.contentHeight)
 

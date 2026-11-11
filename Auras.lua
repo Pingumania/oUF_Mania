@@ -11,6 +11,7 @@ local OTHERS_GROUP = "others"
 local SWAP_KEY = "aurasSwap"
 local COUNT_KEY = "auraCount"
 local DURATION_KEY = "auraDuration"
+local DURATION_SCALE_KEY = "auraDurationScale"
 local ICON_ZOOM = 0.08
 local GLOW_TEXTURE = [[Interface\TargetingFrame\UI-TargetingFrame-Stealable]]
 local GLOW_OUTSET = 3
@@ -26,6 +27,7 @@ local TOOLTIP_ANCHOR = "ANCHOR_BOTTOMLEFT"
 ns.AURA_SECTION = AURA_SECTION
 ns.AURA_COUNT_KEY = COUNT_KEY
 ns.AURA_DURATION_KEY = DURATION_KEY
+ns.AURA_DURATION_SCALE_KEY = DURATION_SCALE_KEY
 ns.AURA_SWAP_KEY = SWAP_KEY
 
 ns.AURA_EDGES = {
@@ -428,7 +430,8 @@ local function ConfigureButton(container, button)
 	button:SetSize(size, size)
 	ns:SetBorderPanelSize(button.Frame, iconSize)
 	ns:SetAuraTextFont(button.Count, frame.unitKey)
-	ns:SetAuraTextFont(button.Time, frame.unitKey)
+	ns:SetAuraTextFont(button.Time, frame.unitKey,
+		ns:IsElementShown(frame.unitKey, DURATION_SCALE_KEY) and Value(group, "size") / GROUP_DEFAULTS.size or nil)
 	button:EnableMouse(Value(group, "tooltip"))
 	button:SetCancelAuraButtons(Value(group, "cancel") and frame.unitKey == "player" and CANCEL_BUTTONS
 		or nil)
@@ -708,6 +711,7 @@ local function ButtonSignature(frame, group)
 		Value(group, "count"),
 		Value(group, "duration"),
 		Value(group, "countdown"),
+		ns:IsElementShown(unit, DURATION_SCALE_KEY),
 		Value(group, "bar") ~= "off" and Value(group, "bar") .. Value(group, "barHeight") .. ns:GetTexture(),
 		Value(group, "bar") ~= "off" and Value(group, "barColorMode") .. table.concat(Value(group, "barColor"), ","),
 		Value(group, "pandemic"),

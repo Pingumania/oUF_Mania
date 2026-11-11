@@ -262,10 +262,10 @@ local function RedrawText(text)
 	end
 end
 
-local function SetTextFont(text, unit)
+local function SetTextFont(text, unit, scale)
 	local key = text.fontKey
 	local font = LSM:Fetch("font", ns:GetTextFont(unit, key))
-	local size = ns:GetTextFontSize(unit, key)
+	local size = math.max(Round(ns:GetTextFontSize(unit, key) * (scale or 1)), 1)
 	local outline = ns:GetTextOutline(unit, key)
 	local smooth = ns:IsTextSmooth(unit, key)
 	if smooth then
@@ -1500,8 +1500,8 @@ function ns:UpdateAuras()
 	end
 end
 
-function ns:SetAuraTextFont(text, unit)
-	SetTextFont(text, unit)
+function ns:SetAuraTextFont(text, unit, scale)
+	SetTextFont(text, unit, scale)
 end
 
 function ns:UpdateTags()

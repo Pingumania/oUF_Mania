@@ -199,6 +199,7 @@ ns.Defaults = {
 			colorMode = { default = "blizzard" },
 			background = "black",
 		},
+		auraDurationScale = { hidden = { default = true } },
 		portrait = {
 			anchor = { default = "LEFT", target = "RIGHT" },
 			size = { default = 40 },

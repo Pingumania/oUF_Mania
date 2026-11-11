@@ -75,6 +75,7 @@ LINK_SECTIONS.portraitMirror = "portrait"
 LINK_SECTIONS.aurasSwap = "auras"
 LINK_SECTIONS.auraCount = "auras"
 LINK_SECTIONS.auraDuration = "auras"
+LINK_SECTIONS.auraDurationScale = "auras"
 
 local CASTBAR_ELEMENTS = {
 	"castbarIcon", "castbarIconGap", "castbarIconMatch", "castbarShield", "castbarShieldGap",
