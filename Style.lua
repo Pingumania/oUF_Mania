@@ -20,6 +20,7 @@ local SWING_BAR_KEYS = { "MainHand", "OffHand", "Ranged" }
 
 local HEALTH_BAR_KEY = "healthbar"
 local POWER_BAR_KEY = "powerbar"
+local POWER_COST_KEY = "powerbarCost"
 
 local CAST_COLOR = CreateColor(1, 0.7, 0)
 local CHANNEL_COLOR = CreateColor(0, 1, 0)
@@ -189,11 +190,40 @@ local function ApplyBarColorFlags(bar, mode)
 	bar.colorPower = mode == "blizzard"
 end
 
+local function ApplyCostPrediction(frame)
+	local power = frame.Power
+	local bar = frame.costPrediction
+	local unit = frame.unitKey
+	local shown = ns:IsElementShown(unit, POWER_COST_KEY)
+
+	bar:SetStatusBarColor(ns:GetElementColor(unit, POWER_COST_KEY))
+	bar:SetAlpha(ns:GetElementAlpha(unit, POWER_COST_KEY))
+
+	if (power.CostPrediction ~= nil) == shown then
+		return
+	end
+
+	local enabled = frame:IsElementEnabled("Power")
+
+	if enabled then
+		frame:DisableElement("Power")
+	end
+
+	power.CostPrediction = shown and bar or nil
+	bar:Hide()
+
+	if enabled then
+		frame:EnableElement("Power")
+		power:SetShown(not not frame.powerShown)
+	end
+end
+
 local function ApplyBarColors(frame)
 	local unit = frame.unitKey
 
 	ApplyBarColorFlags(frame.Health, ns:GetElementColorMode(unit, HEALTH_BAR_KEY))
 	ApplyBarColorFlags(frame.Power, ns:GetElementColorMode(unit, POWER_BAR_KEY))
+	ApplyCostPrediction(frame)
 	frame.Health:ForceUpdate()
 	frame.Power:ForceUpdate()
 end
@@ -1235,10 +1265,12 @@ local function Style(self, unit)
 
 	local costPrediction = CreateBar(power)
 	costPrediction:SetReverseFill(true)
+	costPrediction:Hide()
 	costPrediction:SetPoint("TOP", power, "TOP", 0, 0)
 	costPrediction:SetPoint("BOTTOM", power, "BOTTOM", 0, 0)
 	costPrediction:SetPoint("RIGHT", power:GetStatusBarTexture(), "RIGHT", 0, 0)
-	power.CostPrediction = costPrediction
+	self.costPrediction = costPrediction
+	ApplyCostPrediction(self)
 
 	ns:CreateBorder(self)
 
@@ -1517,7 +1549,8 @@ function ns:ApplyMedia()
 
 		if frame.Power and texture then
 			frame.Power:SetStatusBarTexture(texture)
-			frame.Power.CostPrediction:SetStatusBarTexture(texture)
+			frame.costPrediction:SetStatusBarTexture(texture)
+			frame.costPrediction:SetStatusBarColor(ns:GetElementColor(frame.unitKey, POWER_COST_KEY))
 		end
 
 		if frame.Castbar and texture then

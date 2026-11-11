@@ -69,6 +69,7 @@ end
 
 LINK_SECTIONS.threatBorder = "threat"
 LINK_SECTIONS.healthbarDispel = "healthbar"
+LINK_SECTIONS.powerbarCost = "powerbar"
 LINK_SECTIONS.portraitGap = "portrait"
 LINK_SECTIONS.portraitMatch = "portrait"
 LINK_SECTIONS.portraitMirror = "portrait"

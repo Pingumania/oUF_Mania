@@ -98,7 +98,7 @@ local DISPEL_ROWS = {
 
 local ELEMENTS = {
 	{ key = "healthbar", label = "Health bar", noShow = true, noOffset = true, extra = { "healthbarDispel" } },
-	{ key = "powerbar", label = "Power bar", bar = true, noShow = true, noOffset = true },
+	{ key = "powerbar", label = "Power bar", bar = true, noShow = true, noOffset = true, extra = { "powerbarCost" } },
 	{ key = CUSTOM_TEXT_SECTION, label = "Text", custom = true },
 	{ key = ns.PREDICTION_SECTION, label = "Health prediction", prediction = true,
 		extra = ns.PREDICTION_ELEMENTS },
@@ -1171,6 +1171,26 @@ local function BuildElementPage(body, unit, info)
 				return ns:GetElementColor(storageUnit, "castbarUninterruptible")
 			end, function(r, g, b)
 				ns:SetElementColor(storageUnit, "castbarUninterruptible", r, g, b)
+			end)
+		end
+
+		if info.key == "powerbar" then
+			row = AddToggleRow(body, row, "Show cost prediction", function()
+				return ns:IsElementShown(storageUnit, "powerbarCost")
+			end, function(value)
+				ns:SetElementShown(storageUnit, "powerbarCost", value)
+			end)
+
+			row = AddColorRow(body, row, "Cost prediction color", function()
+				return ns:GetElementColor(storageUnit, "powerbarCost")
+			end, function(r, g, b)
+				ns:SetElementColor(storageUnit, "powerbarCost", r, g, b)
+			end)
+
+			row = AddSliderRow(body, row, "Cost prediction opacity", 0, ALPHA_PERCENT_MAX, function()
+				return Round(ns:GetElementAlpha(storageUnit, "powerbarCost") * ALPHA_PERCENT_MAX)
+			end, function(value)
+				ns:SetElementAlpha(storageUnit, "powerbarCost", value / ALPHA_PERCENT_MAX)
 			end)
 		end
 

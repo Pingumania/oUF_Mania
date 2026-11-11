@@ -200,6 +200,7 @@ ns.Defaults = {
 			background = "black",
 		},
 		auraDurationScale = { hidden = { default = true } },
+		powerbarCost = { color = { 1, 0.82, 0 }, alpha = 0.8 },
 		portrait = {
 			anchor = { default = "LEFT", target = "RIGHT" },
 			size = { default = 40 },
