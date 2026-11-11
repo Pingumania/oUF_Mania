@@ -78,6 +78,10 @@ local MANIA_TAGS = {
 		sample = "|r" },
 }
 
+if ns:IsForever() then
+	table.insert(MANIA_TAGS, 1, { tag = "[mania:firstname]", text = "First name, without surname", sample = "Thrall" })
+end
+
 local GENERAL_TAGS = {
 	{ tag = "[affix]", text = "\"Affix\" if the unit carries the minus classification",
 		sample = "Affix" },

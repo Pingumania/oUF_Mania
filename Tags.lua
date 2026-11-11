@@ -147,6 +147,14 @@ end
 
 oUF.Tags.Events["mania:difficulty"] = oUF.Tags.Events["difficulty"]
 
+if ns:IsForever() then
+	oUF.Tags.Methods["mania:firstname"] = function(unit, realUnit)
+		return (UnitNameUnmodified(realUnit or unit))
+	end
+
+	oUF.Tags.Events["mania:firstname"] = oUF.Tags.Events["name"]
+end
+
 local function Icon(atlas)
 	return ns:CreateIconMarkup(atlas, ns:GetIconTagSize())
 end
