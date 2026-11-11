@@ -143,13 +143,13 @@ local function LayoutPanelShade(shade, panel, size, unit, roundedTop, roundedBot
 		width, height = panelSize, panelSize
 	end
 
-	if issecretvalue(width) or issecretvalue(height) then
-		return
+	local total = math.max(Round(size / unit), 1)
+
+	if not issecretvalue(width) and not issecretvalue(height) then
+		panel.shadePixels = Round(math.min(width, height) / unit)
 	end
 
-	local total = math.max(Round(size / unit), 1)
-	local panelPixels = Round(math.min(width, height) / unit)
-	local pixels = math.min(total, math.floor(panelPixels / 2))
+	local pixels = math.min(total, math.floor((panel.shadePixels or 2 * total) / 2))
 
 	if pixels < 1 then
 		SetShadeShown(shade, false)
