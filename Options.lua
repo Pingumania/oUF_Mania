@@ -89,6 +89,13 @@ end
 
 local CUSTOM_TEXT_SECTION = "customtext"
 
+local DISPEL_ROWS = {
+	{ key = "dispelTint", label = "Tint health bar" },
+	{ key = "dispelIcon", label = "Center icon" },
+	{ key = "dispelGlow", label = "Outer glow" },
+	{ key = "dispelBorder", label = "Recolor border" },
+}
+
 local ELEMENTS = {
 	{ key = "healthbar", label = "Health bar", noShow = true, noOffset = true, extra = { "healthbarDispel" } },
 	{ key = "powerbar", label = "Power bar", bar = true, noShow = true, noOffset = true },
@@ -131,6 +138,8 @@ local ELEMENTS = {
 		noOffset = true,
 		extra = { "threatBorder" },
 	},
+	{ key = ns.DISPEL_SECTION, label = "Dispel highlight", noShow = true, noOffset = true,
+		extra = ns.DISPEL_ELEMENTS },
 	{ key = ns.PRIORITY_SECTION, label = "Priority groups", priority = true },
 }
 
@@ -1098,6 +1107,16 @@ local function BuildElementPage(body, unit, info)
 		end, function(value)
 			ns:SetElementShown(storageUnit, "threatBorder", value)
 		end)
+	end
+
+	if info.key == ns.DISPEL_SECTION then
+		for _, entry in ipairs(DISPEL_ROWS) do
+			row = AddToggleRow(body, row, entry.label, function()
+				return ns:IsElementShown(storageUnit, entry.key)
+			end, function(value)
+				ns:SetElementShown(storageUnit, entry.key, value)
+			end)
+		end
 	end
 
 	if info.key == "quest" then

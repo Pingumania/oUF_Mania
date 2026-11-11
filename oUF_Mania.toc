@@ -20,6 +20,7 @@ Addon.lua
 Border.lua
 Elements.lua
 Auras.lua
+Dispel.lua
 Resources.lua
 Preview.lua
 Style.lua

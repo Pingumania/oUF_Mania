@@ -363,8 +363,15 @@ ns.Defaults = {
 		swingtimerRanged = { color = { 0.4, 0.8, 1 } },
 		threat = { size = { default = 8 }, color = { 1, 0, 0 }, alpha = 1 },
 		threatBorder = { hidden = { default = true } },
+		dispelTint = { hidden = { default = true } },
+		dispelIcon = { hidden = { default = true } },
+		dispelGlow = { hidden = { default = true } },
+		dispelBorder = { hidden = { default = true } },
 	},
 }
+
+ns.DISPEL_SECTION = "dispel"
+ns.DISPEL_ELEMENTS = { "dispelTint", "dispelIcon", "dispelGlow", "dispelBorder" }
 
 ns.ELEMENT_UNITS = {
 	auras = { player = true, target = true, focus = true, pet = true, party = true, boss = true },
@@ -380,12 +387,14 @@ ns.ELEMENT_UNITS = {
 	grouprole = { player = true, target = true, targettarget = true, focus = true, party = true },
 	summon = { player = true, target = true, targettarget = true, focus = true, party = true },
 	quest = { target = true, targettarget = true, focus = true, boss = true },
+	dispel = { player = true, target = true, focus = true, pet = true, party = true },
 }
 
 ns.PREVIEWABLE = {
 	auras = true,
 	prediction = true,
 	threat = true,
+	dispel = true,
 	resting = true,
 	castbar = true,
 	swingtimer = true,

@@ -77,6 +77,10 @@ LINK_SECTIONS.auraCount = "auras"
 LINK_SECTIONS.auraDuration = "auras"
 LINK_SECTIONS.auraDurationScale = "auras"
 
+for _, element in ipairs(ns.DISPEL_ELEMENTS) do
+	LINK_SECTIONS[element] = ns.DISPEL_SECTION
+end
+
 local CASTBAR_ELEMENTS = {
 	"castbarIcon", "castbarIconGap", "castbarIconMatch", "castbarShield", "castbarShieldGap",
 	"castbarShieldMatch", "castbarLatency", "castbarWidth", "castbarWidthMatch", "castbarText",
@@ -1853,6 +1857,7 @@ function ns:ApplyElements(frame)
 
 	ns:ApplyPriorityGroups(frame)
 	ns:ApplyAuras(frame)
+	ns:ApplyDispel(frame)
 end
 
 function ns:ApplyTags(frame)
