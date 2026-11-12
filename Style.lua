@@ -1243,8 +1243,8 @@ local function Style(self, unit)
 	healAbsorb:SetReverseFill(true)
 	healAbsorb:SetPoint("RIGHT", health:GetStatusBarTexture(), "RIGHT", 0, 0)
 
-	local healthOverlay = CreateFrame("Frame", nil, health)
-	healthOverlay:SetAllPoints()
+	local healthOverlay = CreateFrame("Frame", nil, self)
+	healthOverlay:SetAllPoints(health)
 	healthOverlay:SetFrameLevel(health:GetFrameLevel() + HEALTH_OVERLAY_LEVEL)
 	self.healthOverlay = healthOverlay
 
