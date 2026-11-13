@@ -140,8 +140,7 @@ end
 oUF.Tags.Events["mania:smartlevel"] = oUF.Tags.Events["smartlevel"]
 
 oUF.Tags.Methods["mania:difficulty"] = function(unit)
-	local level = UnitEffectiveLevel(unit)
-	local color = GetCreatureDifficultyColor(level > 0 and level or 999)
+	local color = GetDifficultyColor(C_PlayerInfo.GetContentDifficultyCreatureForPlayer(unit))
 	return "|c" .. C_ColorUtil.GenerateTextColorCode(color)
 end
 
