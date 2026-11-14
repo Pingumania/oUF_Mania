@@ -1912,6 +1912,18 @@ local function BuildAuraFields(fields, unit, key, Reflow, Rebuild)
 		return not IsHarmful()
 	end
 
+	local function IsPlayer()
+		return unit == "player"
+	end
+
+	local function IsDetached()
+		return IsPlayer() and ns:GetAuraValue(unit, key, "detached")
+	end
+
+	local function IsAttached()
+		return not IsDetached()
+	end
+
 	local function Candidates()
 		local options = {}
 
@@ -2004,20 +2016,36 @@ local function BuildAuraFields(fields, unit, key, Reflow, Rebuild)
 
 	row = RegisterControl(fields, AddHeaderRow(fields, row, "Layout"))
 
+	from = #fields.controls + 1
+	row = AddToggleRow(fields, row, "Detached", Get("detached"), Set("detached", true))
+	TagShownRows(fields, from, IsPlayer)
+
+	from = #fields.controls + 1
 	row = AddDropdownRow(fields, row, "Attach to", AttachOptions, function()
 		return ns:GetAuraAttach(unit, key) or AURA_FRAME
 	end, function(parentKey)
 		ns:SetAuraAttach(unit, key, parentKey ~= AURA_FRAME and parentKey or nil)
 	end)
+	TagShownRows(fields, from, IsAttached)
 
 	row = AddDropdownRow(fields, row, "Anchor point", AnchorOptions(AURA_SECTION), Get("point"),
 		Set("point"))
 
+	from = #fields.controls + 1
 	row = AddAxisRows(fields, row, "Offset", OFFSET_MIN, OFFSET_MAX, function()
 		return ns:GetAuraValue(unit, key, "x"), ns:GetAuraValue(unit, key, "y")
 	end, function(axis, value)
 		ns:SetAuraValue(unit, key, axis, value)
 	end)
+	TagShownRows(fields, from, IsAttached)
+
+	from = #fields.controls + 1
+	row = AddAxisRows(fields, row, "Position", POSITION_MIN, POSITION_MAX, function()
+		return ns:GetAuraValue(unit, key, "posX"), ns:GetAuraValue(unit, key, "posY")
+	end, function(axis, value)
+		ns:SetAuraValue(unit, key, "pos" .. axis:upper(), value)
+	end)
+	TagShownRows(fields, from, IsDetached)
 
 	row = AddDropdownRow(fields, row, "Direction", AURA_AXES, Get("vertical"), Set("vertical"))
 	from = #fields.controls + 1

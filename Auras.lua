@@ -57,6 +57,9 @@ local GROUP_DEFAULTS = {
 	point = "BOTTOMLEFT",
 	x = 0,
 	y = 0,
+	detached = false,
+	posX = 0,
+	posY = 0,
 	vertical = false,
 	size = 17,
 	max = 16,
@@ -816,6 +819,8 @@ local function PlaceAuras(frame, groups)
 				PlaceContainer(frame, container, root, frame)
 			elseif group == root then
 				PlaceContainer(frame, container, child, containers[GroupKey(child.id)])
+			elseif frame.unitKey == "player" and Value(group, "detached") then
+				ns:SetPoint(container, FLIPPED[Value(group, "point")], UIParent, "CENTER", Value(group, "posX"), Value(group, "posY"))
 			else
 				PlaceContainer(frame, container, group,
 					parent and parent:IsShown() and parent or frame)
