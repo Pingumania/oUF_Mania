@@ -66,7 +66,7 @@ local MANIA_TAGS = {
 	{ tag = "[mania:phase]", text = "Phased", sample = Icon("RaidFrame-Icon-Phasing") },
 	{ tag = "[mania:resurrect]", text = "Incoming resurrect", sample = Icon("RaidFrame-Icon-Rez") },
 	{ tag = "[mania:summon]", text = "Incoming summon", sample = Icon("RaidFrame-Icon-SummonPending") },
-	{ tag = "[mania:curhp]", text = "Current health, abbreviated (57.2k)", sample = "57.2k" },
+	{ tag = "[mania:curhp]", text = "Current health, abbreviated (57.2k), \"Offline\" if disconnected", sample = "57.2k" },
 	{ tag = "[mania:maxhp]", text = "Maximum health, abbreviated", sample = "58.0k" },
 	{ tag = "[mania:curpp]", text = "Current power, abbreviated", sample = "850" },
 	{ tag = "[mania:maxpp]", text = "Maximum power, abbreviated", sample = "1.0k" },

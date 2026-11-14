@@ -78,6 +78,10 @@ end
 ns.FormatNumber = FormatNumber
 
 oUF.Tags.Methods["mania:curhp"] = function(unit)
+	if not UnitIsConnected(unit) then
+		return "Offline"
+	end
+
 	if UnitIsDead(unit) then
 		return ""
 	end
@@ -89,7 +93,7 @@ oUF.Tags.Methods["mania:curhp"] = function(unit)
 	return FormatNumber(UnitHealth(unit))
 end
 
-oUF.Tags.Events["mania:curhp"] = "UNIT_HEALTH UNIT_MAXHEALTH"
+oUF.Tags.Events["mania:curhp"] = "UNIT_HEALTH UNIT_MAXHEALTH UNIT_CONNECTION"
 
 oUF.Tags.Methods["mania:maxhp"] = function(unit)
 	return FormatNumber(UnitHealthMax(unit))
