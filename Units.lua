@@ -177,7 +177,7 @@ local function SpawnParty()
 	partyHeader:SetAttribute("startingIndex", -(PREVIEW_MEMBERS.party - 1))
 	partyHeader:Show()
 	partyHeader:SetAttribute("startingIndex", 1)
-	partyHeader:SetVisibility("party")
+	partyHeader:SetVisibility("custom [@raid1,exists] hide; [@party1,exists][group] show; hide")
 end
 
 function ns:ApplyGroupLayout()
