@@ -74,7 +74,10 @@ function ns:ApplyGroupPreview()
 				header:SetAttribute("startingIndex", 1)
 			end
 
-			SetChildrenPreviewed(header, previewed)
+			if previewed ~= (header.previewed or false) then
+				header.previewed = previewed
+				SetChildrenPreviewed(header, previewed)
+			end
 		end
 	end
 end
