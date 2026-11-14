@@ -215,6 +215,10 @@ local function LayoutShade(frame)
 	end
 end
 
+function ns:LayoutShade(frame)
+	LayoutShade(frame)
+end
+
 function ns:ApplyShadeSize()
 	for frame in next, bordered do
 		LayoutShade(frame)

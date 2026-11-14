@@ -1275,6 +1275,9 @@ local function Style(self, unit)
 	ApplyCostPrediction(self)
 
 	ns:CreateBorder(self)
+	healthBox:HookScript("OnSizeChanged", function()
+		ns:LayoutShade(self)
+	end)
 
 	local portraitHolder = CreateFrame("Frame", nil, self)
 	portraitHolder:SetFrameLevel(self:GetFrameLevel())
