@@ -1179,9 +1179,11 @@ local function FramePostUpdate(frame)
 	ns.RefreshDispel(frame)
 end
 
-local function RangePostUpdate(_, frame)
+local function RangePostUpdate(element, frame)
 	if frame.__unit == "player" then
 		frame:SetAlpha(1)
+	elseif not UnitIsConnected(frame.__unit) then
+		frame:SetAlpha(element.outsideAlpha)
 	end
 end
 
