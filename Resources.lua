@@ -379,6 +379,7 @@ function ns:PlaceResourceSlot(frame, key, placement, stackY)
 		slot.outerWidth = ns:GetUnitSizes(unit)
 	end
 
+	ns:SetBorderPanelSize(slot.box, height)
 	slot.holder:ClearAllPoints()
 	slot.holder:Show()
 

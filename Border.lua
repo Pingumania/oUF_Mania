@@ -136,20 +136,13 @@ local function SetShadeShown(shade, shown)
 	end
 end
 
-local function LayoutPanelShade(shade, panel, size, unit, roundedTop, roundedBottom, panelSize)
-	local width, height = panel:GetSize()
-
-	if panelSize then
-		width, height = panelSize, panelSize
-	end
-
+local function LayoutPanelShade(shade, panel, size, unit, roundedTop, roundedBottom)
 	local total = math.max(Round(size / unit), 1)
+	local pixels = total
 
-	if not issecretvalue(width) and not issecretvalue(height) then
-		panel.shadePixels = Round(math.min(width, height) / unit)
+	if panel.shadeHeight then
+		pixels = math.min(total, math.floor(Round(panel.shadeHeight / unit) / 2))
 	end
-
-	local pixels = math.min(total, math.floor((panel.shadePixels or 2 * total) / 2))
 
 	if pixels < 1 then
 		SetShadeShown(shade, false)
@@ -207,16 +200,11 @@ local function LayoutShade(frame)
 
 	for index, shade in ipairs(frame.borderShades) do
 		if index <= count then
-			LayoutPanelShade(shade, panels[index], size, unit, index == 1, index == count,
-				frame.borderPanelSize)
+			LayoutPanelShade(shade, panels[index], size, unit, index == 1, index == count)
 		else
 			SetShadeShown(shade, false)
 		end
 	end
-end
-
-function ns:LayoutShade(frame)
-	LayoutShade(frame)
 end
 
 function ns:ApplyShadeSize()
@@ -232,10 +220,8 @@ function ns:SetShadeSize(size)
 end
 
 function ns:SetBorderPanelSize(frame, size)
-	bordered[frame] = nil
-	frame.borderPanelSize = size
+	frame.borderPanels[1].shadeHeight = size
 	LayoutShade(frame)
-	frame.shadeFixed = true
 end
 
 function ns:PaintDefaultBackground(panel)
@@ -297,7 +283,7 @@ local function AddPanel(frame)
 	end
 end
 
-function ns:CreateBorder(frame, fixed)
+function ns:CreateBorder(frame)
 	local overlay = CreateFrame("Frame", nil, frame)
 	overlay:SetAllPoints()
 	overlay:SetFrameLevel(frame:GetFrameLevel() + BORDER_LEVEL)
@@ -331,11 +317,6 @@ function ns:CreateBorder(frame, fixed)
 	frame.borderTextures = { overlay:GetRegions() }
 	bordered[frame] = true
 
-	if not fixed then
-		frame:HookScript("OnSizeChanged", LayoutShade)
-		frame:HookScript("OnShow", LayoutShade)
-	end
-
 	ns:SetBorderDividers(frame)
 end
 
@@ -349,7 +330,7 @@ function ns:SetBorderColor(frame, r, g, b)
 	end
 end
 
-function ns:SetBorderDividers(frame, anchors, count)
+function ns:SetBorderDividers(frame, anchors, count, heights)
 	count = count or 0
 
 	local corners = frame.borderCorners
@@ -390,6 +371,10 @@ function ns:SetBorderDividers(frame, anchors, count)
 
 		if index <= count + 1 then
 			panel:ClearAllPoints()
+
+			if heights then
+				panel.shadeHeight = type(heights) == "table" and heights[index] or heights
+			end
 
 			if index == 1 then
 				ns:SetPoint(panel, "TOPLEFT", frame, "TOPLEFT", ns.BAR_INSET, -ns.BAR_INSET)

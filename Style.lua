@@ -806,6 +806,7 @@ local function PlaceCastbar(frame, placement, stackY)
 		end
 
 		ns:SetHeight(border, height + 2 * ns.BAR_INSET)
+		ns:SetBorderPanelSize(border, height)
 
 		if detached then
 			ns:SnapToPixelGrid(border)
@@ -823,6 +824,7 @@ local function PlaceCastbar(frame, placement, stackY)
 
 	iconSize = PlaceCastbarIcon(frame, frame.castbarIconBorder, "castbarIcon", anchor, inset)
 	ns:SetSize(frame.castbarIconBorder, iconSize + 2 * ns.BAR_INSET, iconSize + 2 * ns.BAR_INSET)
+	ns:SetBorderPanelSize(frame.castbarIconBorder, iconSize)
 
 	shieldSize = PlaceCastbarIcon(frame, frame.castbarShieldHolder, "castbarShield", anchor, inset)
 
@@ -948,7 +950,7 @@ local function PlaceSwingTimer(frame, placement, stackY)
 			ns:SetPoint(bar, "TOPLEFT", box, "TOPLEFT", ns.BAR_INSET, -ns.BAR_INSET)
 			ns:SetPoint(bar, "TOPRIGHT", box, "TOPRIGHT", -ns.BAR_INSET, -ns.BAR_INSET)
 			ns:SetHeight(bar, height)
-			ns:SetBorderDividers(box)
+			ns:SetBorderDividers(box, nil, nil, height)
 			bar.backgroundPanel = box.borderPanels[1]
 			previous = box
 		elseif bar:IsShown() then
@@ -969,7 +971,7 @@ local function PlaceSwingTimer(frame, placement, stackY)
 		end
 	end
 
-	ns:SetBorderDividers(swingTimer.box, swingAnchors, count - 1)
+	ns:SetBorderDividers(swingTimer.box, swingAnchors, count - 1, height)
 
 	for index = 1, count do
 		swingAnchors[index].backgroundPanel = swingTimer.box.borderPanels[index]
@@ -989,6 +991,7 @@ local STACK = {
 local stackRegions = {}
 local stackHeights = {}
 local stackAnchors = {}
+local stackPanelHeights = {}
 
 local function ChainInside(frame, count)
 	local healthBox = frame.healthBox
@@ -1026,7 +1029,14 @@ local function ChainInside(frame, count)
 		stackAnchors[index] = stackRegions[index - 1]
 	end
 
-	ns:SetBorderDividers(frame, stackAnchors, count)
+	local _, healthHeight = ns:GetUnitSizes(frame.unitKey)
+	stackPanelHeights[1] = healthHeight - 2 * ns.BAR_INSET - (frame.powerShown and stackHeights[1] or 0)
+
+	for index = 1, count do
+		stackPanelHeights[index + 1] = stackHeights[index]
+	end
+
+	ns:SetBorderDividers(frame, stackAnchors, count, stackPanelHeights)
 	frame.Health.backgroundPanel = frame.borderPanels[1]
 
 	for index = 1, count do
@@ -1129,6 +1139,7 @@ local function PlacePortrait(frame, frameHeight)
 	end
 
 	ns:SetSize(holder, size, size)
+	ns:SetBorderPanelSize(holder, size - 2 * ns.BAR_INSET)
 end
 
 local function LayoutFrame(frame)
@@ -1275,9 +1286,6 @@ local function Style(self, unit)
 	ApplyCostPrediction(self)
 
 	ns:CreateBorder(self)
-	healthBox:HookScript("OnSizeChanged", function()
-		ns:LayoutShade(self)
-	end)
 
 	local portraitHolder = CreateFrame("Frame", nil, self)
 	portraitHolder:SetFrameLevel(self:GetFrameLevel())

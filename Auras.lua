@@ -554,7 +554,7 @@ local function CreateButton(container, button)
 	local holder = CreateFrame("Frame", nil, button)
 	ns:SetPoint(holder, "TOPLEFT", button, "TOPLEFT", -ns.BORDER_SHADOW, ns.BORDER_SHADOW)
 	ns:SetPoint(holder, "BOTTOMRIGHT", button, "BOTTOMRIGHT", ns.BORDER_SHADOW, -ns.BORDER_SHADOW)
-	ns:CreateBorder(holder, true)
+	ns:CreateBorder(holder)
 	button.Frame = holder
 	button.BorderTextures = {}
 

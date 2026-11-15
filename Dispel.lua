@@ -61,7 +61,7 @@ local function BuildParts(frame, parent, Register)
 
 	local border = CreatePart(parent, frame:GetFrameLevel())
 	border:SetAllPoints(frame)
-	ns:CreateBorder(border, true)
+	ns:CreateBorder(border)
 	border.shadeFixed = true
 	border.borderPanels[1]:Hide()
 
