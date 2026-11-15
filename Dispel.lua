@@ -59,7 +59,7 @@ local function BuildParts(frame, parent, Register)
 
 	parts.glow = glow
 
-	local border = CreatePart(parent, frame:GetFrameLevel() + 1)
+	local border = CreatePart(parent, frame:GetFrameLevel())
 	border:SetAllPoints(frame)
 	ns:CreateBorder(border, true)
 	border.shadeFixed = true
