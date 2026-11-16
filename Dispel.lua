@@ -69,7 +69,7 @@ local function BuildParts(frame, parent, Register)
 	end
 
 	for _, edge in ipairs(border.borderTextures) do
-		ns:SetBorderTextureBright(edge, true)
+		edge:SetBlendMode("ADD")
 		Register(edge, COLOR_STYLE)
 	end
 
