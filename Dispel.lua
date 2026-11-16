@@ -10,7 +10,6 @@ local FILL_KEY = "healthbarDispel"
 local WHITE = [[Interface\Buttons\WHITE8X8]]
 local TINT_ALPHA = 0.35
 local ICON_SIZE = 20
-local GLOW_REACH = 8
 local PREVIEW_TYPE = "Magic"
 local PREVIEW_ICON = "RaidFrame-Icon-DebuffMagic"
 local COLOR_STYLE = Enum.CustomAuraButtonDispelTypeTextureStyle.PreserveAsset
@@ -51,7 +50,7 @@ local function BuildParts(frame, parent, Register)
 
 	local glow = ns:CreateGlow(parent)
 	glow:SetFrameLevel(frame:GetFrameLevel())
-	ns:PlaceGlow(frame, glow, GLOW_REACH)
+	ns:PlaceGlow(frame, glow, ns:GetElementSize(frame.unitKey, "threat"))
 
 	for _, piece in ipairs(glow.pieces) do
 		Register(piece, COLOR_STYLE)
@@ -195,6 +194,16 @@ function ns:ApplyDispel(frame)
 	ShowParts(frame.dispelParts, fill, tint, icon, glow, border)
 	frame:RegisterEvent("UNIT_FACTION", ns.RefreshDispel)
 	ns.RefreshDispel(frame)
+end
+
+function ns:PlaceDispelGlow(frame, reach)
+	if frame.dispelParts then
+		ns:PlaceGlow(frame, frame.dispelParts.glow, reach)
+	end
+
+	if frame.dispelPreview then
+		ns:PlaceGlow(frame, frame.dispelPreview.parts.glow, reach)
+	end
 end
 
 function ns:ApplyDispelTexture(frame, texture)

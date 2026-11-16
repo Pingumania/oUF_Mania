@@ -1966,5 +1966,7 @@ function ns:PlaceElements(frame)
 		PlaceIcon(frame, elements[info.key], unit, info.key)
 	end
 
-	ns:PlaceGlow(frame, elements.threat, ns:GetElementSize(unit, "threat"))
+	local reach = ns:GetElementSize(unit, "threat")
+	ns:PlaceGlow(frame, elements.threat, reach)
+	ns:PlaceDispelGlow(frame, reach)
 end
